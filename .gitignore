@@ -180,4 +180,6 @@ rent_house/node_modules/
 rent_house/.expo/
 rent_house/.DS_Store
 rent_house/.env
-
+rent_house_server/.venv/
+rent_house_server/.env
+migrations/
