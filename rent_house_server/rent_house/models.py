@@ -1,16 +1,52 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.db.models import Q
+from enum import Enum
 
+class Role(Enum):
+    ADMIN = 'admin', 'Quản trị viên'
+    OWNER = 'owner', 'Chủ nhà'
+    MODERATOR = 'moderator', 'Người quản lý'
+    RENTER = 'renter', 'Người thuê trọ'
 
-class Role(models.TextChoices):
-    ADMIN = 'ADMIN', 'Quản trị viên'
-    HOST = 'HOST', 'Chủ trọ'
-    RENTER = 'RENTER', 'Người thuê'
-    MODERATOR = 'MODERATOR', 'Người kiểm duyệt'
+    def __str__(self):
+        return self.value[1]
+
+class HouseType(Enum):
+    HOUSE = 'house', 'Nhà riêng'
+    APARTMENT = 'apartment', 'Chung cư'
+    DORMITORY = 'dormitory', 'Ký túc xá'
+    ROOM = 'room', 'Phòng trọ'
+
+    def __str__(self):
+        return self.value[1]
+    
+class PostType(Enum):
+    RENTAL_LISTING = 'rental_listing', 'Cho thuê phòng trọ'
+    SEARCH_LISTING = 'search_listing', 'Tìm phòng trọ'
+    ROOMMATE = 'roommate', 'Tìm bạn ở ghép'
+
+    def __str__(self):
+        return self.value[1]
+    
+class NotificationType(Enum):
+    NEW_POST = 'new_post', 'Bài viết mới'
+    COMMENT = 'comment', 'Bình luận'
+    FOLLOW = 'follow', 'Theo dõi'
+    INTERACTION = 'interaction', 'Tương tác'
+    MESSAGE = 'message', 'Tin nhắn'
+
+class InteractionType(Enum):
+    LIKE = 'like', 'Thích'
+    DISLIKE = 'dislike', 'Không thích'
+    SAVE = 'save', 'Lưu'
+
+    def __str__(self):
+        return self.value[1]
 
 class User(AbstractUser):
     phone = models.CharField(max_length=20, blank=True, null=True)
-    role = models.CharField(max_length=10, choices=Role.choices, default=Role.RENTER)
+    role = models.CharField(max_length=20, choices=[(role.value[0], role.name) for role in Role], default=Role.RENTER.value[0])
     address = models.TextField(blank=True, null=True)
     avatar = models.URLField(blank=True, null=True)
     room = models.ForeignKey('Room', on_delete=models.SET_NULL, null=True, blank=True, related_name='renters')
@@ -18,10 +54,23 @@ class User(AbstractUser):
     def __str__(self):
         return self.username
     
-class HouseType(models.TextChoices):
-    APARTMENT = 'APARTMENT', 'Căn hộ'
-    DORMITORY = 'DORMITORY', 'Ký túc xá'
-    SHARED_ROOM = 'SHARED_ROOM', 'Phòng ở ghép'
+    def set_password(self, new_password):
+        super().set_password(new_password)
+        self.save()
+
+    @classmethod
+    def check_login(cls, username_or_email, password):
+        try:
+            user = cls.objects.get(
+                Q(username=username_or_email) | Q(email=username_or_email)
+            )
+            if user.check_password(password):
+                return user
+            return None
+        except cls.DoesNotExist:
+            return None
+    
+
 
 class House(models.Model):
     title = models.CharField(max_length=50, null=True, blank=True)
@@ -30,7 +79,7 @@ class House(models.Model):
     latitude = models.FloatField()
     longitude = models.FloatField()
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='houses')
-    type = models.CharField(max_length=20, choices=HouseType.choices)
+    type = models.CharField(max_length=20, choices=[(house_type.value[0], house_type.name) for house_type in HouseType])
     price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     created_date = models.DateTimeField(auto_now_add=True)
     is_verified = models.BooleanField(default=False)
@@ -43,7 +92,7 @@ class Room(models.Model):
     title = models.CharField(max_length=50, null=True, blank=True)
     description = models.TextField(null=True, blank=True)
     price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    max_people = models.IntegerField()
+    max_people = models.IntegerField(default=1)
     cur_people = models.IntegerField(default=0)
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
@@ -51,19 +100,19 @@ class Room(models.Model):
     def __str__(self):
         return self.title or f"Room {self.id} in House {self.house.id}"
 
-class PostType(models.TextChoices):
-    RENTAL_LISTING = 'RENTAL_LISTING', 'Tin cho thuê'
-    SEARCH_LISTING = 'SEARCH_LISTING', 'Tin tìm kiếm'
+
 
 class Post(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='posts')
-    type = models.CharField(max_length=20, choices=PostType.choices)
+    type = models.CharField(max_length=20, choices=[(post_type.value[0], post_type.name) for post_type in PostType])
+    title = models.CharField(max_length=50, null=True, blank=True)
     content = models.TextField()
     address = models.TextField(null=True, blank=True)
     latitude = models.FloatField(null=True, blank=True)
     longitude = models.FloatField(null=True, blank=True)
     created_date = models.DateTimeField(auto_now_add=True)
     updated_date = models.DateTimeField(auto_now=True)
+    house_link = models.ForeignKey(House, on_delete=models.CASCADE, null=True, blank=True, related_name='posts')
     is_active = models.BooleanField(default=True)
 
     def __str__(self):
@@ -80,14 +129,13 @@ class Comment(models.Model):
     def __str__(self):
         return f"Comment by {self.author.username} on Post {self.post.id}"
     
-class InteractionType(models.TextChoices):
-    LIKE = 'LIKE', 'Thích'
-    SAVE = 'SAVE', 'Lưu'
+
 
 class Interaction(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     post = models.ForeignKey(Post, on_delete=models.CASCADE)
-    type = models.CharField(max_length=10, choices=InteractionType.choices)
+    type = models.CharField(max_length=20, choices=[(interaction_type.value[0], interaction_type.name) for interaction_type in InteractionType])
+    created_date = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         unique_together = ('user', 'post', 'type')
@@ -106,16 +154,13 @@ class Follow(models.Model):
     def __str__(self):
         return f"{self.follower.username} follows {self.followee.username}"
     
-class NotificationType(models.TextChoices):
-    NEW_POST = 'NEW_POST', 'Bài đăng mới'
-    COMMENT = 'COMMENT', 'Bình luận'
-    FOLLOW = 'FOLLOW', 'Theo dõi'
+
 
 class Notification(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
     content = models.TextField()
     url = models.URLField(null=True, blank=True)
-    type = models.CharField(max_length=20, choices=NotificationType.choices)
+    type = models.CharField(max_length=20, choices=[(notification_type.value[0], notification_type.name) for notification_type in NotificationType])
     is_read = models.BooleanField(default=False)
     created_date = models.DateTimeField(auto_now_add=True)
 
