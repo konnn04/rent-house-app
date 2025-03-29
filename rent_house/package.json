@@ -1,6 +1,6 @@
 {
   "name": "rent_house",
-  "main": "expo-router/entry",
+  "main": "index.tsx",
   "license": "0BSD",
   "version": "1.0.0",
   "scripts": {
@@ -18,7 +18,12 @@
     "@emotion/styled": "^11.14.0",
     "@expo/vector-icons": "^14.0.2",
     "@mui/material": "^6.4.8",
+    "@react-native-async-storage/async-storage": "1.23.1",
+    "@react-navigation/bottom-tabs": "^7.3.3",
     "@react-navigation/native": "^7.0.14",
+    "@react-navigation/native-stack": "^7.3.3",
+    "@react-navigation/stack": "^7.2.3",
+    "bootstrap": "^5.3.3",
     "expo": "~52.0.40",
     "expo-font": "~13.0.4",
     "expo-linking": "~7.0.5",
@@ -28,6 +33,7 @@
     "expo-system-ui": "~4.0.8",
     "expo-web-browser": "~14.0.2",
     "react": "18.3.1",
+    "react-bootstrap": "^2.10.9",
     "react-dom": "18.3.1",
     "react-native": "0.76.7",
     "react-native-reanimated": "~3.16.1",
