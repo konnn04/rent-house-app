@@ -1,9 +1,14 @@
-from django.urls import path
-from rent_house import views
+from django.urls import path, include
+from . import views
+from rest_framework.routers import DefaultRouter
 
+
+router = DefaultRouter()
+router.register(r'users', views.UserViewSet, basename='user')
+router.register(r'houses', views.HouseViewSet, basename='house')
 
 urlpatterns = [
-    path('', views.index, name='index'),
+    path('', include(router.urls)),
 ]
 
 

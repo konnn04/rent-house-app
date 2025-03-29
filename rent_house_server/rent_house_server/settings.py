@@ -35,8 +35,6 @@ ALLOWED_HOSTS = [
     '*',
 ]
 
-AUTH_USER_MODEL = 'rent_house.User'
-
 
 # Application definition
 
@@ -48,8 +46,24 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rent_house',
+    'ckeditor',
+    'ckeditor_uploader',
+    'rest_framework',
+    'drf_yasg',
     'oauth2_provider',
 ]
+
+OAUTH2_PROVIDER = { 'OAUTH2_BACKEND_CLASS': 'oauth2_provider.oauth2_backends.JSONOAuthLibCore' }
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
+    )
+}
+
+AUTH_USER_MODEL = 'rent_house.User'
+
+CKEDITOR_UPLOAD_PATH = "ckeditors/"
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -63,6 +77,8 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'rent_house_server.urls'
+
+MEDIA_ROOT = '%s/rent_house/static/' % BASE_DIR
 
 TEMPLATES = [
     {
