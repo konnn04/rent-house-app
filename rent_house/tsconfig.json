@@ -13,5 +13,5 @@
     "**/*.tsx",
     ".expo/types/**/*.ts",
     "expo-env.d.ts"
-  ]
+, "components/pages/Loading.js", "components/pages/Main.js", "App.js", "constants/Colors.JS", "styles/style.js"  ]
 }
