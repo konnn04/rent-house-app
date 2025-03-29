@@ -1,59 +1,39 @@
-from django.shortcuts import render
-from django.http import HttpResponse, JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from .models import Image, House, Room, Post, Comment, Message
-from .utils import upload_image_to_cloudinary
-import json
+from rest_framework import viewsets, generics, status, parsers, permissions
+from rest_framework.decorators import action
+from rest_framework.response import Response
 
-# Create your views here.
-def index(request):
-    return HttpResponse("Hello, world. You're at the rent_house index.")
+from rent_house.models import User, House, Room, Post, Comment, Interaction, Follow
+from rent_house import serializers
 
-# @csrf_exempt
-# def upload_image(request):
-#     if request.method != 'POST':
-#         return JsonResponse({'error': 'Only POST method is allowed'}, status=405)
+
+class UserViewSet(viewsets.ViewSet, generics.CreateAPIView):
+    queryset = User.objects.filter(is_active=True)
+    serializer_class = serializers.UserSerializer
+    parser_classes = [parsers.MultiPartParser]
+
+    @action(detail=False, methods=['get', 'patch'], url_path='current-user', permission_classes = [permissions.IsAuthenticated])
+    def current_user(self, request):
+        user = request.user
+        if request.method.__eq__('PATCH'):
+            for k, v in request.data.items():
+                if k in ['first_name', 'last_name', 'phone_number']:
+                    setattr(user, k, v)
+                elif k.__eq__('password'):
+                    user.set_password(v)
+                
+        serializer = serializers.UserSerializer(user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
     
-#     try:
-#         # Check if request has files
-#         if 'image' not in request.FILES:
-#             return JsonResponse({'error': 'No image provided'}, status=400)
-        
-#         # Get related entity
-#         data = request.POST
-#         entity_type = data.get('entity_type')  # 'house', 'room', 'post', 'comment', 'message'
-#         entity_id = data.get('entity_id')
-        
-#         # Upload to Cloudinary
-#         image_file = request.FILES['image']
-#         cloudinary_url = upload_image_to_cloudinary(image_file)
-        
-#         if not cloudinary_url:
-#             return JsonResponse({'error': 'Failed to upload image to Cloudinary'}, status=500)
-        
-#         # Create image object with the URL
-#         image = Image(url=cloudinary_url)
-        
-#         # Attach to related entity if provided
-#         if entity_type and entity_id:
-#             if entity_type == 'house':
-#                 image.house = House.objects.get(id=entity_id)
-#             elif entity_type == 'room':
-#                 image.room = Room.objects.get(id=entity_id)
-#             elif entity_type == 'post':
-#                 image.post = Post.objects.get(id=entity_id)
-#             elif entity_type == 'comment':
-#                 image.comment = Comment.objects.get(id=entity_id)
-#             elif entity_type == 'message':
-#                 image.message = Message.objects.get(id=entity_id)
-        
-#         image.save()
-        
-#         return JsonResponse({
-#             'id': image.id,
-#             'url': image.url,
-#             'success': True
-#         })
+class HouseViewSet(viewsets.ModelViewSet):
+    queryset = House.objects.all()
+    serializer_class = serializers.HouseSerializer
+    parser_classes = [parsers.MultiPartParser]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        house_type = self.request.query_params.get('house_type')
+        if house_type:
+            queryset = queryset.filter(type=house_type)
+        return queryset
     
-#     except Exception as e:
-#         return JsonResponse({'error': str(e)}, status=500)

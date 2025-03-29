@@ -39,13 +39,12 @@ class NotificationType(Enum):
 class InteractionType(Enum):
     LIKE = 'like', 'Thích'
     DISLIKE = 'dislike', 'Không thích'
-    SAVE = 'save', 'Lưu'
 
     def __str__(self):
         return self.value[1]
 
 class User(AbstractUser):
-    phone = models.CharField(max_length=20, blank=True, null=True)
+    phone_number = models.CharField(max_length=20, blank=True, null=True)
     role = models.CharField(max_length=20, choices=[(role.value[0], role.name) for role in Role], default=Role.RENTER.value[0])
     address = models.TextField(blank=True, null=True)
     avatar = models.URLField(blank=True, null=True)
@@ -69,8 +68,6 @@ class User(AbstractUser):
             return None
         except cls.DoesNotExist:
             return None
-    
-
 
 class House(models.Model):
     title = models.CharField(max_length=50, null=True, blank=True)
@@ -80,8 +77,9 @@ class House(models.Model):
     longitude = models.FloatField()
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='houses')
     type = models.CharField(max_length=20, choices=[(house_type.value[0], house_type.name) for house_type in HouseType])
-    price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    price = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True)
     created_date = models.DateTimeField(auto_now_add=True)
+    updated_date = models.DateTimeField(auto_now=True)
     is_verified = models.BooleanField(default=False)
 
     def __str__(self):
@@ -91,7 +89,7 @@ class Room(models.Model):
     house = models.ForeignKey(House, on_delete=models.CASCADE, related_name='rooms')
     title = models.CharField(max_length=50, null=True, blank=True)
     description = models.TextField(null=True, blank=True)
-    price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    price = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True)
     max_people = models.IntegerField(default=1)
     cur_people = models.IntegerField(default=0)
     created_date = models.DateTimeField(auto_now_add=True)
@@ -99,8 +97,6 @@ class Room(models.Model):
 
     def __str__(self):
         return self.title or f"Room {self.id} in House {self.house.id}"
-
-
 
 class Post(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='posts')
@@ -129,13 +125,13 @@ class Comment(models.Model):
     def __str__(self):
         return f"Comment by {self.author.username} on Post {self.post.id}"
     
-
-
 class Interaction(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     post = models.ForeignKey(Post, on_delete=models.CASCADE)
     type = models.CharField(max_length=20, choices=[(interaction_type.value[0], interaction_type.name) for interaction_type in InteractionType])
     created_date = models.DateTimeField(auto_now_add=True)
+    is_interacted = models.BooleanField(default=False)
+    updated_date = models.DateTimeField(auto_now=True)
 
     class Meta:
         unique_together = ('user', 'post', 'type')
@@ -147,6 +143,8 @@ class Follow(models.Model):
     follower = models.ForeignKey(User, on_delete=models.CASCADE, related_name='following')
     followee = models.ForeignKey(User, on_delete=models.CASCADE, related_name='followers')
     created_date = models.DateTimeField(auto_now_add=True)
+    is_following = models.BooleanField(default=True)
+    updated_date = models.DateTimeField(auto_now=True)
 
     class Meta:
         unique_together = ('follower', 'followee')
@@ -182,6 +180,7 @@ class Message(models.Model):
     boxchat = models.ForeignKey(BoxChat, on_delete=models.CASCADE, related_name='messages')
     sender = models.ForeignKey(User, on_delete=models.CASCADE)
     content = models.TextField()
+    attachment = models.URLField(null=True, blank=True)
     created_date = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
