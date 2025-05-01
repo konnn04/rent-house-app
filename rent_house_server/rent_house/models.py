@@ -77,9 +77,13 @@ class House(models.Model):
     longitude = models.FloatField()
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='houses')
     type = models.CharField(max_length=20, choices=[(house_type.value[0], house_type.name) for house_type in HouseType])
-    price = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True)
-    created_date = models.DateTimeField(auto_now_add=True)
-    updated_date = models.DateTimeField(auto_now=True)
+    base_price = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    water_price = models.DecimalField(max_digits=20, decimal_places=2, null=True, default=0)
+    electricity_price = models.DecimalField(max_digits=20, decimal_places=2, null=True, default=0)
+    internet_price = models.DecimalField(max_digits=20, decimal_places=2, null=True, default=0)
+    trash_price = models.DecimalField(max_digits=20, decimal_places=2, null=True, default=0)
     is_verified = models.BooleanField(default=False)
 
     def __str__(self):
@@ -92,8 +96,11 @@ class Room(models.Model):
     price = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True)
     max_people = models.IntegerField(default=1)
     cur_people = models.IntegerField(default=0)
-    created_date = models.DateTimeField(auto_now_add=True)
-    updated_date = models.DateTimeField(auto_now=True)
+    bedrooms = models.IntegerField(default=1)
+    bathrooms = models.IntegerField(default=1)
+    area = models.FloatField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.title or f"Room {self.id} in House {self.house.id}"
@@ -106,8 +113,8 @@ class Post(models.Model):
     address = models.TextField(null=True, blank=True)
     latitude = models.FloatField(null=True, blank=True)
     longitude = models.FloatField(null=True, blank=True)
-    created_date = models.DateTimeField(auto_now_add=True)
-    updated_date = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     house_link = models.ForeignKey(House, on_delete=models.CASCADE, null=True, blank=True, related_name='posts')
     is_active = models.BooleanField(default=True)
 
@@ -119,8 +126,8 @@ class Comment(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='comments')
     parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='replies')
     content = models.TextField()
-    created_date = models.DateTimeField(auto_now_add=True)
-    updated_date = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"Comment by {self.author.username} on Post {self.post.id}"
@@ -129,9 +136,9 @@ class Interaction(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     post = models.ForeignKey(Post, on_delete=models.CASCADE)
     type = models.CharField(max_length=20, choices=[(interaction_type.value[0], interaction_type.name) for interaction_type in InteractionType])
-    created_date = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True)
     is_interacted = models.BooleanField(default=False)
-    updated_date = models.DateTimeField(auto_now=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         unique_together = ('user', 'post', 'type')
@@ -142,9 +149,9 @@ class Interaction(models.Model):
 class Follow(models.Model):
     follower = models.ForeignKey(User, on_delete=models.CASCADE, related_name='following')
     followee = models.ForeignKey(User, on_delete=models.CASCADE, related_name='followers')
-    created_date = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True)
     is_following = models.BooleanField(default=True)
-    updated_date = models.DateTimeField(auto_now=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         unique_together = ('follower', 'followee')
@@ -160,7 +167,7 @@ class Notification(models.Model):
     url = models.URLField(null=True, blank=True)
     type = models.CharField(max_length=20, choices=[(notification_type.value[0], notification_type.name) for notification_type in NotificationType])
     is_read = models.BooleanField(default=False)
-    created_date = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"Notification for {self.user.username}: {self.type}"
@@ -168,7 +175,7 @@ class Notification(models.Model):
 class BoxChat(models.Model):
     user1 = models.ForeignKey(User, on_delete=models.CASCADE, related_name='boxchats1')
     user2 = models.ForeignKey(User, on_delete=models.CASCADE, related_name='boxchats2')
-    created_date = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         unique_together = ('user1', 'user2')
@@ -181,7 +188,7 @@ class Message(models.Model):
     sender = models.ForeignKey(User, on_delete=models.CASCADE)
     content = models.TextField()
     attachment = models.URLField(null=True, blank=True)
-    created_date = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"Message from {self.sender.username} in BoxChat {self.boxchat.id}"

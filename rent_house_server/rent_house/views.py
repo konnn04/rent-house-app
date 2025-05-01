@@ -32,8 +32,8 @@ class HouseViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        house_type = self.request.query_params.get('house_type')
-        if house_type:
-            queryset = queryset.filter(type=house_type)
+        # house_type = self.request.query_params.get('house_type')
+        # if house_type:
+        #     queryset = queryset.filter(type=house_type)
         return queryset
     
