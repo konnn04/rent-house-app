@@ -97,124 +97,109 @@ class User(AbstractUser):
         """Lấy tất cả nhà mà người dùng sở hữu"""
         return self.houses.all()
 
-class MediaFileManager(models.Manager):
+class MediaManager(models.Manager):
     def get_for_object(self, obj):
-        """Lấy tất cả media files cho một đối tượng cụ thể"""
-        from django.contrib.contenttypes.models import ContentType
+        """Get all media for a specific object"""
         content_type = ContentType.objects.get_for_model(obj)
         return self.filter(content_type=content_type, object_id=obj.id)
     
     def get_images(self):
-        """Lấy chỉ hình ảnh"""
+        """Get only images"""
         return self.filter(media_type='image')
     
     def get_videos(self):
-        """Lấy chỉ video"""
+        """Get only videos"""
         return self.filter(media_type='video')
-        
+    
     def get_by_purpose(self, purpose):
-        """Lấy media theo mục đích sử dụng"""
+        """Get media by purpose"""
         return self.filter(purpose=purpose)
 
-class MediaFile(BaseModel):
+class Media(BaseModel):
     MEDIA_TYPES = (
-        ('image', 'Hình ảnh'),
+        ('image', 'Image'),
         ('video', 'Video'),
-        ('document', 'Tài liệu'),
-    )
-    
-    STORAGE_TYPES = (
-        ('cloudinary', 'Cloudinary'),
-        ('local', 'Local Storage'),
     )
     
     PURPOSE_CHOICES = (
-        ('avatar', 'Avatar người dùng'),
-        ('cover', 'Ảnh bìa'),
-        ('gallery', 'Ảnh trong thư viện'),
-        ('attachment', 'Tệp đính kèm')
+        ('avatar', 'User Avatar'),
+        ('cover', 'Cover Photo'),
+        ('gallery', 'Gallery Image'),
+        ('attachment', 'Attachment')
     )
     
     url = models.URLField()
-    media_type = models.CharField(max_length=20, choices=MEDIA_TYPES)
-    storage_type = models.CharField(max_length=20, choices=STORAGE_TYPES)
-    mime_type = models.CharField(max_length=100, blank=True, null=True)  # application/pdf, image/jpeg...
-    file_size = models.PositiveIntegerField(null=True, blank=True)
+    media_type = models.CharField(max_length=10, choices=MEDIA_TYPES)
     public_id = models.CharField(max_length=255, blank=True, null=True)
     purpose = models.CharField(max_length=20, choices=PURPOSE_CHOICES, null=True, blank=True)
-    variants_config = models.JSONField(null=True, blank=True)  # Lưu cấu hình biến thể dưới dạng JSON
     
     # Generic relation
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.PositiveIntegerField()
     content_object = GenericForeignKey('content_type', 'object_id')
     
-    # Cache URLs cho các biến thể phổ biến
+    # Cache URLs for common sizes
     thumbnail_url = models.URLField(blank=True, null=True)
     medium_url = models.URLField(blank=True, null=True)
     
-    objects = MediaFileManager()
+    objects = MediaManager()
     
     def __str__(self):
         return f"{self.get_media_type_display()} for {self.content_object}"
     
     def get_url(self, size=None):
         """
-        Lấy URL của media file với kích thước tùy chỉnh.
-        :param size: Kích thước mong muốn ('thumbnail', 'medium', 'large', hoặc tuple (width, height))
-        :return: URL của media file
+        Get URL with custom size
+        :param size: Desired size ('thumbnail', 'medium', 'large', or tuple (width, height))
+        :return: URL of the media file
         """
-        # Nếu không phải hình ảnh hoặc không cần resize, trả về URL gốc
+        # If not image or no resize needed, return original URL
         if self.media_type != 'image' or not size:
             return self.url
             
-        # Kiểm tra xem đã có cache URL không
+        # Check for cached URLs
         if size == 'thumbnail' and self.thumbnail_url:
             return self.thumbnail_url
         if size == 'medium' and self.medium_url:
             return self.medium_url
             
-        # Xử lý với Cloudinary
-        if self.storage_type == 'cloudinary':
-            if '/' not in self.url:
-                return self.url
-                
-            # Tách URL Cloudinary
-            base_url = self.url.split('/upload/')[0] + '/upload/'
-            image_part = self.url.split('/upload/')[1] if len(self.url.split('/upload/')) > 1 else ''
+        # Handle Cloudinary URLs
+        if '/' not in self.url:
+            return self.url
             
-            if not image_part:
-                return self.url
-                
-            # Xác định transformation
-            transform = ''
-            if size == 'thumbnail':
-                transform = 'w_150,h_150,c_fill/'
-            elif size == 'medium':
-                transform = 'w_500,c_scale/'
-            elif size == 'large':
-                transform = 'w_1200,c_scale/'
-            elif isinstance(size, tuple) and len(size) == 2:
-                transform = f'w_{size[0]},h_{size[1]},c_fill/'
-                
-            # Tạo URL với transformation
-            new_url = f"{base_url}{transform}{image_part}"
+        # Split Cloudinary URL
+        base_url = self.url.split('/upload/')[0] + '/upload/'
+        image_part = self.url.split('/upload/')[1] if len(self.url.split('/upload/')) > 1 else ''
+        
+        if not image_part:
+            return self.url
             
-            # Cache URL cho các kích thước phổ biến
-            if size == 'thumbnail' and not self.thumbnail_url:
-                self.thumbnail_url = new_url
-                self.save(update_fields=['thumbnail_url'])
-            elif size == 'medium' and not self.medium_url:
-                self.medium_url = new_url
-                self.save(update_fields=['medium_url'])
-                
-            return new_url
-                
-        # Nếu không phải Cloudinary, trả về URL gốc
-        return self.url
+        # Define transformation
+        transform = ''
+        if size == 'thumbnail':
+            transform = 'w_150,h_150,c_fill/'
+        elif size == 'medium':
+            transform = 'w_500,c_scale/'
+        elif size == 'large':
+            transform = 'w_1200,c_scale/'
+        elif isinstance(size, tuple) and len(size) == 2:
+            transform = f'w_{size[0]},h_{size[1]},c_fill/'
+            
+        # Create URL with transformation
+        new_url = f"{base_url}{transform}{image_part}"
+        
+        # Cache URLs for common sizes
+        if size == 'thumbnail' and not self.thumbnail_url:
+            self.thumbnail_url = new_url
+            self.save(update_fields=['thumbnail_url'])
+        elif size == 'medium' and not self.medium_url:
+            self.medium_url = new_url
+            self.save(update_fields=['medium_url'])
+            
+        return new_url
 
     def generate_all_sizes(self):
-        """Tạo trước tất cả các kích thước thông dụng và lưu vào cache"""
+        """Generate all common sizes and cache them"""
         if self.media_type == 'image':
             self.get_url('thumbnail')
             self.get_url('medium')
@@ -234,7 +219,7 @@ class House(BaseModel):
     internet_price = models.DecimalField(max_digits=20, decimal_places=2, null=True, default=0)
     trash_price = models.DecimalField(max_digits=20, decimal_places=2, null=True, default=0)
     is_verified = models.BooleanField(default=False)
-    media_files = GenericRelation(MediaFile)
+    media_files = GenericRelation(Media)
 
     def __str__(self):
         return self.title or f"House {self.id}"
@@ -274,7 +259,7 @@ class Room(BaseModel):
     bedrooms = models.IntegerField(default=1)
     bathrooms = models.IntegerField(default=1)
     area = models.FloatField(null=True, blank=True)
-    media_files = GenericRelation(MediaFile)
+    media_files = GenericRelation(Media)
     
     def __str__(self):
         return self.title or f"Room {self.id} in House {self.house.id}"
@@ -319,7 +304,7 @@ class Post(BaseModel):
     longitude = models.FloatField(null=True, blank=True)
     house_link = models.ForeignKey(House, on_delete=models.CASCADE, null=True, blank=True, related_name='posts')
     is_active = models.BooleanField(default=True)
-    media_files = GenericRelation(MediaFile)
+    media_files = GenericRelation(Media)
 
     def __str__(self):
         return f"{self.type} by {self.author.username}"
@@ -346,7 +331,7 @@ class Comment(BaseModel):
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='comments')
     parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='replies')
     content = models.TextField()
-    media_files = GenericRelation(MediaFile)
+    media_files = GenericRelation(Media)
 
     def __str__(self):
         return f"Comment by {self.author.username} on Post {self.post.id}"
@@ -354,7 +339,7 @@ class Comment(BaseModel):
     def get_reply_count(self):
         """Lấy số lượng phản hồi"""
         return self.replies.count()
-    
+        
 class Interaction(BaseModel):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     post = models.ForeignKey(Post, on_delete=models.CASCADE)
@@ -495,7 +480,7 @@ class Message(BaseModel):
     is_system_message = models.BooleanField(default=False)  # Tin nhắn hệ thống (thông báo)
     is_removed = models.BooleanField(default=False)  # Đánh dấu đã xóa thay vì xóa hoàn toàn
     replied_to = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='replies')
-    media_files = GenericRelation(MediaFile)
+    media_files = GenericRelation(Media)
     
     class Meta:
         ordering = ['created_at']
@@ -520,7 +505,7 @@ class Rate(BaseModel):
     house = models.ForeignKey(House, on_delete=models.CASCADE, related_name='ratings')
     star = models.IntegerField(choices=[(i, i) for i in range(1, 6)])
     comment = models.TextField(null=True, blank=True)
-    media_files = GenericRelation(MediaFile)
+    media_files = GenericRelation(Media)
 
     class Meta:
         unique_together = ('user', 'house')

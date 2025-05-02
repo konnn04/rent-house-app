@@ -20,7 +20,7 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView):
                     setattr(user, k, v)
                 elif k.__eq__('password'):
                     user.set_password(v)
-                
+            user.save()
         serializer = serializers.UserSerializer(user)
         return Response(serializer.data, status=status.HTTP_200_OK)
     
