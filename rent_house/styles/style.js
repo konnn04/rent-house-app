@@ -29,6 +29,7 @@ export const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 5,
     alignItems: "center",
+    margin: 15,
   },
   buttonText: {
     color: "#fff",
@@ -53,7 +54,7 @@ export const authStyles = (colors) => {
     },
     authSubtitle: {
       fontSize: 16,
-      marginBottom: 30,
+      margin: 15,
       textAlign: "center",
       color: colors.textSecondary, // Sử dụng màu textSecondary từ theme
     },
