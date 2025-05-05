@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text } from 'react-native';
+import { Text, View } from 'react-native';
 import { styles } from '../../../styles/style';
 
 const chatBoxInfo = {
@@ -39,7 +39,29 @@ const messageHistory = [
 
 const ChatScreen = () => {
 
-  return (<View style={styles.container}></View>);
+  return (<View style={styles.container}>
+    <View style={styles.chatBox}>
+      <Text style={styles.chatBoxName}>{chatBoxInfo.user1.name}</Text>
+      <Text style={styles.chatBoxLastMessage}>{chatBoxInfo.user1.lastMessage}</Text>
+      <Text style={styles.chatBoxLastMessageTime}>{chatBoxInfo.user1.lastMessageTime}</Text>
+    </View>
+
+    <View style={styles.messageHistory}>
+      {messageHistory.map((message) => (
+        <View key={message.id} style={styles.message}>
+          <Text style={styles.messageSender}>{message.sender}</Text>
+          <Text style={styles.messageContent}>{message.message}</Text>
+          <Text style={styles.messageTimestamp}>{new Date(message.timestamp).toLocaleTimeString()}</Text>
+        </View>
+      ))}
+    </View>
+    <View style={styles.inputContainer}>
+      <Text style={styles.inputPlaceholder}>Type a message...</Text>
+      <View style={styles.sendButton}>
+        <Text style={styles.sendButtonText}>Send</Text>
+      </View>
+    </View>
+  </View>);
 }
 
 
