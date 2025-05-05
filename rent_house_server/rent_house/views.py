@@ -20,7 +20,7 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView):
                     setattr(user, k, v)
                 elif k.__eq__('password'):
                     user.set_password(v)
-                
+            user.save()
         serializer = serializers.UserSerializer(user)
         return Response(serializer.data, status=status.HTTP_200_OK)
     
@@ -32,8 +32,8 @@ class HouseViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        house_type = self.request.query_params.get('house_type')
-        if house_type:
-            queryset = queryset.filter(type=house_type)
+        # house_type = self.request.query_params.get('house_type')
+        # if house_type:
+        #     queryset = queryset.filter(type=house_type)
         return queryset
     
