@@ -104,11 +104,24 @@ class UserSerializer(serializers.ModelSerializer):
         u.set_password(u.password)
         u.save()
         return u
+    
+    def update(self, instance, validated_data):
+        # Xử lý password đặc biệt nếu được cung cấp
+        password = validated_data.pop('password', None)
+        if password:
+            instance.set_password(password)
+        
+        # Cập nhật các trường khác
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        
+        instance.save()
+        return instance
 
     class Meta:
         model = User
-        fields = ( 'username', 'email', 'first_name', 'last_name', 'phone_number', 'role', 'address', 'avatar', 'is_active', 'is_staff', 'is_superuser')
+        fields = ('id', 'username', 'email', 'first_name', 'last_name', 'phone_number', 'role', 'address', 'avatar', 'is_active', 'is_staff', 'is_superuser', 'password')
         read_only_fields = ('id', 'is_active', 'is_staff', 'is_superuser')
         extra_kwargs = {
-            'password': {'write_only': True},
+            'password': {'write_only': True, 'required': False},
         }
