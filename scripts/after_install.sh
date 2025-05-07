@@ -1,7 +1,9 @@
 #!/bin/bash
 # Đảm bảo thư mục tồn tại và có quyền
 sudo mkdir -p /home/ec2-user/rent-house-app/rent_house_server
+sudo mkdir -p /home/ec2-user/rent-house-app/logs
 sudo chown -R ec2-user:ec2-user /home/ec2-user/rent-house-app
+sudo chmod -R 755 /home/ec2-user/rent-house-app/logs
 
 # Di chuyển đến thư mục
 cd /home/ec2-user/rent-house-app/rent_house_server
@@ -26,16 +28,16 @@ touch static/favicon.ico
 if ! grep -q "STATIC_ROOT" rent_house_server/settings.py; then
     echo "
 # Static files
-STATIC_ROOT = os.path.join(BASE_DIR, 'static') 
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 " >> rent_house_server/settings.py
 fi
 
-# Cấu hình Nginx để phục vụ port 80 - Use server IP to prevent conflicts
+# Cấu hình Nginx để phục vụ port 80
 sudo mkdir -p /etc/nginx/conf.d
 sudo cat > /tmp/rent-house.conf << EOF
 server {
     listen 80;
-    server_name _;  # Use server IP to prevent conflicts
+    server_name 54.179.2.65;  # Use actual server IP
 
     location /static/ {
         alias /home/ec2-user/rent-house-app/rent_house_server/static/;

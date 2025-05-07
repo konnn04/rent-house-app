@@ -19,7 +19,7 @@ echo "Changed to directory: $(pwd)" >> /home/ec2-user/rent-house-app/deploy.log
 # Activate virtual environment
 if [ ! -d "venv" ]; then
     echo "Virtual environment not found! Creating new one..." >> /home/ec2-user/rent-house-app/deploy.log
-    python3 -m venv venv
+    python3 -m venv venv || /usr/bin/python3 -m venv venv
 fi
 
 source venv/bin/activate || {
@@ -36,12 +36,12 @@ fi
 echo "Gunicorn version: $(gunicorn --version)" >> /home/ec2-user/rent-house-app/deploy.log
 
 # Check if port is already in use
-if netstat -tulpn | grep -q ":8000 "; then
+if netstat -tulpn 2>/dev/null | grep -q ":8000 "; then
     echo "Port 8000 is already in use. Attempting to free it..." >> /home/ec2-user/rent-house-app/deploy.log
-    PID=$(netstat -tulpn | grep ":8000 " | awk '{print $7}' | cut -d'/' -f1)
+    PID=$(netstat -tulpn 2>/dev/null | grep ":8000 " | awk '{print $7}' | cut -d'/' -f1)
     if [ ! -z "$PID" ]; then
         echo "Killing process $PID using port 8000" >> /home/ec2-user/rent-house-app/deploy.log
-        kill -9 $PID || echo "Failed to kill process $PID. It might not belong to ec2-user." >> /home/ec2-user/rent-house-app/deploy.log
+        sudo kill -9 $PID || echo "Failed to kill process $PID. It might require root privileges." >> /home/ec2-user/rent-house-app/deploy.log
     fi
 else
     echo "Port 8000 is free." >> /home/ec2-user/rent-house-app/deploy.log
@@ -49,7 +49,7 @@ fi
 
 # Stop any running Gunicorn processes
 echo "Stopping any running Gunicorn processes..." >> "$LOG_FILE"
-pkill -u ec2-user -f gunicorn || echo "No Gunicorn processes found to kill." >> "$LOG_FILE"
+pkill -u ec2-user -f gunicorn 2>/dev/null || echo "No Gunicorn processes found to kill." >> "$LOG_FILE"
 
 # Verify WSGI path exists
 if [ ! -f "rent_house_server/wsgi.py" ]; then
@@ -58,10 +58,15 @@ if [ ! -f "rent_house_server/wsgi.py" ]; then
     exit 1
 fi
 
-# List installed packages for debugging
-pip freeze >> /home/ec2-user/rent-house-app/deploy.log
+# Test Gunicorn startup in foreground first to catch errors
+echo "Testing Gunicorn startup..." >> "$LOG_FILE"
+gunicorn --bind 0.0.0.0:8000 --workers 2 --timeout 120 --log-file "$LOG_FILE" --log-level debug rent_house_server.wsgi:application --check-config >> "$LOG_FILE" 2>&1 || {
+    echo "ERROR: Gunicorn configuration test failed!" >> /home/ec2-user/rent-house-app/deploy.log
+    tail -n 50 "$LOG_FILE" >> /home/ec2-user/rent-house-app/deploy.log
+    exit 1
+}
 
-# Start Gunicorn with better configuration
+# Start Gunicorn in background
 echo "Starting Gunicorn at $(date)" >> "$LOG_FILE"
 nohup gunicorn \
     --bind 0.0.0.0:8000 \
@@ -78,7 +83,7 @@ GUNICORN_PID=$!
 echo "Gunicorn started with PID: $GUNICORN_PID" >> "$LOG_FILE"
 echo "Gunicorn started with PID: $GUNICORN_PID" >> /home/ec2-user/rent-house-app/deploy.log
 
-# Give Gunicorn more time to start up
+# Wait for Gunicorn to start
 echo "Waiting 10 seconds for Gunicorn to start..." >> /home/ec2-user/rent-house-app/deploy.log
 sleep 10
 
@@ -86,36 +91,44 @@ sleep 10
 if ps -p $GUNICORN_PID > /dev/null; then
     echo "Gunicorn successfully started." >> "$LOG_FILE"
     echo "SUCCESS: Gunicorn started at $(date) with PID: $GUNICORN_PID" >> /home/ec2-user/rent-house-app/deploy.log
-    
+
     # Verify it's listening on the port
-    if netstat -tulpn | grep -q ":8000 "; then
+    if netstat -tulpn 2>/dev/null | grep -q ":8000 "; then
         echo "Confirmed: Gunicorn is listening on port 8000" >> /home/ec2-user/rent-house-app/deploy.log
     else
         echo "WARNING: Gunicorn is running but not listening on port 8000!" >> /home/ec2-user/rent-house-app/deploy.log
+        tail -n 50 "$LOG_FILE" >> /home/ec2-user/rent-house-app/deploy.log
+        exit 1
     fi
-    
+
     # Check connection to verify it's responding
-    curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8000/ >> /home/ec2-user/rent-house-app/deploy.log 2>&1 || echo "Failed to connect" >> /home/ec2-user/rent-house-app/deploy.log
-    
+    RESPONSE_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8000/ 2>/dev/null)
+    echo "HTTP response code: $RESPONSE_CODE" >> /home/ec2-user/rent-house-app/deploy.log
+    if [ "$RESPONSE_CODE" -eq 200 ]; then
+        echo "SUCCESS: Gunicorn is responding correctly on port 8000" >> /home/ec2-user/rent-house-app/deploy.log
+    else
+        echo "WARNING: Gunicorn is running but not responding correctly (HTTP $RESPONSE_CODE)" >> /home/ec2-user/rent-house-app/deploy.log
+        tail -n 50 "$LOG_FILE" >> /home/ec2-user/rent-house-app/deploy.log
+    fi
+
     exit 0
 else
     echo "ERROR: Gunicorn failed to start!" >> "$LOG_FILE"
     echo "FAILURE: Gunicorn failed to start at $(date)" >> /home/ec2-user/rent-house-app/deploy.log
-    
+
     # Dump recent log entries for debugging
     echo "Last 50 lines of Gunicorn log:" >> /home/ec2-user/rent-house-app/deploy.log
     tail -n 50 "$LOG_FILE" >> /home/ec2-user/rent-house-app/deploy.log
-    
+
     # Check Python environment
     echo "Python path: $(which python)" >> /home/ec2-user/rent-house-app/deploy.log
     echo "Python version: $(python --version)" >> /home/ec2-user/rent-house-app/deploy.log
-    
+
     # Check system resources
     echo "Memory usage:" >> /home/ec2-user/rent-house-app/deploy.log
     free -m >> /home/ec2-user/rent-house-app/deploy.log
-    
     echo "Disk space:" >> /home/ec2-user/rent-house-app/deploy.log
-    df -h >> /home/ec2-user/rent-house-app/deploy.log 
-    
+    df -h >> /home/ec2-user/rent-house-app/deploy.log
+
     exit 1
 fi

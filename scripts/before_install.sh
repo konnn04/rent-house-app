@@ -1,6 +1,6 @@
 #!/bin/bash
 # Install required packages
-yum install -y nginx net-tools
+yum install -y nginx net-tools python3 python3-pip
 systemctl start nginx
 systemctl enable nginx
 
