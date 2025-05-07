@@ -2,4 +2,4 @@
 yum install -y nginx
 systemctl start nginx
 systemctl enable nginx
-rm -rf /home/ec2-user/rent-house-app/rent_house_server
+sudo rm -rf /home/ec2-user/rent-house-app/rent_house_server
