@@ -30,7 +30,8 @@ source venv/bin/activate || {
 }
 echo "Virtual environment activated: $(which python)" >> /home/ec2-user/rent-house-app/deploy.log
 
-# Check if gunicorn is installed
+# Install dependencies and Gunicorn
+pip install -r requirements.txt
 if ! command -v gunicorn &> /dev/null; then
     echo "Gunicorn not found. Installing..." >> /home/ec2-user/rent-house-app/deploy.log
     pip install gunicorn
@@ -43,7 +44,7 @@ if netstat -tulpn 2>/dev/null | grep -q ":8000 "; then
     PID=$(netstat -tulpn 2>/dev/null | grep ":8000 " | awk '{print $7}' | cut -d'/' -f1)
     if [ ! -z "$PID" ]; then
         echo "Killing process $PID using port 8000" >> /home/ec2-user/rent-house-app/deploy.log
-        sudo kill -9 $PID 2>> /home/ec2-user/rent-house-app/deploy.log || echo "Failed to kill process $PID (may require root privileges)" >> /home/ec2-user/rent-house-app/deploy.log
+        sudo kill -9 $PID 2>> /home/ec2-user/rent-house-app/deploy.log || echo "Failed to kill process $PID" >> /home/ec2-user/rent-house-app/deploy.log
     fi
 else
     echo "Port 8000 is free." >> /home/ec2-user/rent-house-app/deploy.log
@@ -60,15 +61,17 @@ if [ ! -f "rent_house_server/wsgi.py" ]; then
     exit 1
 fi
 
-# Test Gunicorn configuration
+# Test Gunicorn configuration with detailed logging
 echo "Testing Gunicorn configuration..." >> "$LOG_FILE"
-gunicorn --bind 0.0.0.0:8000 --workers 2 --timeout 120 --log-file "$LOG_FILE" --log-level debug rent_house_server.wsgi:application --check-config >> "$LOG_FILE" 2>&1 || {
+gunicorn --bind 0.0.0.0:8000 --workers 2 --timeout 120 --log-file "$LOG_FILE" --log-level debug rent_house_server.wsgi:application --check-config >> "$LOG_FILE" 2>> "$LOG_FILE" || {
     echo "ERROR: Gunicorn configuration test failed!" >> /home/ec2-user/rent-house-app/deploy.log
+    echo "Dumping last 50 lines of Gunicorn log:" >> /home/ec2-user/rent-house-app/deploy.log
     tail -n 50 "$LOG_FILE" >> /home/ec2-user/rent-house-app/deploy.log
     exit 1
 }
+echo "Gunicorn configuration test passed." >> /home/ec2-user/rent-house-app/deploy.log
 
-# Start Gunicorn in background with error redirection
+# Start Gunicorn in background
 echo "Starting Gunicorn at $(date)" >> "$LOG_FILE"
 nohup gunicorn \
     --bind 0.0.0.0:8000 \
@@ -87,7 +90,7 @@ echo "Gunicorn started with PID: $GUNICORN_PID" >> /home/ec2-user/rent-house-app
 
 # Wait for Gunicorn to start
 echo "Waiting 15 seconds for Gunicorn to start..." >> /home/ec2-user/rent-house-app/deploy.log
-sleep 15  # Tăng thời gian chờ để đảm bảo Gunicorn khởi động
+sleep 15
 
 # Check if Gunicorn is running
 if ps -p $GUNICORN_PID > /dev/null; then
