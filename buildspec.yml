@@ -9,7 +9,7 @@ phases:
   build:
     commands:
       - echo "Building Django app"
-      - python manage.py collectstatic --noinput
+      # - python manage.py collectstatic --noinput
   post_build:
     commands:
       - echo "Build completed"
