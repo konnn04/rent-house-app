@@ -26,7 +26,7 @@ touch static/favicon.ico
 if ! grep -q "STATIC_ROOT" rent_house_server/settings.py; then
     echo "
 # Static files
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+STATIC_ROOT = os.path.join(BASE_DIR, 'static') 
 " >> rent_house_server/settings.py
 fi
 
