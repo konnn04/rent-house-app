@@ -4,6 +4,7 @@ phases:
     runtime-versions:
       python: 3.8
     commands:
+      - cd rent_house_server
       - pip install -r requirements.txt
   build:
     commands:
