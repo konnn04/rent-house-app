@@ -113,7 +113,7 @@ else
     free -m >> /home/ec2-user/rent-house-app/deploy.log
     
     echo "Disk space:" >> /home/ec2-user/rent-house-app/deploy.log
-    df -h >> /home/ec2-user/rent-house-app/deploy.log
+    df -h >> /home/ec2-user/rent-house-app/deploy.log 
     
     exit 1
 fi
