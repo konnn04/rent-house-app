@@ -9,7 +9,6 @@ phases:
   build:
     commands:
       - echo "Building Django app"
-      - cd rent_house_server
       - python manage.py collectstatic --noinput
   post_build:
     commands:
