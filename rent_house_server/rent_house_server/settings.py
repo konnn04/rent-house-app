@@ -111,11 +111,11 @@ DATABASES = {
     # Use MySQL database
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'rent_house',
+        'NAME': os.getenv('DB_NAME') or 'rent_house',
         'USER': os.getenv('DB_USER') or 'root',
         'PASSWORD': os.getenv('DB_PASSWORD') or '1212',
-        'HOST': 'localhost',
-        'PORT': '3306',
+        'HOST': os.getenv('DB_HOST') or 'localhost',
+        'PORT': os.getenv('DB_PORT') or '3306',
     }
 }
 
