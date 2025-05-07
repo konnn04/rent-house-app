@@ -41,13 +41,15 @@ if netstat -tulpn | grep -q ":8000 "; then
     PID=$(netstat -tulpn | grep ":8000 " | awk '{print $7}' | cut -d'/' -f1)
     if [ ! -z "$PID" ]; then
         echo "Killing process $PID using port 8000" >> /home/ec2-user/rent-house-app/deploy.log
-        kill -9 $PID || true
+        kill -9 $PID || echo "Failed to kill process $PID. It might not belong to ec2-user." >> /home/ec2-user/rent-house-app/deploy.log
     fi
+else
+    echo "Port 8000 is free." >> /home/ec2-user/rent-house-app/deploy.log
 fi
 
 # Stop any running Gunicorn processes
 echo "Stopping any running Gunicorn processes..." >> "$LOG_FILE"
-pkill -u ec2-user -f gunicorn || echo "No Gunicorn processes found to kill."
+pkill -u ec2-user -f gunicorn || echo "No Gunicorn processes found to kill." >> "$LOG_FILE"
 
 # Verify WSGI path exists
 if [ ! -f "rent_house_server/wsgi.py" ]; then
