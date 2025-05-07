@@ -6,6 +6,7 @@ systemctl enable nginx
 
 # Clean up previous installation
 sudo rm -rf /home/ec2-user/rent-house-app/rent_house_server
+sudo rm -rf /home/ec2-user/rent-house-app/logs
 
 # Create directories for logs
 mkdir -p /home/ec2-user/rent-house-app/logs

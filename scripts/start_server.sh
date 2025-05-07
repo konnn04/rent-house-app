@@ -47,7 +47,7 @@ fi
 
 # Stop any running Gunicorn processes
 echo "Stopping any running Gunicorn processes..." >> "$LOG_FILE"
-pkill -f gunicorn || echo "No Gunicorn processes found to kill."
+pkill -u ec2-user -f gunicorn || echo "No Gunicorn processes found to kill."
 
 # Verify WSGI path exists
 if [ ! -f "rent_house_server/wsgi.py" ]; then
