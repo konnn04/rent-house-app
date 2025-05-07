@@ -1,0 +1,20 @@
+version: 0.2
+phases:
+  install:
+    runtime-versions:
+      python: 3.8
+    commands:
+      - pip install -r rent-house-app/requirements.txt
+  build:
+    commands:
+      - echo "Building Django app"
+      - cd server
+      - python manage.py collectstatic --noinput
+  post_build:
+    commands:
+      - echo "Build completed"
+artifacts:
+  files:
+    - server/**/*
+    - appspec.yml
+    - scripts/*
