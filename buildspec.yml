@@ -15,6 +15,6 @@ phases:
       - echo "Build completed"
 artifacts:
   files:
-    - server/**/*
+    - rent_house_server/**/*
     - appspec.yml
     - scripts/*
