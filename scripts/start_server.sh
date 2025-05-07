@@ -1,12 +1,15 @@
 #!/bin/bash
 
-# Set up error handling
+# Set up error handling and enable debug mode
 set -e
+set -x  # In ra các lệnh để debug
 echo "Starting server deployment at $(date)" > /home/ec2-user/rent-house-app/deploy.log
 
 # Create log directory if it doesn't exist
 mkdir -p /home/ec2-user/rent-house-app/logs
 LOG_FILE="/home/ec2-user/rent-house-app/logs/gunicorn.log"
+touch "$LOG_FILE"  # Đảm bảo file log tồn tại
+chmod 664 "$LOG_FILE"  # Đặt quyền ghi cho ec2-user
 echo "Log file configured at $LOG_FILE" >> /home/ec2-user/rent-house-app/deploy.log
 
 # Change to the application directory
@@ -21,7 +24,6 @@ if [ ! -d "venv" ]; then
     echo "Virtual environment not found! Creating new one..." >> /home/ec2-user/rent-house-app/deploy.log
     python3 -m venv venv || /usr/bin/python3 -m venv venv
 fi
-
 source venv/bin/activate || {
     echo "Failed to activate virtual environment" >> /home/ec2-user/rent-house-app/deploy.log
     exit 1
@@ -41,7 +43,7 @@ if netstat -tulpn 2>/dev/null | grep -q ":8000 "; then
     PID=$(netstat -tulpn 2>/dev/null | grep ":8000 " | awk '{print $7}' | cut -d'/' -f1)
     if [ ! -z "$PID" ]; then
         echo "Killing process $PID using port 8000" >> /home/ec2-user/rent-house-app/deploy.log
-        sudo kill -9 $PID || echo "Failed to kill process $PID. It might require root privileges." >> /home/ec2-user/rent-house-app/deploy.log
+        sudo kill -9 $PID 2>> /home/ec2-user/rent-house-app/deploy.log || echo "Failed to kill process $PID (may require root privileges)" >> /home/ec2-user/rent-house-app/deploy.log
     fi
 else
     echo "Port 8000 is free." >> /home/ec2-user/rent-house-app/deploy.log
@@ -49,7 +51,7 @@ fi
 
 # Stop any running Gunicorn processes
 echo "Stopping any running Gunicorn processes..." >> "$LOG_FILE"
-pkill -u ec2-user -f gunicorn 2>/dev/null || echo "No Gunicorn processes found to kill." >> "$LOG_FILE"
+pkill -u ec2-user -f gunicorn 2>> "$LOG_FILE" || echo "No Gunicorn processes found to kill." >> "$LOG_FILE"
 
 # Verify WSGI path exists
 if [ ! -f "rent_house_server/wsgi.py" ]; then
@@ -58,15 +60,15 @@ if [ ! -f "rent_house_server/wsgi.py" ]; then
     exit 1
 fi
 
-# Test Gunicorn startup in foreground first to catch errors
-echo "Testing Gunicorn startup..." >> "$LOG_FILE"
+# Test Gunicorn configuration
+echo "Testing Gunicorn configuration..." >> "$LOG_FILE"
 gunicorn --bind 0.0.0.0:8000 --workers 2 --timeout 120 --log-file "$LOG_FILE" --log-level debug rent_house_server.wsgi:application --check-config >> "$LOG_FILE" 2>&1 || {
     echo "ERROR: Gunicorn configuration test failed!" >> /home/ec2-user/rent-house-app/deploy.log
     tail -n 50 "$LOG_FILE" >> /home/ec2-user/rent-house-app/deploy.log
     exit 1
 }
 
-# Start Gunicorn in background
+# Start Gunicorn in background with error redirection
 echo "Starting Gunicorn at $(date)" >> "$LOG_FILE"
 nohup gunicorn \
     --bind 0.0.0.0:8000 \
@@ -84,8 +86,8 @@ echo "Gunicorn started with PID: $GUNICORN_PID" >> "$LOG_FILE"
 echo "Gunicorn started with PID: $GUNICORN_PID" >> /home/ec2-user/rent-house-app/deploy.log
 
 # Wait for Gunicorn to start
-echo "Waiting 10 seconds for Gunicorn to start..." >> /home/ec2-user/rent-house-app/deploy.log
-sleep 10
+echo "Waiting 15 seconds for Gunicorn to start..." >> /home/ec2-user/rent-house-app/deploy.log
+sleep 15  # Tăng thời gian chờ để đảm bảo Gunicorn khởi động
 
 # Check if Gunicorn is running
 if ps -p $GUNICORN_PID > /dev/null; then
@@ -97,18 +99,20 @@ if ps -p $GUNICORN_PID > /dev/null; then
         echo "Confirmed: Gunicorn is listening on port 8000" >> /home/ec2-user/rent-house-app/deploy.log
     else
         echo "WARNING: Gunicorn is running but not listening on port 8000!" >> /home/ec2-user/rent-house-app/deploy.log
+        netstat -tulpn >> /home/ec2-user/rent-house-app/deploy.log 2>&1
         tail -n 50 "$LOG_FILE" >> /home/ec2-user/rent-house-app/deploy.log
         exit 1
     fi
 
     # Check connection to verify it's responding
-    RESPONSE_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8000/ 2>/dev/null)
+    RESPONSE_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8000/ 2>/dev/null || echo "000")
     echo "HTTP response code: $RESPONSE_CODE" >> /home/ec2-user/rent-house-app/deploy.log
-    if [ "$RESPONSE_CODE" -eq 200 ]; then
+    if [ "$RESPONSE_CODE" -eq 200 ] || [ "$RESPONSE_CODE" -eq 301 ] || [ "$RESPONSE_CODE" -eq 302 ]; then
         echo "SUCCESS: Gunicorn is responding correctly on port 8000" >> /home/ec2-user/rent-house-app/deploy.log
     else
         echo "WARNING: Gunicorn is running but not responding correctly (HTTP $RESPONSE_CODE)" >> /home/ec2-user/rent-house-app/deploy.log
         tail -n 50 "$LOG_FILE" >> /home/ec2-user/rent-house-app/deploy.log
+        exit 1
     fi
 
     exit 0
