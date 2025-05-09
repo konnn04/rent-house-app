@@ -209,6 +209,25 @@ LOGGING = {
     },
 }
 
+
+
+# Telegram Bot Settings
+TELEGRAM_DEBUG_ENABLED = os.getenv('TELEGRAM_DEBUG_ENABLED', 'False').lower() == 'true'
+TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID', '')
+TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', '')
+
+# Email Configuration with Gmail
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')  # Add to .env
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')  # App password from Google
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER)
+
+# Verification settings
+VERIFICATION_CODE_EXPIRY_MINUTES = 30  # Time in minutes before verification codes expire
+
 # Only add Telegram handler if enabled
 if TELEGRAM_DEBUG_ENABLED:
     LOGGING['handlers']['telegram'] = {
@@ -218,21 +237,3 @@ if TELEGRAM_DEBUG_ENABLED:
     # Add telegram handler to loggers
     LOGGING['loggers']['django']['handlers'].append('telegram')
     LOGGING['loggers']['rent_house']['handlers'].append('telegram')
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-TELEGRAM_DEBUG_ENABLED = os.getenv('TELEGRAM_DEBUG_ENABLED', 'False').lower() == 'true'TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID', '')TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', '')# Telegram Bot SettingsVERIFICATION_CODE_EXPIRY_MINUTES = 30  # Time in minutes before verification codes expire# Verification settingsDEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER)EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')  # App password from GoogleEMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')  # Add to .envEMAIL_USE_TLS = TrueEMAIL_PORT = 587EMAIL_HOST = 'smtp.gmail.com'EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'# Email Configuration with Gmail

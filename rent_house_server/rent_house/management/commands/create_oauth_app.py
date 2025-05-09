@@ -2,6 +2,12 @@ from django.core.management.base import BaseCommand
 from oauth2_provider.models import Application
 from django.contrib.auth import get_user_model
 
+from dotenv import load_dotenv
+import os
+
+# Load environment variables from .env file
+load_dotenv()
+
 User = get_user_model()
 
 class Command(BaseCommand):
@@ -25,13 +31,13 @@ class Command(BaseCommand):
             
             # Tạo ứng dụng mới
             app = Application.objects.create(
-                name="React Native App",
+                name=os.getenv('NAME_APP', 'React Native App'),
                 user=admin_user,
-                client_type=Application.CLIENT_CONFIDENTIAL,
+                client_type=Application.CLIENT_PUBLIC,
                 authorization_grant_type=Application.GRANT_PASSWORD,
                 redirect_uris="",  # Không cần redirect URI cho password flow
-                client_id="reactnative",
-                client_secret="reactnativesecret",
+                client_id=os.getenv('CLIENT_ID_APP', 'renthouseclient'),
+                client_secret=os.getenv('CLIENT_SECRET_APP', 'renthouseclientsecret'),
                 skip_authorization=True
             )
             
