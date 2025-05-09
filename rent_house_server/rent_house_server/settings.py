@@ -237,3 +237,9 @@ if TELEGRAM_DEBUG_ENABLED:
     # Add telegram handler to loggers
     LOGGING['loggers']['django']['handlers'].append('telegram')
     LOGGING['loggers']['rent_house']['handlers'].append('telegram')
+
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:8000',
+    'https://*.ngrok-free.app',
+    'https://light-mudfish-primary.ngrok-free.app'
+]

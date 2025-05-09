@@ -17,6 +17,11 @@ def send_telegram_message(message, parse_mode='HTML'):
         if not bot_token or not chat_id:
             logger.warning("Telegram credentials not configured properly")
             return False
+        
+        # Verify message is not too long
+        if len(message) > 4096:
+            logger.warning(f"Message too long ({len(message)} chars), truncating to 4096 chars")
+            message = message[:4093] + "..."
             
         url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
         data = {
@@ -26,9 +31,29 @@ def send_telegram_message(message, parse_mode='HTML'):
             "disable_web_page_preview": True
         }
         
+        logger.info(f"Sending Telegram message to chat {chat_id}")
         response = requests.post(url, data=data)
-        response.raise_for_status()
         
+        # Handle error responses with more detail
+        if response.status_code != 200:
+            error_detail = f"Status: {response.status_code}"
+            try:
+                error_json = response.json()
+                if 'description' in error_json:
+                    error_detail += f", Description: {error_json['description']}"
+            except:
+                error_detail += f", Response: {response.text[:100]}"
+                
+            logger.error(f"Telegram API error: {error_detail}")
+            
+            # If it's an HTML parse error, try sending without parse_mode
+            if parse_mode == 'HTML' and 'can\'t parse entities' in response.text:
+                logger.info("Attempting to send message without HTML parsing")
+                return send_telegram_message(f"⚠️ Original message had invalid HTML. Raw message:\n\n{message}", parse_mode=None)
+                
+            return False
+            
+        logger.info("Telegram message sent successfully")
         return True
     except Exception as e:
         logger.error(f"Failed to send Telegram message: {str(e)}")
@@ -99,3 +124,9 @@ def debug_message(message, level="INFO"):
     formatted_message = f"{emoji} <b>{level}</b>: {message}"
     
     return send_telegram_message(formatted_message)
+
+def escape_html(text):
+    """Escape HTML special characters"""
+    if text is None:
+        return ""
+    return text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
