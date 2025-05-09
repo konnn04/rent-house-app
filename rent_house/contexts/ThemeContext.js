@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { ThemeManager } from '../utils/theme';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import Colors from '../constants/Colors';
+import { ThemeManager } from '../utils/Theme';
 
 const ThemeContext = createContext();
 

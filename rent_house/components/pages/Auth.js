@@ -1,19 +1,36 @@
-import React, { useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import { View, TextInput, TouchableOpacity, Text, Image } from 'react-native';
-import { styles, authStyles } from '../../styles/style';
+import React, { useState } from 'react';
+import { Text, TextInput, TouchableOpacity, View } from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../../contexts/ThemeContext';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons'
+import { authStyles, styles } from '../../styles/style';
+import { login } from '../../utils/Authentication';
 
 export default function Auth() {
-  const [email, setEmail] = useState('');
+  const [usernameOrEmail, setUsernameOrEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [message, setMessage] = useState('');
   const navigation = useNavigation();
   const { colors } = useTheme();
   const dynamicAuthStyles = authStyles(colors);
 
   const handleLogin = () => {
-    navigation.navigate('main');
+    setMessage(''); // Clear previous message
+    // Validate input
+    if (!usernameOrEmail || !password) {
+      setMessage('Please fill in all fields');
+      return;
+    }
+    // Call the login function from utils/Authentication.js
+    login(usernameOrEmail, password)
+      .then(() => {
+        navigation.navigate('main'); // Navigate to Home screen on success
+      })
+      .catch((error) => {
+        console.error('Login error:', error);
+        setMessage('Invalid username or password');
+      });
+
   };
 
   return (
@@ -27,10 +44,10 @@ export default function Auth() {
             color: colors.textPrimary,
             backgroundColor: colors.backgroundSecondary
           }]}
-          placeholder="Email"
+          placeholder="Username or Email"
           placeholderTextColor={colors.textSecondary}
-          value={email}
-          onChangeText={setEmail}
+          value={usernameOrEmail}
+          onChangeText={setUsernameOrEmail}
         />
         <TextInput
           style={[styles.input, {
@@ -44,6 +61,9 @@ export default function Auth() {
           onChangeText={setPassword}
           secureTextEntry
         />
+        {/* Handle exception */}
+        {message && <Text style={dynamicAuthStyles.errorText}>{message}</Text>}
+
         <TouchableOpacity
           style={[styles.button, { backgroundColor: colors.accentColor }]}
           onPress={handleLogin}

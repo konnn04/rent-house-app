@@ -1,5 +1,4 @@
 import { StyleSheet } from "react-native";
-import { useTheme } from "../contexts/ThemeContext";
 
 export const styles = StyleSheet.create({
   container: {
@@ -38,7 +37,7 @@ export const styles = StyleSheet.create({
 });
 
 export const authStyles = (colors) => {
-  return  StyleSheet.create({
+  return StyleSheet.create({
     authContainer: {
       flex: 2,
       padding: 0,
@@ -78,6 +77,10 @@ export const authStyles = (colors) => {
       color: colors.textPrimary, // Sử dụng màu textPrimary từ theme
       fontSize: 16,
       fontWeight: "bold",
+    },
+    errorText: {
+      color: 'red',
+      marginTop: 10,
     },
   });
 }
@@ -134,5 +137,6 @@ export const homeStyles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 10,
-  }
+  },
+
 });

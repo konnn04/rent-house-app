@@ -4,18 +4,15 @@ import {
   ActivityIndicator,
   FlatList,
   RefreshControl,
-  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View
 } from 'react-native';
 import { useTheme } from '../../../contexts/ThemeContext';
-import { generateMockPosts } from '../../../data/mockPosts';
-import { styles, homeStyles } from '../../../styles/style';
+import { homeStyles, styles } from '../../../styles/style';
+import { api } from '../../../utils/Apis';
 import PostItem from '../../feeds/PostItem';
-
-const POSTS_PER_PAGE = 5;
 
 const HomeScreen = () => {
   const { theme, toggleTheme, colors } = useTheme();
@@ -23,27 +20,45 @@ const HomeScreen = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
+  const [nextPageUrl, setNextPageUrl] = useState(null);
   
   // Initial load
   useEffect(() => {
     loadPosts();
   }, []);
   
-  // Simulated fetch from API
   const loadPosts = async (refresh = false) => {
     try {
-      // Simulate network request
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      if ((loading && !refresh) || loadingMore) return;
       
-      const allPosts = generateMockPosts(50);
-      const currentPage = refresh ? 1 : page;
-      const newPosts = allPosts.slice(0, currentPage * POSTS_PER_PAGE);
+      let url = '/api/new-feed/';
       
-      setPosts(newPosts);
-      setPage(currentPage);
-      setHasMore(newPosts.length < allPosts.length);
+      // If not refreshing and we have a next page URL, use that
+      if (!refresh && nextPageUrl) {
+        try {
+          // Extract just the query parameters
+          const urlObj = new URL(nextPageUrl);
+          const queryParams = urlObj.search.substring(1); // Remove the leading '?'
+          if (queryParams) {
+            url = `/api/new-feed/?${queryParams}`;
+          }
+        } catch (e) {
+          console.error('Failed to parse next page URL:', e);
+        }
+      }
+      
+      const response = await api.get(url);
+      const newData = response.data || {};
+      
+      // Update next page URL for pagination
+      setNextPageUrl(newData.next || null);
+      
+      // Ensure results is an array
+      const results = Array.isArray(newData.results) ? newData.results : [];
+      
+      // If refreshing, replace posts; otherwise, append
+      setPosts(prevPosts => refresh ? results : [...prevPosts, ...results]);
+      
     } catch (error) {
       console.error('Error loading posts:', error);
     } finally {
@@ -56,17 +71,15 @@ const HomeScreen = () => {
   // Handle refresh (pull down)
   const handleRefresh = () => {
     setRefreshing(true);
-    setPage(1);
     loadPosts(true);
   };
   
   // Handle loading more (pagination)
   const handleLoadMore = () => {
-    if (loadingMore || !hasMore) return;
+    if (loadingMore || !nextPageUrl) return;
     
     setLoadingMore(true);
-    setPage(prevPage => prevPage + 1);
-    loadPosts();
+    loadPosts(false);
   };
   
   // Render footer (loading indicator)
@@ -95,13 +108,6 @@ const HomeScreen = () => {
               color={colors.textPrimary} 
             />
           </TouchableOpacity>
-          <TouchableOpacity onPress={toggleTheme} style={homeStyles.themeButton}>
-            <Ionicons 
-              name={theme === 'dark' ? 'sunny' : 'moon'} 
-              size={24} 
-              color={colors.textPrimary} 
-            />
-          </TouchableOpacity>
         </View>
         <Text style={[homeStyles.greeting, { color: colors.textPrimary }]}>
           Xin chào
@@ -123,8 +129,8 @@ const HomeScreen = () => {
         </View>
       ) : (
         <FlatList
-          data={posts}
-          keyExtractor={item => item.id}
+          data={posts || []}
+          keyExtractor={item => item?.id?.toString() || Math.random().toString()}
           renderItem={({ item }) => <PostItem post={item} />}
           contentContainerStyle={homeStyles.postsList}
           refreshControl={
@@ -138,6 +144,13 @@ const HomeScreen = () => {
           onEndReached={handleLoadMore}
           onEndReachedThreshold={0.5}
           ListFooterComponent={renderFooter}
+          ListEmptyComponent={
+            <View style={homeStyles.emptyContainer}>
+              <Text style={{ color: colors.textSecondary, textAlign: 'center' }}>
+                Không có bài viết nào.
+              </Text>
+            </View>
+          }
         />
       )}
     </View>

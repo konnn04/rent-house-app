@@ -1,11 +1,11 @@
-import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import React from 'react';
 import { SafeAreaView, StatusBar, StyleSheet } from 'react-native';
-import { ThemeProvider, useTheme } from './contexts/ThemeContext';
-import Loading from './components/pages/Loading';
 import Auth from './components/pages/Auth';
+import Loading from './components/pages/Loading';
 import Main from './components/pages/Main';
+import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 
 const Stack = createNativeStackNavigator();
 
