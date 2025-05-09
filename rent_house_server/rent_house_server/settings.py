@@ -62,7 +62,10 @@ OAUTH2_PROVIDER = { 'OAUTH2_BACKEND_CLASS': 'oauth2_provider.oauth2_backends.JSO
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
-    )
+    ),
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 10,
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
 }
 
 AUTH_USER_MODEL = 'rent_house.User'
@@ -111,11 +114,11 @@ DATABASES = {
     # Use MySQL database
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'rent_house',
+        'NAME': os.getenv('DB_NAME') or 'rent_house',
         'USER': os.getenv('DB_USER') or 'root',
         'PASSWORD': os.getenv('DB_PASSWORD') or '1212',
-        'HOST': 'localhost',
-        'PORT': '3306',
+        'HOST': os.getenv('DB_HOST') or 'localhost',
+        'PORT': os.getenv('DB_PORT') or '3306',
     }
 }
 
@@ -156,3 +159,80 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Firebase config (thêm vào cuối file)
+FIREBASE_CREDENTIALS = {
+    # Thêm thông tin credential từ Firebase console
+    # Ví dụ:
+    "type": "service_account",
+    "project_id": "rent-house-app-xxxx",
+    # Các thông tin khác từ firebase credentials...
+}
+
+# Cấu hình logging
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+        'file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'debug.log'),
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+        },
+        'rent_house': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+}
+
+# Only add Telegram handler if enabled
+if TELEGRAM_DEBUG_ENABLED:
+    LOGGING['handlers']['telegram'] = {
+        'level': 'ERROR',  # Only send ERROR and above to Telegram by default
+        'class': 'rent_house.log_handlers.TelegramLogHandler',
+    }
+    # Add telegram handler to loggers
+    LOGGING['loggers']['django']['handlers'].append('telegram')
+    LOGGING['loggers']['rent_house']['handlers'].append('telegram')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+TELEGRAM_DEBUG_ENABLED = os.getenv('TELEGRAM_DEBUG_ENABLED', 'False').lower() == 'true'TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID', '')TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', '')# Telegram Bot SettingsVERIFICATION_CODE_EXPIRY_MINUTES = 30  # Time in minutes before verification codes expire# Verification settingsDEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER)EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')  # App password from GoogleEMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')  # Add to .envEMAIL_USE_TLS = TrueEMAIL_PORT = 587EMAIL_HOST = 'smtp.gmail.com'EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'# Email Configuration with Gmail

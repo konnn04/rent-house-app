@@ -1,8 +1,8 @@
 version: 0.0
 os: linux
 files:
-  - source: /server
-    destination: /home/ec2-user/rent-house-app/server
+  - source: /rent_house_server
+    destination: /home/ec2-user/rent-house-app/rent_house_server
 hooks:
   BeforeInstall:
     - location: scripts/before_install.sh
@@ -10,7 +10,7 @@ hooks:
       runas: ec2-user
   AfterInstall:
     - location: scripts/after_install.sh
-      timeout: 300
+      timeout: 500
       runas: ec2-user
   ApplicationStart:
     - location: scripts/start_server.sh
