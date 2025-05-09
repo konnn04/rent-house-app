@@ -82,3 +82,57 @@ export const authStyles = (colors) => {
   });
 }
 
+export const homeStyles = StyleSheet.create({
+  headerContainer: {
+    paddingTop: 10,
+    paddingHorizontal: 20,
+  },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+    marginTop: 25,
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: 'bold',
+  },
+  greeting: {
+    fontSize: 16,
+  },
+  themeButton: {
+    padding: 8,
+    borderRadius: 20,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    borderRadius: 25,
+    marginTop: 15,
+    marginBottom: 15,
+    borderWidth: 1,
+  },
+  searchInput: {
+    flex: 1,
+    marginLeft: 10,
+    fontSize: 16,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  postsList: {
+    paddingTop: 10,
+    paddingBottom: 70, // Extra space for tab navigation
+  },
+  loadingFooter: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 10,
+  }
+});

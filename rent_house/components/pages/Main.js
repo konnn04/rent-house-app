@@ -42,14 +42,14 @@ export default function Main() {
         tabBarActiveTintColor: colors.textPrimary,
         tabBarInactiveTintColor: colors.textSecondary,
         tabBarStyle: {
-          backgroundColor: colors.backgroundSecondary,
+          backgroundColor: colors.backgroundPrimary,
           borderTopWidth: 0,
           position: 'absolute',
           bottom: 0,
           left: 0,
           right: 0,
           elevation: 0,
-          height: 60,
+          height: 45,
         },
       })}
     >

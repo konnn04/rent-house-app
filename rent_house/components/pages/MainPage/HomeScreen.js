@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { generateMockPosts } from '../../../data/mockPosts';
-import { styles } from '../../../styles/style';
+import { styles, homeStyles } from '../../../styles/style';
 import PostItem from '../../feeds/PostItem';
 
 const POSTS_PER_PAGE = 5;
@@ -95,14 +95,21 @@ const HomeScreen = () => {
               color={colors.textPrimary} 
             />
           </TouchableOpacity>
+          <TouchableOpacity onPress={toggleTheme} style={homeStyles.themeButton}>
+            <Ionicons 
+              name={theme === 'dark' ? 'sunny' : 'moon'} 
+              size={24} 
+              color={colors.textPrimary} 
+            />
+          </TouchableOpacity>
         </View>
         <Text style={[homeStyles.greeting, { color: colors.textPrimary }]}>
           Xin chào
         </Text>
-        <View style={[homeStyles.searchContainer, { backgroundColor: colors.backgroundSecondary }]}>
+        <View style={[homeStyles.searchContainer, { backgroundColor: colors.backgroundSecondary, borderColor: colors.borderColor}]}>
           <Ionicons name="search" size={20} color={colors.textSecondary} />
           <TextInput
-            style={[homeStyles.searchInput, { color: colors.textPrimary }]}
+            style={[homeStyles.searchInput, { color: colors.textPrimary, backgroundColor: colors.backgroundSecondary }]}
             placeholder="Bạn tìm nhà sao ?"
             placeholderTextColor={colors.textSecondary}
           />
@@ -136,59 +143,5 @@ const HomeScreen = () => {
     </View>
   );
 };
-
-const homeStyles = StyleSheet.create({
-  headerContainer: {
-    paddingTop: 40,
-    paddingHorizontal: 20,
-  },
-  headerTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-    marginTop: 35,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-  },
-  greeting: {
-    fontSize: 16,
-  },
-  themeButton: {
-    padding: 8,
-    borderRadius: 20,
-  },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 15,
-    paddingVertical: 10,
-    borderRadius: 25,
-    marginTop: 15,
-    marginBottom: 15,
-  },
-  searchInput: {
-    flex: 1,
-    marginLeft: 10,
-    fontSize: 16,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  postsList: {
-    paddingTop: 10,
-    paddingBottom: 70, // Extra space for tab navigation
-  },
-  loadingFooter: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 10,
-  }
-});
 
 export default HomeScreen;
