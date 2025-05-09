@@ -1,6 +1,7 @@
-import React from 'react';
 import { Text, View } from 'react-native';
 import { styles } from '../../../styles/style';
+import React from 'react';
+import ChatList from '../../chat/ChatList';
 
 const chatBoxInfo = {
   user1: {
@@ -37,34 +38,10 @@ const messageHistory = [
   // Add more messages as needed
 ];
 
+// filepath: d:\HOC\cacCongNghe_lapTrinh_HienDai\BTL\rent-house-app\rent_house\components\pages\MainPage\ChatScreen.js
+
 const ChatScreen = () => {
+  return <ChatList />;
+};
 
-  return (<View style={styles.container}>
-    <View style={styles.chatBox}>
-      <Text style={styles.chatBoxName}>{chatBoxInfo.user1.name}</Text>
-      <Text style={styles.chatBoxLastMessage}>{chatBoxInfo.user1.lastMessage}</Text>
-      <Text style={styles.chatBoxLastMessageTime}>{chatBoxInfo.user1.lastMessageTime}</Text>
-    </View>
-
-    <View style={styles.messageHistory}>
-      {messageHistory.map((message) => (
-        <View key={message.id} style={styles.message}>
-          <Text style={styles.messageSender}>{message.sender}</Text>
-          <Text style={styles.messageContent}>{message.message}</Text>
-          <Text style={styles.messageTimestamp}>{new Date(message.timestamp).toLocaleTimeString()}</Text>
-        </View>
-      ))}
-    </View>
-    <View style={styles.inputContainer}>
-      <Text style={styles.inputPlaceholder}>Type a message...</Text>
-      <View style={styles.sendButton}>
-        <Text style={styles.sendButtonText}>Send</Text>
-      </View>
-    </View>
-  </View>);
-}
-
-
-
-
-  export default ChatScreen;
+export default ChatScreen;
