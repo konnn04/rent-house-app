@@ -20,10 +20,6 @@ export const login = async (username, password) => {
       client_secret: CLIENT_SECRET,
     };
     
-    console.log("Attempting login with:", { username: formData.username, client_id: CLIENT_ID });
-
-    console.log("Check verification status response:", checkVerify.data);
-
     const response = await api.post("/o/token/", formData);
     console.log("Login response:", response.data);
     
