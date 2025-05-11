@@ -11,6 +11,7 @@ from .follow import FollowViewSet
 from .room_rental import RoomRentalViewSet
 from .chat import ChatGroupViewSet, MessageViewSet
 from .auth import RegisterView, VerifyEmailView, ResendVerificationView, CheckVerificationStatusView
+from .ping import ping_view
 
 # Export all views to maintain backward compatibility
 __all__ = [
@@ -30,5 +31,6 @@ __all__ = [
     'RegisterView',
     'VerifyEmailView',
     'ResendVerificationView',
-    'CheckVerificationStatusView'
+    'CheckVerificationStatusView',
+    'ping',
 ]

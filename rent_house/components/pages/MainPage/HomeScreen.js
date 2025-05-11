@@ -31,7 +31,7 @@ const HomeScreen = () => {
     try {
       if ((loading && !refresh) || loadingMore) return;
       
-      let url = '/api/new-feed/';
+      let url = 'api/new-feed/';
       
       // If not refreshing and we have a next page URL, use that
       if (!refresh && nextPageUrl) {
@@ -40,7 +40,7 @@ const HomeScreen = () => {
           const urlObj = new URL(nextPageUrl);
           const queryParams = urlObj.search.substring(1); // Remove the leading '?'
           if (queryParams) {
-            url = `/api/new-feed/?${queryParams}`;
+            url = `api/new-feed/?${queryParams}`;
           }
         } catch (e) {
           console.error('Failed to parse next page URL:', e);

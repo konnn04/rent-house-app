@@ -12,6 +12,17 @@ export const api = axios.create({
   }
 });
 
+export const checkInternetConnection = async () => {
+  try {
+    const response = await fetch(API_BASE_URL+'/api/ping/');
+    if (response.status === 200) {
+      return true;
+    }
+  } catch (error) {
+    return false;
+  }
+};
+
 // Add token to every request
 api.interceptors.request.use(
   async (config) => {

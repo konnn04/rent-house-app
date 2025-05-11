@@ -132,7 +132,7 @@ Kiểm tra xem tài khoản đã được xác thực chưa.
 
 ```json
 {
-  "email": "user@example.com"
+  "email_or_username": "user@example.com"
 }
 ```
 

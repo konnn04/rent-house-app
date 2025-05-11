@@ -3,7 +3,7 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.db.models import Q
 from django.contrib.auth.hashers import make_password
-from django.utils import timezone
+from django.core.management import call_command
 from rent_house.models import (
     User, House, Room, Post, Comment, Interaction, Follow, 
     Notification, ChatGroup, ChatMembership, Message, Rate, Media, 
@@ -47,31 +47,38 @@ class Command(BaseCommand):
                 
                 # Create notifications
                 self.create_notifications()
+
+                # Create Application
+                self.create_application()
                 
             self.stdout.write(self.style.SUCCESS('Successfully populated database!'))
             
         except Exception as e:
             self.stdout.write(self.style.ERROR(f'Error populating database: {str(e)}'))
 
+    def create_application(self):
+        call_command('create_oauth_app')    
+
+
     def create_users(self):
         self.stdout.write('Creating users...')
         
         # Create admin user
-        # admin = User.objects.create(
-        #     username='admin',
-        #     email='admin@example.com',
-        #     password=make_password('Admin@123'),
-        #     first_name='Admin',
-        #     last_name='User',
-        #     phone_number='0909123456',
-        #     role=Role.ADMIN.value[0],
-        #     is_staff=True,
-        #     is_superuser=True
-        # )
+        admin = User.objects.create(
+            username='admin',
+            email='admin@example.com',
+            password=make_password('1'),
+            first_name='Admin',
+            last_name='User',
+            phone_number='0909123456',
+            role=Role.ADMIN.value[0],
+            is_staff=True,
+            is_superuser=True
+        )
         
         # Create house owners
         owners = []
-        for i in range(1, 6):
+        for i in range(1, 5):
             owner = User.objects.create(
                 username=f'owner{i}',
                 email=f'owner{i}@example.com',
@@ -81,7 +88,7 @@ class Command(BaseCommand):
                 phone_number=f'09023456{i}',
                 role=Role.OWNER.value[0],
                 address=f'{i}00 Owner Street, City',
-                avatar=f'https://placehold.co/400x400?text=Owner{i}'
+                avatar=f'https://api.dicebear.com/7.x/micah/svg?seed=1{i}'
             )
             # Create avatar Media
             if owner.avatar:
@@ -96,7 +103,7 @@ class Command(BaseCommand):
         
         # Create renters
         renters = []
-        for i in range(1, 11):
+        for i in range(1, 21):
             renter = User.objects.create(
                 username=f'renter{i}',
                 email=f'renter{i}@example.com',
@@ -106,7 +113,7 @@ class Command(BaseCommand):
                 phone_number=f'09034567{i}',
                 role=Role.RENTER.value[0],
                 address=f'{i}00 Renter Street, City',
-                avatar=f'https://placehold.co/400x400?text=Renter{i}'
+                avatar=f'https://api.dicebear.com/7.x/micah/svg?seed=2{i}'
             )
             # Create avatar Media
             if renter.avatar:
@@ -129,7 +136,7 @@ class Command(BaseCommand):
             phone_number='0904567890',
             role=Role.MODERATOR.value[0],
             address='456 Moderator Street, City',
-            avatar='https://placehold.co/400x400?text=Moderator',
+            avatar='https://api.dicebear.com/7.x/micah/svg?seed=100',
             is_staff=True
         )
         
@@ -143,7 +150,7 @@ class Command(BaseCommand):
                 purpose='avatar'
             )
         
-        self.users = [ moderator] + owners + renters
+        self.users = [admin, moderator] + owners + renters
 
     def create_houses(self):
         self.stdout.write('Creating houses...')
@@ -167,49 +174,48 @@ class Command(BaseCommand):
         ]
         
         for i, owner in enumerate(owners):
-            num_houses = random.randint(1, 3)
-            for j in range(num_houses):
-                location = random.choice(locations)
-                house_type = random.choice(house_types)
-                
-                house = House.objects.create(
-                    title=f"{owner.first_name}'s {HouseType[house_type.upper()].value[1]} #{j+1}",
-                    description=f"A beautiful {house_type} located in a convenient area with easy access to public transportation, shops, and restaurants.",
-                    address=location['address'],
-                    latitude=location['lat'] + random.uniform(-0.005, 0.005),
-                    longitude=location['long'] + random.uniform(-0.005, 0.005),
-                    owner=owner,
-                    type=house_type,
-                    base_price=random.randint(300, 1500) * 100000,
-                    is_verified=random.choice([True, False])
+            # Create 1 house for each owner
+            location = random.choice(locations)
+            house_type = random.choice(house_types)
+            
+            house = House.objects.create(
+                title=f"{owner.first_name}'s {HouseType[house_type.upper()].value[1]}",
+                description=f"A beautiful {house_type} located in a convenient area with easy access to public transportation, shops, and restaurants.",
+                address=location['address'],
+                latitude=location['lat'] + random.uniform(-0.005, 0.005),
+                longitude=location['long'] + random.uniform(-0.005, 0.005),
+                owner=owner,
+                type=house_type,
+                base_price=random.randint(300, 1500) * 100000,
+                is_verified=random.choice([True, False])
+            )
+            
+            # Create Media for house
+            num_images = 5
+            for k in range(num_images):
+                Media.objects.create(
+                    content_type=ContentType.objects.get_for_model(House),
+                    object_id=house.id,
+                    url=f'https://konya007.github.io/image-library/houses/h{house.id+1}r{k+1}.jpg',
+                    media_type='image',
+                    purpose='gallery'
                 )
-                
-                # Create Media for house
-                num_images = random.randint(3, 6)
-                for k in range(num_images):
-                    Media.objects.create(
-                        content_type=ContentType.objects.get_for_model(House),
-                        object_id=house.id,
-                        url=f'https://placehold.co/800x600?text=House{house.id}Image{k+1}',
-                        media_type='image',
-                        purpose='gallery'
-                    )
-                
-                self.houses.append(house)
+            
+            self.houses.append(house)
 
     def create_rooms(self):
         self.stdout.write('Creating rooms...')
         
         self.rooms = []
-        for house in self.houses:
+        for i, house in enumerate(self.houses):
             num_rooms = random.randint(2, 5)
-            for i in range(num_rooms):
+            for j in range(num_rooms):
                 max_people = random.randint(1, 4)
                 cur_people = random.randint(0, max_people)
                 
                 room = Room.objects.create(
                     house=house,
-                    title=f"Room {i+1} in {house.title}",
+                    title=f"Room {j+1} in {house.title}",
                     description=f"A spacious room with good lighting and ventilation. The room includes basic furniture.",
                     price=random.randint(150, 500) * 100000,
                     max_people=max_people,
@@ -220,12 +226,12 @@ class Command(BaseCommand):
                 )
                 
                 # Create Media for room
-                num_images = random.randint(2, 4)
-                for j in range(num_images):
+                num_images = 5
+                for k in range(num_images):
                     Media.objects.create(
                         content_type=ContentType.objects.get_for_model(Room),
                         object_id=room.id,
-                        url=f'https://placehold.co/800x600?text=Room{room.id}Image{j+1}',
+                        url=f'https://konya007.github.io/image-library/houses/h{i+1}r{k+1}.jpg',
                         media_type='image',
                         purpose='gallery'
                     )

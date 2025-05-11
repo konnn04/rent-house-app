@@ -39,9 +39,8 @@ export const styles = StyleSheet.create({
 export const authStyles = (colors) => {
   return StyleSheet.create({
     authContainer: {
-      flex: 2,
+      flex: 1,
       padding: 0,
-      justifyContent: "space-around",
       backgroundColor: colors.backgroundPrimary, // Sử dụng màu nền từ theme
     },
     authTitle: {

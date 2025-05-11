@@ -57,7 +57,11 @@ INSTALLED_APPS = [
     'oauth2_provider',
 ]
 
-OAUTH2_PROVIDER = { 'OAUTH2_BACKEND_CLASS': 'oauth2_provider.oauth2_backends.JSONOAuthLibCore' }
+OAUTH2_PROVIDER = { 
+    'ERROR_RESPONSE_WITH_SCOPES': True,
+    'OAUTH2_BACKEND_CLASS': 'oauth2_provider.oauth2_backends.JSONOAuthLibCore',
+    'OAUTH2_VALIDATOR_CLASS': 'rent_house.auth_validators.CustomOAuth2Validator'
+}
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
@@ -66,6 +70,8 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 10,
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
+    # Add custom exception handler
+    # 'EXCEPTION_HANDLER': 'rent_house.exception_handlers.custom_exception_handler',
 }
 
 AUTH_USER_MODEL = 'rent_house.User'
@@ -227,6 +233,10 @@ DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER)
 
 # Verification settings
 VERIFICATION_CODE_EXPIRY_MINUTES = 30  # Time in minutes before verification codes expire
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+]
 
 # Only add Telegram handler if enabled
 if TELEGRAM_DEBUG_ENABLED:
