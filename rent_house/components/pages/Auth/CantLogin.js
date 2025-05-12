@@ -2,12 +2,12 @@ import { useNavigation } from '@react-navigation/native';
 import React, { useState } from 'react';
 import { Image, ScrollView, StyleSheet, View } from 'react-native';
 import {
-    Button,
-    Card,
-    HelperText,
-    Text,
-    TextInput,
-    useTheme as usePaperTheme
+  Button,
+  Card,
+  HelperText,
+  Text,
+  TextInput,
+  useTheme as usePaperTheme
 } from 'react-native-paper';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { resendActivation, resetPasswordRequest } from '../../../utils/Authentication';
@@ -98,7 +98,7 @@ export default function CantLogin() {
 
   return (
     <ScrollView 
-      style={styles.container}
+      style={[styles.container, { backgroundColor: colors.backgroundPrimary }]}
       contentContainerStyle={styles.scrollContent}
     >
       {/* Logo and Header */}
@@ -110,8 +110,8 @@ export default function CantLogin() {
         />
       </View>
 
-      <Text variant="headlineMedium" style={styles.title}>Hỗ Trợ Đăng Nhập</Text>
-      <Text variant="bodyLarge" style={styles.subtitle}>
+      <Text style={styles.title}>Hỗ Trợ Đăng Nhập</Text>
+      <Text style={styles.subtitle}>
         Chúng tôi sẽ giúp bạn truy cập lại tài khoản
       </Text>
 
@@ -147,7 +147,7 @@ export default function CantLogin() {
       {/* Help text based on active tab */}
       <Card style={styles.helpCard}>
         <Card.Content>
-          <Text variant="bodyMedium">
+          <Text style={{ color: colors.textSecondary }}>
             {activeTab === 'reset' 
               ? 'Nhập địa chỉ email bạn đã dùng để đăng ký. Chúng tôi sẽ gửi link đặt lại mật khẩu qua email.'
               : 'Nhập địa chỉ email bạn đã dùng để đăng ký. Chúng tôi sẽ gửi lại mã kích hoạt cho tài khoản của bạn.'}

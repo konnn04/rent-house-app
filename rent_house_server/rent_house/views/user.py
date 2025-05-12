@@ -6,6 +6,8 @@ from rent_house.models import User
 from rent_house.serializers import UserSerializer
 from rent_house.firebase_utils import store_fcm_token, remove_fcm_token
 
+from rent_house.utils import upload_image_to_cloudinary
+
 class UserViewSet(viewsets.ViewSet, generics.CreateAPIView):
     queryset = User.objects.filter(is_active=True)
     serializer_class = UserSerializer
@@ -53,3 +55,23 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView):
             return Response({"status": "Device unregistered successfully"})
         else:
             return Response({"error": "Failed to unregister device"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+    @action(detail=False, methods=['patch'], permission_classes=[permissions.IsAuthenticated], url_path='update-avatar')
+    def update_avatar(self, request):
+        """Cập nhật avatar người dùng"""
+        user = request.user
+        avatar = request.FILES.get('avatar')
+        if not avatar:
+            return Response({"error": "Avatar is required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Upload the image to Cloudinary
+        avatar_url = upload_image_to_cloudinary(avatar)
+        if not avatar_url:
+            return Response({"error": "Failed to upload image"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        # Update the user's avatar
+        user.avatar = avatar_url
+        user.save()
+        
+        serializer = UserSerializer(user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+        

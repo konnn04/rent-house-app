@@ -1,16 +1,63 @@
-import React, { Fragment } from 'react';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
-import { View, Text } from 'react-native';
-import { styles } from '../../styles/style';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import React from 'react';
 
-import HomeScreen from './MainPage/HomeScreen';
-import ChatScreen from './MainPage/ChatScreen';
-import FindHouseScreen from './MainPage/FindHouseScreen';
-import ProfileScreen from './MainPage/ProfileScreen';
 import { useTheme } from '../../contexts/ThemeContext';
+import ChatScreen from './main/ChatScreen';
+import FindHouseScreen from './main/FindHouseScreen';
+import HomeScreen from './main/home/HomeScreen';
+import ProfileScreen from './main/profile/ProfileScreen';
+
+import LanguageSettingsScreen from '../settings/LanguageSettingsScreen';
+import NotificationSettingsScreen from '../settings/NotificationSettingsScreen';
+import SettingsScreen from '../settings/SettingsScreen';
+import ChangePasswordScreen from './main/profile/ChangePasswordScreen';
+import EditProfileScreen from './main/profile/EditProfileScreen';
 
 const Tab = createBottomTabNavigator();
+const ProfileStack = createNativeStackNavigator();
+
+const ProfileStackScreen = () => {
+  const { colors } = useTheme();
+  return (
+    <ProfileStack.Navigator
+      screenOptions={{
+        headerStyle: {
+          backgroundColor: colors.backgroundPrimary,
+        },
+        headerTintColor: colors.textPrimary,
+        headerShadowVisible: false,
+      }}
+    >
+      <ProfileStack.Screen
+        name="ProfileMain"
+        component={ProfileScreen}
+        options={{ headerShown: false }}
+      />
+      <ProfileStack.Screen
+        name="EditProfile"
+        component={EditProfileScreen}
+        options={{ title: 'Cập nhật thông tin', headerShown: false }} />
+      <ProfileStack.Screen
+        name="Settings"
+        component={SettingsScreen}
+        options={{ headerShown: false }} />
+      <ProfileStack.Screen
+        name="NotificationSettings"
+        component={NotificationSettingsScreen}
+        options={{ headerShown: false }} />
+      <ProfileStack.Screen
+        name="LanguageSettings"
+        component={LanguageSettingsScreen}
+        options={{ headerShown: false }} />
+      <ProfileStack.Screen
+        name="ChangePassword"
+        component={ChangePasswordScreen}
+        options={{ headerShown: false }} />
+    </ProfileStack.Navigator>
+  );
+};
 
 export default function Main() {
   const { colors } = useTheme();
@@ -49,14 +96,14 @@ export default function Main() {
           left: 0,
           right: 0,
           elevation: 0,
-          height: 45,
+          height: 50,
         },
       })}
     >
       <Tab.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
-      <Tab.Screen name="Chat" component={ChatScreen} options={{ headerShown: false }}/>
-      <Tab.Screen name="Find" component={FindHouseScreen} options={{ headerShown: false }}/>
-      <Tab.Screen name="Profile" component={ProfileScreen} options={{ headerShown: false }}/>
+      <Tab.Screen name="Chat" component={ChatScreen} options={{ headerShown: false }} />
+      <Tab.Screen name="Find" component={FindHouseScreen} options={{ headerShown: false }} />
+      <Tab.Screen name="Profile" component={ProfileStackScreen} options={{ headerShown: false }} />
     </Tab.Navigator>
   );
 }

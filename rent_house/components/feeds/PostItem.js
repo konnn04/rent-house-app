@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { ActivityIndicator, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../../contexts/ThemeContext';
+import ImageGallery from '../common/ImageGallery'; // Import component mới
 
 const PostItem = ({ post }) => {
   const { colors } = useTheme();
@@ -65,9 +66,8 @@ const PostItem = ({ post }) => {
           <Image 
             source={{ 
               uri: post.author?.avatar || 
-                   post.author?.avatar_thumbnail || 
-                   'https://via.placeholder.com/150'
-            }}
+                   post.author?.avatar_thumbnail                   
+            } || require('@assets/images/favicon.png') }
             onLoadStart={() => handleImageLoadStart('avatar')}
             onLoad={() => handleImageLoadEnd('avatar')}
             onError={() => handleImageError('avatar')}
@@ -115,35 +115,9 @@ const PostItem = ({ post }) => {
         )}
         <Text style={[styles.postContent, { color: colors.textPrimary }]}>{post.content}</Text>
         
-        {/* Images */}
+        {/* Thay thế phần Images bằng component ImageGallery */}
         {post.media && post.media.length > 0 && (
-          <View style={styles.postMedia}>
-            {post.media.map((item, index) => (
-              <View key={index} style={styles.mediaContainer}>
-                <Image 
-                  source={{ 
-                    uri: item.url || item.thumbnail || item.medium || 'https://via.placeholder.com/800x600' 
-                  }}
-                  style={styles.postImage}
-                  resizeMode="cover"
-                  onLoadStart={() => handleImageLoadStart(index)}
-                  onLoad={() => handleImageLoadEnd(index)}
-                  onError={() => handleImageError(index)}
-                />
-                {imageLoading[index] && (
-                  <View style={styles.imageLoadingOverlay}>
-                    <ActivityIndicator size="large" color={colors.accentColor} />
-                  </View>
-                )}
-                {imageLoadError[index] && (
-                  <View style={styles.imageErrorOverlay}>
-                    <Ionicons name="image-outline" size={40} color={colors.textSecondary} />
-                    <Text style={{ color: colors.textSecondary }}>Không thể hiển thị hình ảnh</Text>
-                  </View>
-                )}
-              </View>
-            ))}
-          </View>
+          <ImageGallery mediaItems={post.media} />
         )}
         
         {/* Location info if available */}

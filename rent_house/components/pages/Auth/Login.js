@@ -1,12 +1,10 @@
 import { useNavigation } from '@react-navigation/native';
 import React, { useState } from 'react';
-import { Image, StyleSheet, View } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
 import {
     Button,
     HelperText,
-    Text,
-    TextInput,
-    useTheme as usePaperTheme
+    TextInput
 } from 'react-native-paper';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useTheme } from '../../../contexts/ThemeContext';
@@ -21,13 +19,11 @@ export default function Login() {
 
     const navigation = useNavigation();
     const { colors } = useTheme();
-    const paperTheme = usePaperTheme();
     const { signIn } = useAuth();
 
     // Handle login with spam prevention and loading state
     const handleLogin = async () => {
         if (isLoading) return;
-
         setMessage('');
 
         // Input validation
@@ -57,7 +53,7 @@ export default function Login() {
     };
 
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: colors.backgroundPrimary }]}>
             <View style={styles.logoContainer}>
                 <Image
                     source={require('@assets/logo.png')}
@@ -65,8 +61,8 @@ export default function Login() {
                 />
             </View>
 
-            <Text variant="headlineLarge" style={styles.title}>RENT HOUSE</Text>
-            <Text variant="titleLarge" style={styles.title}>
+            <Text style={[styles.title, { color: colors.textPrimary }]}>RENT HOUSE</Text>
+            <Text style={[styles.subtitle, { color: colors.textPrimary }]}>
                 Đăng nhập tài khoản
             </Text>
 
@@ -77,6 +73,9 @@ export default function Login() {
                 style={styles.input}
                 mode="outlined"
                 autoCapitalize="none"
+                theme={{ colors: { primary: colors.accentColor } }}
+                outlineColor={colors.borderColor}
+                activeOutlineColor={colors.accentColor}
             />
 
             <TextInput
@@ -86,16 +85,20 @@ export default function Login() {
                 secureTextEntry={!showPassword}
                 style={styles.input}
                 mode="outlined"
+                theme={{ colors: { primary: colors.accentColor } }}
+                outlineColor={colors.borderColor}
+                activeOutlineColor={colors.accentColor}
                 right={
                     <TextInput.Icon 
                         icon={showPassword ? "eye-off" : "eye"} 
-                        onPress={() => setShowPassword(!showPassword)} 
+                        onPress={() => setShowPassword(!showPassword)}
+                        color={() => colors.textSecondary}
                     />
                 }
             />
 
             {message ? (
-                <HelperText type="error" visible={true}>
+                <HelperText type="error" visible={true} theme={{ colors: { error: colors.dangerColor } }}>
                     {message}
                 </HelperText>
             ) : null}
@@ -107,6 +110,8 @@ export default function Login() {
                 disabled={isLoading}
                 style={styles.button}
                 contentStyle={styles.buttonContent}
+                buttonColor={colors.accentColor}
+                textColor="#ffffff"
             >
                 {isLoading ? 'Đang đăng nhập...' : 'Đăng nhập'}
             </Button>
@@ -115,6 +120,7 @@ export default function Login() {
                 mode="text"
                 onPress={() => navigation.navigate('Register')}
                 style={styles.linkButton}
+                textColor={colors.accentColor}
             >
                 Chưa có tài khoản? Đăng ký
             </Button>
@@ -123,6 +129,7 @@ export default function Login() {
                 mode="text"
                 onPress={() => navigation.navigate('CantLogin')}
                 style={styles.linkButton}
+                textColor={colors.accentColor}
             >
                 Không thể đăng nhập?
             </Button>
@@ -148,6 +155,12 @@ const styles = StyleSheet.create({
     },
     title: {
         fontWeight: 'bold',
+        marginBottom: 20,
+        textAlign: 'center',
+        fontSize: 24,
+    },
+    subtitle: {
+        fontSize: 16,
         marginBottom: 20,
         textAlign: 'center',
     },

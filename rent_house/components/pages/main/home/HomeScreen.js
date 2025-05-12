@@ -1,23 +1,21 @@
-import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
   RefreshControl,
   Text,
-  TextInput,
-  TouchableOpacity,
   View
 } from 'react-native';
-import { useTheme } from '../../../contexts/ThemeContext';
-import { homeStyles, styles } from '../../../styles/style';
-import { api } from '../../../utils/Apis';
-import PostItem from '../../feeds/PostItem';
+import { useTheme } from '../../../../contexts/ThemeContext';
+import { homeStyles, styles } from '../../../../styles/style';
+import { api } from '../../../../utils/Fetch';
+import { NewPostSample } from '../../../feeds/NewPostSample';
+import PostItem from '../../../feeds/PostItem';
 
 const HomeScreen = () => {
-  const { theme, toggleTheme, colors } = useTheme();
+  const { colors } = useTheme();
   const [posts, setPosts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [nextPageUrl, setNextPageUrl] = useState(null);
@@ -99,36 +97,23 @@ const HomeScreen = () => {
       <View style={homeStyles.headerContainer}>
         <View style={homeStyles.headerTop}>
           <Text style={[homeStyles.title, { color: colors.textPrimary }]}>
-            RENT HOUSE
+            Trang chủ
           </Text>
-          <TouchableOpacity onPress={toggleTheme} style={homeStyles.themeButton}>
-            <Ionicons 
-              name={theme === 'dark' ? 'sunny' : 'moon'} 
-              size={24} 
-              color={colors.textPrimary} 
-            />
-          </TouchableOpacity>
-        </View>
-        <Text style={[homeStyles.greeting, { color: colors.textPrimary }]}>
-          Xin chào
-        </Text>
-        <View style={[homeStyles.searchContainer, { backgroundColor: colors.backgroundSecondary, borderColor: colors.borderColor}]}>
-          <Ionicons name="search" size={20} color={colors.textSecondary} />
-          <TextInput
-            style={[homeStyles.searchInput, { color: colors.textPrimary, backgroundColor: colors.backgroundSecondary }]}
-            placeholder="Bạn tìm nhà sao ?"
-            placeholderTextColor={colors.textSecondary}
-          />
         </View>
       </View>
+
+      {/* Tạo bài viết */}
+      
       
       {loading ? (
+        
         <View style={homeStyles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.accentColor} />
           <Text style={{ color: colors.textSecondary, marginTop: 10 }}>Đang tải bài viết...</Text>
         </View>
       ) : (
         <FlatList
+          
           data={posts || []}
           keyExtractor={item => item?.id?.toString() || Math.random().toString()}
           renderItem={({ item }) => <PostItem post={item} />}
@@ -144,6 +129,7 @@ const HomeScreen = () => {
           onEndReached={handleLoadMore}
           onEndReachedThreshold={0.5}
           ListFooterComponent={renderFooter}
+          ListHeaderComponent={NewPostSample}
           ListEmptyComponent={
             <View style={homeStyles.emptyContainer}>
               <Text style={{ color: colors.textSecondary, textAlign: 'center' }}>
@@ -151,6 +137,7 @@ const HomeScreen = () => {
               </Text>
             </View>
           }
+          style={homeStyles.postsList}
         />
       )}
     </View>

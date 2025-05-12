@@ -11,10 +11,10 @@ from rent_house.models import (
 )
 
 class Command(BaseCommand):
-    help = 'Populate the database with sample data'
+    help = 'Tạo dữ liệu mẫu cho ứng dụng'
 
     def handle(self, *args, **kwargs):
-        self.stdout.write('Populating database...')
+        self.stdout.write('Đang tạo dữ liệu mẫu...')
         
         try:
             with transaction.atomic():
@@ -51,17 +51,17 @@ class Command(BaseCommand):
                 # Create Application
                 self.create_application()
                 
-            self.stdout.write(self.style.SUCCESS('Successfully populated database!'))
+            self.stdout.write(self.style.SUCCESS('Tạo dữ liệu mẫu thành công!'))
             
         except Exception as e:
-            self.stdout.write(self.style.ERROR(f'Error populating database: {str(e)}'))
+            self.stdout.write(self.style.ERROR(f'Có lỗi đã xảy ra trong quá trình: {str(e)}'))
 
     def create_application(self):
         call_command('create_oauth_app')    
 
 
     def create_users(self):
-        self.stdout.write('Creating users...')
+        self.stdout.write('[INFO] Đang tạo USER...')
         
         # Create admin user
         admin = User.objects.create(
@@ -75,20 +75,46 @@ class Command(BaseCommand):
             is_staff=True,
             is_superuser=True
         )
-        
-        # Create house owners
+
+        owner_data = [
+            {
+                'username': 'blu','first_name': 'Duwong', 'last_name': 'Blu'           
+            },
+            {
+                'username': 'lmn','first_name': 'Lý', 'last_name': 'Nhạt'           
+            },
+            {
+                'username': 'nanh','first_name': 'Nhat', 'last_name': 'Kim Anh'           
+            },
+            {
+                'username': 'moggu2','first_name': 'Thợ Săn', 'last_name': 'Lo Lắng',        
+            },
+            {
+                'username': 'regiko','first_name': 'Ghe', 'last_name': 'Gi Cô'           
+            },
+            {
+                'username': 'sleo','first_name': 'Sờ', 'last_name': 'Leo'           
+            },
+            {
+                'username': 'taku','first_name': 'Hài', 'last_name': 'Miền Tây'           
+            },
+            {
+                'username': 'tan','first_name': 'Quốc', 'last_name': 'Kazama'           
+            }
+        ]        
+        # Create house owners 1->8
         owners = []
-        for i in range(1, 5):
+        for i, e in enumerate(owner_data):
             owner = User.objects.create(
-                username=f'owner{i}',
-                email=f'owner{i}@example.com',
-                password=make_password(f'Owner@123'),
-                first_name=f'Owner',
-                last_name=f'{i}',
+                username=e['username'],
+                email=f'{e['username']}@riikon.net',
+                password=make_password(f'1'),
+                first_name=e['first_name'],
+                last_name=e['last_name'],
                 phone_number=f'09023456{i}',
                 role=Role.OWNER.value[0],
-                address=f'{i}00 Owner Street, City',
-                avatar=f'https://api.dicebear.com/7.x/micah/svg?seed=1{i}'
+                address=f'Số {i+1}00, Đường {e['first_name']}, Quận 1, TP.HCM',
+                avatar=f'https://konya007.github.io/image-library/avatar/{e['username']}.jpg'
             )
             # Create avatar Media
             if owner.avatar:
@@ -102,18 +128,51 @@ class Command(BaseCommand):
             owners.append(owner)
         
         # Create renters
+        renter_data = [
+            {
+                'username': 'sleo2','first_name': 'Phan', 'last_name': 'Nhạt',
+            },
+            {
+                'username': 'taku2','first_name': 'Công', 'last_name': 'Tâm Vô Lượng',
+            },
+            {
+                'username': 'tri','first_name': 'Minh', 'last_name': 'Trí',
+            },
+            {
+                'username': 'trieu','first_name': 'Thanh', 'last_name': 'Tều',
+            },
+            {
+                'username': 'truc','first_name': 'Minh', 'last_name': 'Trực',
+            },
+            {
+                'username': 'vulee','first_name': 'Vũ', 'last_name': 'Trường',
+            },
+            {
+                'username': 'moggu','first_name': 'Mo', 'last_name': 'Gu',
+            },
+            {
+                'username': 'quan','first_name': 'Hải', 'last_name': 'Quấn'  
+            },
+            {
+                'username': 'nanh2','first_name': 'Haha', 'last_name': 'Aha',
+            },
+            {
+                'username': 'trong','first_name': 'Thành', 'last_name': 'Cộc',
+            }
+        ]
+        # Create house renters 1->10 is in renter_data, from 11->30 is random
         renters = []
-        for i in range(1, 21):
+        for i, e in enumerate(renter_data):
             renter = User.objects.create(
-                username=f'renter{i}',
-                email=f'renter{i}@example.com',
-                password=make_password(f'Renter@123'),
-                first_name=f'Renter',
-                last_name=f'{i}',
+                username=e['username'] if i < len(renter_data) else f'renter{i}',
+                email=f'{e['username']}@riikon.net' if i < len(renter_data) else f'example{i}@mail.com',
+                password=make_password(f'1'),
+                first_name=e['first_name'] if i < len(renter_data) else f'Renter',
+                last_name= e['last_name'] if i < len(renter_data) else f'Anoymous{i}',
                 phone_number=f'09034567{i}',
                 role=Role.RENTER.value[0],
-                address=f'{i}00 Renter Street, City',
-                avatar=f'https://api.dicebear.com/7.x/micah/svg?seed=2{i}'
+                address=f'Số {i+1}00, Đường {e['first_name']}, Quận 1, TP.HCM' if i < len(renter_data) else f'Số {i+1}00, Đường Anoymous{i}, Quận 1, TP.HCM',
+                avatar=f'https://konya007.github.io/image-library/avatar/{e['username']}.jpg' if i < len(renter_data) else f'https://api.dicebear.com/7.x/micah/png?seed={i+1}'
             )
             # Create avatar Media
             if renter.avatar:
@@ -136,7 +195,7 @@ class Command(BaseCommand):
             phone_number='0904567890',
             role=Role.MODERATOR.value[0],
             address='456 Moderator Street, City',
-            avatar='https://api.dicebear.com/7.x/micah/svg?seed=100',
+            avatar='https://api.dicebear.com/7.x/micah/png?seed=100',
             is_staff=True
         )
         
@@ -153,7 +212,7 @@ class Command(BaseCommand):
         self.users = [admin, moderator] + owners + renters
 
     def create_houses(self):
-        self.stdout.write('Creating houses...')
+        self.stdout.write('[INFO] Đang tạo HOUSE...')
         
         owners = User.objects.filter(role=Role.OWNER.value[0])
         house_types = [house_type.value[0] for house_type in HouseType]
@@ -180,7 +239,7 @@ class Command(BaseCommand):
             
             house = House.objects.create(
                 title=f"{owner.first_name}'s {HouseType[house_type.upper()].value[1]}",
-                description=f"A beautiful {house_type} located in a convenient area with easy access to public transportation, shops, and restaurants.",
+                description=f"Đây là một {house_type} đẹp và tiện nghi, nằm ở vị trí thuận lợi.",
                 address=location['address'],
                 latitude=location['lat'] + random.uniform(-0.005, 0.005),
                 longitude=location['long'] + random.uniform(-0.005, 0.005),
@@ -204,7 +263,7 @@ class Command(BaseCommand):
             self.houses.append(house)
 
     def create_rooms(self):
-        self.stdout.write('Creating rooms...')
+        self.stdout.write('[INFO] Đang tạo ROOM...')
         
         self.rooms = []
         for i, house in enumerate(self.houses):
@@ -215,8 +274,8 @@ class Command(BaseCommand):
                 
                 room = Room.objects.create(
                     house=house,
-                    title=f"Room {j+1} in {house.title}",
-                    description=f"A spacious room with good lighting and ventilation. The room includes basic furniture.",
+                    title=f"Phòng số {j+1} thuộc [{house.title}]",
+                    description=f"Một phòng ngủ tiện nghi, sạch sẽ và thoáng mát.",
                     price=random.randint(150, 500) * 100000,
                     max_people=max_people,
                     cur_people=cur_people,
@@ -256,7 +315,7 @@ class Command(BaseCommand):
                         )
 
     def create_posts(self):
-        self.stdout.write('Creating posts...')
+        self.stdout.write('[INFO] Đang tạo POST...')
         
         post_types = [post_type.value[0] for post_type in PostType]
         users = User.objects.all()
@@ -279,24 +338,25 @@ class Command(BaseCommand):
                     if houses.exists():
                         house = random.choice(houses)
                         house_link = house
-                        title = f"Room for rent in {house.title}"
-                        content = f"I have a great room available in my {house.type}. It's located at {house.address} and the price is {house.base_price} VND per month. Contact me for more details!"
+                        title = f"Phòng cho thuê"
+                        content = f"Phòng cho thuê tại {house.address}. Giá chỉ {house.base_price} VND/tháng. Liên hệ ngay để biết thêm chi tiết!"
                         address = house.address
                         latitude = house.latitude
                         longitude = house.longitude
                     else:
                         continue
                 else:
-                    title = "Room for rent"
-                    content = "I have a room for rent in my apartment. It's located in a convenient area with easy access to public transportation. The price is negotiable. Contact me for more details!"
+                    title = "Phòng cho thuê"
+                    content = "Tôi còn dư một phòng trong căn hộ của mình. Ai có nhu cầu thuê phòng thì liên hệ với tôi nhé!"
+                    address = "123 Đường ABC, Quận 1, TP.HCM"
                     
             elif post_type == PostType.SEARCH_LISTING.value[0]:
-                title = "Looking for a room"
-                content = f"Hi, I'm {user.first_name}. I'm looking for a room to rent in the city center area. My budget is around 3-5 million VND per month. I'm a clean and quiet person. Please contact me if you have any available rooms!"
+                title = "Tìm phòng trọ"
+                content = "Chào mọi người! Tôi là một sinh viên đang tìm phòng trọ ở khu vực trung tâm thành phố. Mức giá khoảng 3-5 triệu/tháng. Ai có phòng trống thì liên hệ với tôi nhé!"
                 
             elif post_type == PostType.ROOMMATE.value[0]:
-                title = "Looking for a roommate"
-                content = f"Hi, I'm {user.first_name}. I'm looking for a roommate to share my apartment. The rent is 7 million VND per month (3.5 million VND each). The apartment has 2 bedrooms, 1 bathroom, and a kitchen. Please contact me if you're interested!"
+                title = "Tìm bạn cùng phòng"
+                content = f"Chào các bạn! Tôi là {user.first_name}, hiện đang tìm một bạn cùng phòng để chia sẻ chi phí thuê nhà. Ai có nhu cầu thì liên hệ với tôi nhé!"
                 
             post = Post.objects.create(
                 author=user,
@@ -313,10 +373,11 @@ class Command(BaseCommand):
             # Create Media for post
             num_images = random.randint(0, 3)
             for j in range(num_images):
+                seed = random.randint(1, 1000)
                 Media.objects.create(
                     content_type=ContentType.objects.get_for_model(Post),
                     object_id=post.id,
-                    url=f'https://placehold.co/800x600?text=Post{post.id}Image{j+1}',
+                    url=f'https://picsum.photos/seed/{seed}/800/600',
                     media_type='image',
                     purpose='attachment'
                 )
@@ -324,7 +385,7 @@ class Command(BaseCommand):
             self.posts.append(post)
 
     def create_comments(self):
-        self.stdout.write('Creating comments...')
+        self.stdout.write('[INFO] Đang tạo COMMENT...')
         
         users = User.objects.all()
         
@@ -336,16 +397,21 @@ class Command(BaseCommand):
                 user = random.choice(users)
                 
                 comment_content = random.choice([
-                    "This looks great! I'm interested.",
-                    "What's the exact location?",
-                    "Is this still available?",
-                    "Does the price include utilities?",
-                    "How many people are currently living there?",
-                    "Is it close to public transportation?",
-                    "Do you allow pets?",
-                    "I'll send you a private message for more details.",
-                    "When can I come to see the place?",
-                    "Is there any deposit required?"
+                    "Phòng này trông rất tốt! Tôi quan tâm.",
+                    "Vị trí chính xác ở đâu?",
+                    "Phòng này còn trống không?",
+                    "Giá có bao gồm tiền điện nước không?",
+                    "Hiện tại có bao nhiêu người đang sống ở đó?",
+                    "Có gần phương tiện giao thông công cộng không?",
+                    "Bạn có cho phép nuôi thú cưng không?",
+                    "Tôi sẽ gửi tin nhắn riêng để biết thêm chi tiết.",
+                    "Khi nào tôi có thể đến xem phòng?",
+                    "Có thể cho tôi biết thêm về các tiện ích không?",
+                    "Có yêu cầu đặt cọc không?",
+                    "Có thể thương lượng giá không?",
+                    "Có thể cho tôi biết thêm về khu vực này không?",
+                    "Có thể cho tôi biết thêm về chủ nhà không?",
+                    "Có thể cho tôi biết thêm về các quy định không?",
                 ])
                 
                 comment = Comment.objects.create(
@@ -362,7 +428,7 @@ class Command(BaseCommand):
                     Media.objects.create(
                         content_type=ContentType.objects.get_for_model(Comment),
                         object_id=comment.id,
-                        url=f'https://placehold.co/800x600?text=Comment{comment.id}Image',
+                        url=f'https://picsum.photos/seed/{comment.id+100}/800/600',
                         media_type='image',
                         purpose='attachment'
                     )
@@ -373,14 +439,22 @@ class Command(BaseCommand):
                     user = random.choice(users)
                     if user != parent_comment.author:  # Don't reply to yourself
                         reply_content = random.choice([
-                            "Thanks for your interest!",
-                            "Yes, it's still available.",
-                            "The price includes water and electricity.",
-                            "It's about 5 minutes walk to the bus station.",
-                            "Sorry, no pets allowed.",
-                            "You can visit this weekend if you want.",
-                            "Yes, there's a 1-month deposit.",
-                            "I'll send you more details via private message."
+                            "Cảm ơn bạn đã quan tâm!",
+                            "Vâng, phòng vẫn còn trống.",
+                            "Giá đã bao gồm tiền nước và điện.",
+                            "Cách trạm xe buýt khoảng 5 phút đi bộ.",
+                            "Xin lỗi, không cho phép nuôi thú cưng.",
+                            "Bạn có thể đến xem phòng vào cuối tuần này nếu muốn.",
+                            "Vâng, cần đặt cọc 1 tháng tiền nhà.",
+                            "Tôi sẽ gửi thêm chi tiết qua tin nhắn riêng.",
+                            "Khu vực này rất an ninh và yên tĩnh.",
+                            "Phòng rất thoáng và có ánh sáng tự nhiên tốt.",
+                            "Có nhiều tiện ích xung quanh như siêu thị, quán ăn.",
+                            "Chủ nhà rất thân thiện và dễ tính.",
+                            "Mình có thể thương lượng giá nếu bạn ở dài hạn.",
+                            "Phòng đã được trang bị nội thất cơ bản.",
+                            "Có chỗ để xe miễn phí.",
+                            "WiFi tốc độ cao miễn phí."
                         ])
                         
                         Comment.objects.create(
@@ -391,7 +465,7 @@ class Command(BaseCommand):
                         )
 
     def create_interactions(self):
-        self.stdout.write('Creating interactions...')
+        self.stdout.write('[INFO] Đang tạo INTERACTION...')
         
         users = User.objects.all()
         interaction_types = [interaction_type.value[0] for interaction_type in InteractionType]
@@ -412,7 +486,7 @@ class Command(BaseCommand):
                     )
 
     def create_follows(self):
-        self.stdout.write('Creating follows...')
+        self.stdout.write('[INFO] Đang tạo FOLLOW...')
         
         users = list(User.objects.all())
         
@@ -431,7 +505,7 @@ class Command(BaseCommand):
                     )
 
     def create_chats_and_messages(self):
-        self.stdout.write('Creating chats and messages...')
+        self.stdout.write('[INFO] Đang tạo CHAT và MESSAGE...')
         
         users = list(User.objects.all())
         
@@ -477,16 +551,31 @@ class Command(BaseCommand):
                     sender = random.choice(user_pair)
                     
                     message_content = random.choice([
-                        "Hi, how are you?",
-                        "I'm interested in your listing.",
-                        "Is the room still available?",
-                        "When can I come to see the place?",
-                        "What's the exact address?",
-                        "Do you allow pets?",
-                        "Is the price negotiable?",
-                        "Are utilities included in the price?",
-                        "Is there any deposit required?",
-                        "How far is it from public transportation?"
+                        "Xin chào, bạn khoẻ không?",
+                        "Tôi quan tâm đến phòng cho thuê của bạn.",
+                        "Phòng còn trống không?",
+                        "Khi nào tôi có thể đến xem phòng?",
+                        "Địa chỉ chính xác ở đâu vậy?",
+                        "Bạn có cho phép nuôi thú cưng không?",
+                        "Giá có thể thương lượng không?",
+                        "Đã bao gồm tiền điện nước chưa?",
+                        "Có cần đặt cọc không?",
+                        "Khoảng cách đến phương tiện công cộng bao xa?",
+                        "Xin chào, tôi thấy bài đăng của bạn rất thú vị.",
+                        "Phòng có máy lạnh không?",
+                        "Khu vực này có an toàn không?",
+                        "Có chỗ để xe máy không?",
+                        "Chi phí thuê hàng tháng bao nhiêu?",
+                        "Phòng có sẵn nội thất không?",
+                        "Tôi có thể dọn vào ở ngay không?",
+                        "Internet có tính phí không?",
+                        "Tôi cần ở dài hạn, có ưu đãi gì không?",
+                        "Khu vực xung quanh có tiện ích gì không?",
+                        "Láng giềng có ồn ào không?",
+                        "Bạn cho thuê tối thiểu bao lâu?",
+                        "Có quy định gì đặc biệt không?",
+                        "Tôi có thể thỏa thuận thanh toán theo quý không?",
+                        "Cảm ơn bạn đã phản hồi nhanh chóng!"
                     ])
                     
                     message = Message.objects.create(
@@ -500,7 +589,7 @@ class Command(BaseCommand):
                         Media.objects.create(
                             content_type=ContentType.objects.get_for_model(Message),
                             object_id=message.id,
-                            url=f'https://placehold.co/800x600?text=Message{message.id}Attachment',
+                            url=f'https://picsum.photos/seed/{message.id+200}/800/600',
                             media_type='image',
                             purpose='attachment'
                         )
@@ -512,8 +601,8 @@ class Command(BaseCommand):
             creator = chat_members[0]
             
             group_chat = ChatGroup.objects.create(
-                name=f"Group Chat {i+1}",
-                description=f"A group for discussing housing in area {i+1}",
+                name=f"Nhóm chat {i+1}",
+                description=f"Một nhóm chat thú vị về nhà ở.",
                 is_group=True,
                 created_by=creator
             )
@@ -532,16 +621,26 @@ class Command(BaseCommand):
                 sender = random.choice(chat_members)
                 
                 message_content = random.choice([
-                    "Hello everyone!",
-                    "Has anyone found a good place?",
-                    "I'm looking for a roommate in District 1.",
-                    "Anyone know a good agent?",
-                    "Prices keep going up in this area!",
-                    "I just found a great place, but it's already taken.",
-                    "Let's meet up this weekend to discuss housing options.",
-                    "Has anyone lived in this neighborhood before?",
-                    "Any recommendations for affordable places?",
-                    "What's a reasonable price for a 2-bedroom in this area?"
+                    "Chào cả nhóm!",
+                    "Có ai tìm được chỗ ở tốt chưa?",
+                    "Tôi đang tìm bạn cùng phòng ở Quận 1.",
+                    "Ai biết môi giới nhà tốt không?",
+                    "Giá nhà ở khu vực này cứ tăng mãi!",
+                    "Tôi vừa tìm được một chỗ rất tốt, nhưng đã có người thuê mất rồi.",
+                    "Cuối tuần này gặp nhau bàn về lựa chọn nhà ở nhé.",
+                    "Có ai từng ở khu vực này chưa?",
+                    "Có ai biết chỗ nào giá cả phải chăng không?",
+                    "Giá hợp lý cho căn hộ 2 phòng ngủ ở khu vực này là bao nhiêu?",
+                    "Có ai biết khu vực nào an ninh tốt không?",
+                    "Tôi mới chuyển đến TP.HCM, cần tìm phòng gấp!",
+                    "Có ai đang ở trọ gần đại học không?",
+                    "Nhà trọ nào có wifi tốt nhỉ?",
+                    "Làm sao để tránh bị chủ nhà tăng giá đột ngột?",
+                    "Có ai biết khu nào không bị ngập khi mưa không?",
+                    "Chỗ nào có bãi giữ xe máy an toàn nhỉ?",
+                    "Ở đây có tiệm tạp hóa gần không?",
+                    "Tôi cần tìm nhà gần tuyến xe buýt.",
+                    "Có ai biết chỗ nào cho thuê ngắn hạn không?"
                 ])
                 
                 Message.objects.create(
@@ -551,7 +650,7 @@ class Command(BaseCommand):
                 )
 
     def create_rates(self):
-        self.stdout.write('Creating rates...')
+        self.stdout.write('[INFO] Đang tạo RATE...')
         
         users = list(User.objects.filter(role=Role.RENTER.value[0]))
         houses = list(House.objects.all())
@@ -572,11 +671,18 @@ class Command(BaseCommand):
                 if not Rate.objects.filter(user=user, house=house).exists():
                     stars = random.randint(1, 5)
                     comments = [
-                        f"Great place! {stars}/5 stars.",
-                        f"The location is convenient. {stars}/5.",
-                        f"Good value for money. {stars}/5.",
-                        f"The owner is very responsive. {stars}/5.",
-                        f"Clean and comfortable. {stars}/5.",
+                        f"Nhà ở đáng yêu và tiện nghi. {stars}/5.",
+                        f"Vị trí thuận tiện, gần chợ và trường học. {stars}/5.",
+                        f"Giá cả hợp lý với chất lượng phòng. {stars}/5.",
+                        f"Chủ nhà rất thân thiện và nhiệt tình hỗ trợ. {stars}/5.",
+                        f"Phòng sạch sẽ và thoải mái. {stars}/5.",
+                        f"Khu vực an ninh tốt, yên tĩnh về đêm. {stars}/5.",
+                        f"Tiện ích xung quanh đầy đủ, thuận tiện sinh hoạt. {stars}/5.",
+                        f"Phòng tắm mới và sạch sẽ. {stars}/5.",
+                        f"Không gian thoáng mát, có nhiều cửa sổ. {stars}/5.",
+                        f"Nội thất đầy đủ và chất lượng tốt. {stars}/5.",
+                        f"Hàng xóm thân thiện và yên tĩnh. {stars}/5.",
+                        f"Chủ nhà giải quyết vấn đề nhanh chóng. {stars}/5.",
                         None  # Some ratings might not have comments
                     ]
                     
@@ -594,20 +700,20 @@ class Command(BaseCommand):
                         Media.objects.create(
                             content_type=ContentType.objects.get_for_model(Rate),
                             object_id=rate.id,
-                            url=f'https://placehold.co/800x600?text=Rating{rate.id}Image',
+                            url=f'https://picsum.photos/seed/{rate.id+300}/800/600',
                             media_type='image',
                             purpose='attachment'
                         )
 
     def create_notifications(self):
-        self.stdout.write('Creating notifications...')
+        self.stdout.write('[INFO] Đang tạo NOTIFICATION...')
         
         users = User.objects.all()
         notification_types = [notification_type.value[0] for notification_type in NotificationType]
         
         # Create a few random notifications for each user
         for user in users:
-            num_notifications = random.randint(3, 10)
+            num_notifications = random.randint(3, 30)
             
             for i in range(num_notifications):
                 notification_type = random.choice(notification_types)
@@ -625,7 +731,7 @@ class Command(BaseCommand):
                             continue  # Skip if sender has no posts
                             
                         post = random.choice(sender_posts)
-                        content = f"{sender.first_name} has published a new post: {post.title}"
+                        content = f"{sender.first_name} đã đăng một bài viết mới: {post.title}"
                         url = f"/posts/{post.id}/"
                         related_object_type = ContentType.objects.get_for_model(Post)
                         related_object_id = post.id
@@ -637,13 +743,13 @@ class Command(BaseCommand):
                             continue  # Skip if user has no posts
                             
                         post = random.choice(user_posts)
-                        content = f"{sender.first_name} commented on your post: {post.title}"
+                        content = f"{sender.first_name} đã bình luận về bài viết của bạn: {post.title}"
                         url = f"/posts/{post.id}/"
                         related_object_type = ContentType.objects.get_for_model(Comment)
                         related_object_id = None
                     
                     elif notification_type == NotificationType.FOLLOW.value[0]:
-                        content = f"{sender.first_name} started following you"
+                        content = f"{sender.first_name} đã theo dõi bạn."
                         url = f"/users/{sender.id}/"
                         related_object_type = ContentType.objects.get_for_model(User)
                         related_object_id = sender.id
@@ -660,13 +766,13 @@ class Command(BaseCommand):
                             continue  # Skip if no interaction types
                             
                         interaction_type = random.choice(interaction_types)
-                        content = f"{sender.first_name} {interaction_type.lower()} your post: {post.title}"
+                        content = f"{sender.first_name} {interaction_type.lower()} bài viết của bạn: {post.title}"
                         url = f"/posts/{post.id}/"
                         related_object_type = ContentType.objects.get_for_model(Post)
                         related_object_id = post.id
                     
                     elif notification_type == NotificationType.MESSAGE.value[0]:
-                        content = f"You have a new message from {sender.first_name}"
+                        content = f"Bạn có tin nhắn mới từ {sender.first_name}."
                         url = "/messages/"
                         related_object_type = ContentType.objects.get_for_model(User)
                         related_object_id = sender.id

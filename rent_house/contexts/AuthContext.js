@@ -29,28 +29,39 @@ export const AuthProvider = ({ children }) => {
     setIsLoading(false);
   };
 
-  // Sửa hàm signIn để nhận trực tiếp token thay vì gọi lại login
   const signIn = async (token) => {
     try {
       setUserToken(token);
-      return true;
+      await AsyncStorage.setItem('access_token', token);
     } catch (error) {
-      console.error('Sign in error:', error);
-      return false;
+      console.error('Error saving token:', error);
     }
   };
 
   const signOut = async () => {
-    setUserToken(null);
-    await AsyncStorage.removeItem('access_token');
-    await AsyncStorage.removeItem('refresh_token');
+    try {
+      await AsyncStorage.removeItem('access_token');
+      await AsyncStorage.removeItem('refresh_token');
+      setUserToken(null);
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ isLoading, userToken, signIn, signOut, checkToken }}>
+    <AuthContext.Provider
+      value={{
+        isLoading,
+        userToken,
+        signIn,
+        signOut,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
 };
 
 export const useAuth = () => useContext(AuthContext);
+
+export default AuthContext;
