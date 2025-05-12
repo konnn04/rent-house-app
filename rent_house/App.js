@@ -4,7 +4,7 @@ import React from 'react';
 import { StatusBar, StyleSheet, View } from 'react-native';
 import { Provider as PaperProvider } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import AuthScreen from './components/pages/auth/Main';
+import AuthScreen from './components/pages/Auth/Main';
 import Loading from './components/pages/Loading';
 import Main from './components/pages/Main';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
