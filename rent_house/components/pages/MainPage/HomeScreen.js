@@ -79,8 +79,10 @@ const HomeScreen = () => {
     if (loadingMore || !nextPageUrl) return;
     
     setLoadingMore(true);
-    loadPosts(false);
+    loadPosts(false);   
   };
+
+
   
   // Render footer (loading indicator)
   const renderFooter = () => {

@@ -36,7 +36,8 @@ export default function Auth() {
   return (
     <View style={[styles.authContainer, { backgroundColor: colors.backgroundPrimary }]}>
       <View>
-        <Text style={[dynamicAuthStyles.authTitle, { color: colors.textPrimary }]}>RENT HOUSE</Text>
+        <Text style={[dynamicAuthStyles.authTitle, { color: colors.textPrimary, marginBottom: 0 }]}>RENT</Text>
+        <Text style={[dynamicAuthStyles.authTitle, { color: colors.textPrimary }]}>HOUSE</Text>
         <Text style={[dynamicAuthStyles.authSubtitle, { color: colors.textSecondary }]}>Welcome back!</Text>
         <TextInput
           style={[styles.input, {
