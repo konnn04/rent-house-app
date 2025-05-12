@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../../contexts/ThemeContext';
 
 const PostItem = ({ post }) => {
@@ -8,6 +8,8 @@ const PostItem = ({ post }) => {
   const [liked, setLiked] = useState(false);
   const [disliked, setDisliked] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
+  const [imageLoadError, setImageLoadError] = useState({});
+  const [imageLoading, setImageLoading] = useState({});
   
   // Format the timestamp to a readable date
   const formatDate = (dateString) => {
@@ -36,6 +38,20 @@ const PostItem = ({ post }) => {
     setShowOptions(!showOptions);
   };
 
+  const handleImageLoadStart = (index) => {
+    setImageLoading(prev => ({ ...prev, [index]: true }));
+  };
+
+  const handleImageLoadEnd = (index) => {
+    setImageLoading(prev => ({ ...prev, [index]: false }));
+  };
+
+  const handleImageError = (index) => {
+    setImageLoadError(prev => ({ ...prev, [index]: true }));
+    setImageLoading(prev => ({ ...prev, [index]: false }));
+    console.error(`Failed to load image at index ${index}`);
+  };
+
   // Safety check for null/undefined post
   if (!post) {
     return null;
@@ -47,9 +63,22 @@ const PostItem = ({ post }) => {
       <View style={styles.postHeader}>
         <View style={styles.postUserInfo}>
           <Image 
-            source={{ uri: post.author?.avatar || 'https://via.placeholder.com/40' }} 
+            source={{ 
+              uri: post.author?.avatar || 
+                   post.author?.avatar_thumbnail || 
+                   'https://via.placeholder.com/150'
+            }}
+            onLoadStart={() => handleImageLoadStart('avatar')}
+            onLoad={() => handleImageLoadEnd('avatar')}
+            onError={() => handleImageError('avatar')}
+            resizeMode="cover" 
             style={styles.userAvatar} 
           />
+          {imageLoading['avatar'] && (
+            <View style={styles.avatarLoadingOverlay}>
+              <ActivityIndicator size="small" color={colors.accentColor} />
+            </View>
+          )}
           <View>
             <Text style={[styles.userName, { color: colors.textPrimary }]}>
               {post.author?.full_name || post.author?.username || 'Anonymous'}
@@ -86,16 +115,33 @@ const PostItem = ({ post }) => {
         )}
         <Text style={[styles.postContent, { color: colors.textPrimary }]}>{post.content}</Text>
         
-        {/* Images or Videos */}
+        {/* Images */}
         {post.media && post.media.length > 0 && (
           <View style={styles.postMedia}>
             {post.media.map((item, index) => (
-              <Image 
-                key={index} 
-                source={{ uri: item.url || item.thumbnail }} 
-                style={styles.postImage}
-                resizeMode="cover" 
-              />
+              <View key={index} style={styles.mediaContainer}>
+                <Image 
+                  source={{ 
+                    uri: item.url || item.thumbnail || item.medium || 'https://via.placeholder.com/800x600' 
+                  }}
+                  style={styles.postImage}
+                  resizeMode="cover"
+                  onLoadStart={() => handleImageLoadStart(index)}
+                  onLoad={() => handleImageLoadEnd(index)}
+                  onError={() => handleImageError(index)}
+                />
+                {imageLoading[index] && (
+                  <View style={styles.imageLoadingOverlay}>
+                    <ActivityIndicator size="large" color={colors.accentColor} />
+                  </View>
+                )}
+                {imageLoadError[index] && (
+                  <View style={styles.imageErrorOverlay}>
+                    <Ionicons name="image-outline" size={40} color={colors.textSecondary} />
+                    <Text style={{ color: colors.textSecondary }}>Không thể hiển thị hình ảnh</Text>
+                  </View>
+                )}
+              </View>
             ))}
           </View>
         )}
@@ -172,12 +218,24 @@ const styles = StyleSheet.create({
   postUserInfo: {
     flexDirection: 'row',
     alignItems: 'center',
+    position: 'relative',
   },
   userAvatar: {
     width: 40,
     height: 40,
     borderRadius: 20,
     marginRight: 12,
+    backgroundColor: '#f0f0f0',
+  },
+  avatarLoadingOverlay: {
+    position: 'absolute',
+    left: 0,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.1)',
   },
   userName: {
     fontWeight: 'bold',
@@ -222,11 +280,35 @@ const styles = StyleSheet.create({
   postMedia: {
     marginBottom: 12,
   },
+  mediaContainer: {
+    position: 'relative',
+    marginBottom: 8,
+  },
   postImage: {
     width: '100%',
     height: 200,
     borderRadius: 8,
-    marginBottom: 8,
+    backgroundColor: '#f0f0f0',
+  },
+  imageLoadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.05)',
+  },
+  imageErrorOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.05)',
   },
   locationInfo: {
     flexDirection: 'row',

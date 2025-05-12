@@ -1,26 +1,42 @@
-import React, { useEffect } from 'react';
-import { View, Text, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
+import React, { useEffect } from 'react';
+import { ActivityIndicator, Text, View } from 'react-native';
 import { styles } from '../../styles/style';
+
+import { Alert } from 'react-native';
+import { checkInternetConnection } from '../../utils/Apis';
 
 export default function Loading() {
   const navigation = useNavigation();
 
   useEffect(() => {
-    checkInternetConnection();
-  }, []);
-
-  const checkInternetConnection = async () => {
-    try {
-      const response = await fetch('https://www.google.com');
-      if (response.status === 200) {
-        navigation.navigate('auth');
+    let timer = null;
+    
+    const checkConnection = async () => {
+      const connected = await checkInternetConnection();
+      console.log('Connection status:', connected);
+      setIsConnected(connected);
+      
+      if (!connected) {
+        Alert.alert(
+          "No Connection",
+          "Cannot connect to server. Will try again automatically."
+        );
+        
+        timer = setTimeout(() => {
+          checkConnection();
+        }, 30000); // 30 seconds delay
+      } else {
+        navigation.navigate('main');
       }
-    } catch (error) {
-      alert('No internet connection');
-    }
-  };
+    };
+    
+    checkConnection();
+    
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [navigation]);
 
   return (
     <View style={styles.loadingContainer}>

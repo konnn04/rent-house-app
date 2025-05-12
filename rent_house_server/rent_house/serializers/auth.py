@@ -2,6 +2,7 @@ from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.db.models import Q
 
 from rent_house.models import User, VerificationCode
 
@@ -123,11 +124,15 @@ class ResendVerificationSerializer(serializers.Serializer):
         return value
 
 class CheckVerificationStatusSerializer(serializers.Serializer):
-    email = serializers.EmailField(required=True)
-    
-    def validate_email(self, value):
+    email_or_username = serializers.CharField(required=True)
+    def validate_email_or_username(self, value):
         try:
-            self.user = User.objects.get(email=value)
+            self.user = User.objects.filter(
+                Q(email=value) | Q(username=value)
+            ).first()
+            if not self.user:
+                raise serializers.ValidationError("Username hoặc email không tồn tại trong hệ thống")
             return value
         except User.DoesNotExist:
-            raise serializers.ValidationError("Email không tồn tại trong hệ thống")
+            raise serializers.ValidationError("Username hoặc email không tồn tại trong hệ thống")
+ 

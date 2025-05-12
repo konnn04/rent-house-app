@@ -1,19 +1,22 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { useColorScheme } from 'react-native';
 import Colors from '../constants/Colors';
-import { ThemeManager } from '../utils/theme';
+import { paperThemes } from '../styles/paperTheme';
+import { ThemeManager } from '../utils/Theme';
 
 const ThemeContext = createContext();
 
 export const ThemeProvider = ({ children }) => {
+  const systemTheme = useColorScheme();
   const [theme, setTheme] = useState('light');
-
+  
   useEffect(() => {
     loadTheme();
   }, []);
 
   const loadTheme = async () => {
     const savedTheme = await ThemeManager.getTheme();
-    setTheme(savedTheme);
+    setTheme(savedTheme || systemTheme || 'light');
   };
 
   const toggleTheme = async () => {
@@ -25,7 +28,8 @@ export const ThemeProvider = ({ children }) => {
   const value = {
     theme,
     toggleTheme,
-    colors: Colors[theme]
+    colors: Colors[theme],
+    paperTheme: paperThemes[theme]
   };
 
   return (
