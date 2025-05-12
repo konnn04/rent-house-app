@@ -1,48 +1,60 @@
-import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { SafeAreaView, StatusBar, StyleSheet } from 'react-native';
-import { ThemeProvider, useTheme } from './contexts/ThemeContext';
+import React from 'react';
+import { StatusBar, StyleSheet, View } from 'react-native';
+import { Provider as PaperProvider } from 'react-native-paper';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import AuthScreen from './components/pages/Auth/Main';
 import Loading from './components/pages/Loading';
-import Auth from './components/pages/Auth';
 import Main from './components/pages/Main';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 
-const Stack = createNativeStackNavigator();
+// Stack cho tất cả các màn hình
+const RootStack = createNativeStackNavigator();
 
+// Component chính của app
 const AppContent = () => {
-  const { theme, colors } = useTheme();
+  const { theme, colors, paperTheme } = useTheme();
+  const { isLoading, userToken } = useAuth();
 
   return (
-    <>
-      {/* Tùy chỉnh StatusBar */}
+    <PaperProvider theme={paperTheme}>
       <StatusBar
         barStyle={theme === 'light' ? 'dark-content' : 'light-content'}
         backgroundColor={colors.backgroundPrimary}
       />
-      {/* SafeAreaView để bao phủ toàn màn hình */}
-      <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.backgroundPrimary }]}>
+      <View style={[styles.container, { backgroundColor: colors.backgroundPrimary }]}>
         <NavigationContainer>
-          <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="Loading">
-            <Stack.Screen name="Loading" component={Loading} />
-            <Stack.Screen name="auth" component={Auth} />
-            <Stack.Screen name="main" component={Main} />
-          </Stack.Navigator>
+          <RootStack.Navigator screenOptions={{ headerShown: false }}>
+            {isLoading ? (
+              <RootStack.Screen name="Loading" component={Loading} />
+            ) : userToken ? (
+              <RootStack.Screen name="Main" component={Main} />
+            ) : (
+              <RootStack.Screen name="AuthScreen" component={AuthScreen} />
+            )}
+          </RootStack.Navigator>
         </NavigationContainer>
-      </SafeAreaView>
-    </>
+      </View>
+    </PaperProvider>
   );
 };
 
 export default function App() {
   return (
-    <ThemeProvider>
-      <AppContent />
-    </ThemeProvider>
+    <SafeAreaProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <AppContent />
+        </AuthProvider>
+      </ThemeProvider>
+    </SafeAreaProvider>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
+  container: {
     flex: 1,
   },
 });

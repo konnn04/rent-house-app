@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../../contexts/ThemeContext';
 
 const PostItem = ({ post }) => {
@@ -8,6 +8,21 @@ const PostItem = ({ post }) => {
   const [liked, setLiked] = useState(false);
   const [disliked, setDisliked] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
+  const [imageLoadError, setImageLoadError] = useState({});
+  const [imageLoading, setImageLoading] = useState({});
+  
+  // Format the timestamp to a readable date
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('vi-VN', { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
   
   const handleLike = () => {
     setLiked(!liked);
@@ -23,18 +38,54 @@ const PostItem = ({ post }) => {
     setShowOptions(!showOptions);
   };
 
+  const handleImageLoadStart = (index) => {
+    setImageLoading(prev => ({ ...prev, [index]: true }));
+  };
+
+  const handleImageLoadEnd = (index) => {
+    setImageLoading(prev => ({ ...prev, [index]: false }));
+  };
+
+  const handleImageError = (index) => {
+    setImageLoadError(prev => ({ ...prev, [index]: true }));
+    setImageLoading(prev => ({ ...prev, [index]: false }));
+    console.error(`Failed to load image at index ${index}`);
+  };
+
+  // Safety check for null/undefined post
+  if (!post) {
+    return null;
+  }
+
   return (
     <View style={[styles.postContainer, { backgroundColor: colors.backgroundSecondary }]}>
       {/* Header */}
       <View style={styles.postHeader}>
         <View style={styles.postUserInfo}>
           <Image 
-            source={{ uri: post.author.avatar || 'https://via.placeholder.com/40' }} 
+            source={{ 
+              uri: post.author?.avatar || 
+                   post.author?.avatar_thumbnail || 
+                   'https://via.placeholder.com/150'
+            }}
+            onLoadStart={() => handleImageLoadStart('avatar')}
+            onLoad={() => handleImageLoadEnd('avatar')}
+            onError={() => handleImageError('avatar')}
+            resizeMode="cover" 
             style={styles.userAvatar} 
           />
+          {imageLoading['avatar'] && (
+            <View style={styles.avatarLoadingOverlay}>
+              <ActivityIndicator size="small" color={colors.accentColor} />
+            </View>
+          )}
           <View>
-            <Text style={[styles.userName, { color: colors.textPrimary }]}>{post.author.name}</Text>
-            <Text style={[styles.postTime, { color: colors.textSecondary }]}>{post.createdAt}</Text>
+            <Text style={[styles.userName, { color: colors.textPrimary }]}>
+              {post.author?.full_name || post.author?.username || 'Anonymous'}
+            </Text>
+            <Text style={[styles.postTime, { color: colors.textSecondary }]}>
+              {formatDate(post.created_at)}
+            </Text>
           </View>
         </View>
         <View style={styles.postOptions}>
@@ -59,39 +110,47 @@ const PostItem = ({ post }) => {
 
       {/* Body */}
       <View style={styles.postBody}>
+        {post.title && (
+          <Text style={[styles.postTitle, { color: colors.accentColor }]}>{post.title}</Text>
+        )}
         <Text style={[styles.postContent, { color: colors.textPrimary }]}>{post.content}</Text>
         
-        {/* Images or Videos */}
+        {/* Images */}
         {post.media && post.media.length > 0 && (
           <View style={styles.postMedia}>
             {post.media.map((item, index) => (
-              <Image 
-                key={index} 
-                source={{ uri: item.url }} 
-                style={styles.postImage}
-                resizeMode="cover" 
-              />
+              <View key={index} style={styles.mediaContainer}>
+                <Image 
+                  source={{ 
+                    uri: item.url || item.thumbnail || item.medium || 'https://via.placeholder.com/800x600' 
+                  }}
+                  style={styles.postImage}
+                  resizeMode="cover"
+                  onLoadStart={() => handleImageLoadStart(index)}
+                  onLoad={() => handleImageLoadEnd(index)}
+                  onError={() => handleImageError(index)}
+                />
+                {imageLoading[index] && (
+                  <View style={styles.imageLoadingOverlay}>
+                    <ActivityIndicator size="large" color={colors.accentColor} />
+                  </View>
+                )}
+                {imageLoadError[index] && (
+                  <View style={styles.imageErrorOverlay}>
+                    <Ionicons name="image-outline" size={40} color={colors.textSecondary} />
+                    <Text style={{ color: colors.textSecondary }}>Không thể hiển thị hình ảnh</Text>
+                  </View>
+                )}
+              </View>
             ))}
           </View>
         )}
         
-        {/* Room Attachment */}
-        {post.roomInfo && (
-          <View style={[styles.roomAttachment, { borderColor: colors.borderColor }]}>
-            <Text style={[styles.roomTitle, { color: colors.accentColor }]}>{post.roomInfo.title}</Text>
-            <View style={styles.roomDetails}>
-              <Text style={{ color: colors.textPrimary }}><Text style={{ fontWeight: 'bold' }}>Địa chỉ:</Text> {post.roomInfo.address}</Text>
-              <Text style={{ color: colors.textPrimary }}><Text style={{ fontWeight: 'bold' }}>Giá:</Text> {post.roomInfo.price.toLocaleString('vi-VN')} đồng/tháng</Text>
-              <Text style={{ color: colors.textPrimary }}><Text style={{ fontWeight: 'bold' }}>Diện tích:</Text> {post.roomInfo.area} m²</Text>
-              {post.roomInfo.features && (
-                <View style={styles.roomFeatures}>
-                  <Text style={{ fontWeight: 'bold', color: colors.textPrimary }}>Tiện ích:</Text>
-                  {post.roomInfo.features.map((feature, index) => (
-                    <Text key={index} style={{ color: colors.textPrimary, marginLeft: 10 }}>• {feature}</Text>
-                  ))}
-                </View>
-              )}
-            </View>
+        {/* Location info if available */}
+        {post.address && (
+          <View style={styles.locationInfo}>
+            <Ionicons name="location" size={16} color={colors.textSecondary} />
+            <Text style={[styles.locationText, { color: colors.textSecondary }]}>{post.address}</Text>
           </View>
         )}
       </View>
@@ -109,7 +168,7 @@ const PostItem = ({ post }) => {
               color={liked ? colors.accentColor : colors.textSecondary} 
             />
             <Text style={{ color: liked ? colors.accentColor : colors.textSecondary, marginLeft: 5 }}>
-              {post.likes + (liked ? 1 : 0)}
+              {(post.interaction_count || 0) + (liked ? 1 : 0)}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity 
@@ -121,14 +180,11 @@ const PostItem = ({ post }) => {
               size={20} 
               color={disliked ? colors.accentColor : colors.textSecondary} 
             />
-            <Text style={{ color: disliked ? colors.accentColor : colors.textSecondary, marginLeft: 5 }}>
-              {post.dislikes + (disliked ? 1 : 0)}
-            </Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.interactionButton}>
             <Ionicons name="chatbubble-outline" size={20} color={colors.textSecondary} />
             <Text style={{ color: colors.textSecondary, marginLeft: 5 }}>
-              {post.comments.length}
+              {post.comment_count || 0}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.interactionButton}>
@@ -136,35 +192,6 @@ const PostItem = ({ post }) => {
             <Text style={{ color: colors.textSecondary, marginLeft: 5 }}>Chia sẻ</Text>
           </TouchableOpacity>
         </View>
-        
-        {/* Featured Comments - limit to 2 for mobile view */}
-        {post.comments.length > 0 && (
-          <View style={styles.featuredComments}>
-            <Text style={[styles.commentsTitle, { color: colors.textSecondary }]}>Bình luận nổi bật</Text>
-            {post.comments.slice(0, 2).map((comment) => (
-              <View key={comment.id} style={styles.comment}>
-                <Image 
-                  source={{ uri: comment.author.avatar || 'https://via.placeholder.com/30' }} 
-                  style={styles.commentAvatar} 
-                />
-                <View style={[styles.commentContent, { backgroundColor: colors.backgroundPrimary }]}>
-                  <View style={styles.commentHeader}>
-                    <Text style={[styles.commentAuthor, { color: colors.textPrimary }]}>{comment.author.name}</Text>
-                    <Text style={[styles.commentTime, { color: colors.textSecondary }]}>{comment.createdAt}</Text>
-                  </View>
-                  <Text style={[styles.commentText, { color: colors.textPrimary }]}>{comment.text}</Text>
-                </View>
-              </View>
-            ))}
-            {post.comments.length > 2 && (
-              <TouchableOpacity style={styles.viewMoreComments}>
-                <Text style={{ color: colors.textSecondary }}>
-                  Xem thêm {post.comments.length - 2} bình luận
-                </Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        )}
       </View>
     </View>
   );
@@ -191,12 +218,24 @@ const styles = StyleSheet.create({
   postUserInfo: {
     flexDirection: 'row',
     alignItems: 'center',
+    position: 'relative',
   },
   userAvatar: {
     width: 40,
     height: 40,
     borderRadius: 20,
     marginRight: 12,
+    backgroundColor: '#f0f0f0',
+  },
+  avatarLoadingOverlay: {
+    position: 'absolute',
+    left: 0,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.1)',
   },
   userName: {
     fontWeight: 'bold',
@@ -228,6 +267,11 @@ const styles = StyleSheet.create({
   postBody: {
     marginBottom: 12,
   },
+  postTitle: {
+    fontSize: 17,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
   postContent: {
     fontSize: 15,
     lineHeight: 20,
@@ -236,28 +280,44 @@ const styles = StyleSheet.create({
   postMedia: {
     marginBottom: 12,
   },
+  mediaContainer: {
+    position: 'relative',
+    marginBottom: 8,
+  },
   postImage: {
     width: '100%',
     height: 200,
     borderRadius: 8,
-    marginBottom: 8,
+    backgroundColor: '#f0f0f0',
   },
-  roomAttachment: {
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 12,
+  imageLoadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.05)',
+  },
+  imageErrorOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.05)',
+  },
+  locationInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginTop: 5,
   },
-  roomTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  roomDetails: {
-    gap: 5,
-  },
-  roomFeatures: {
-    marginTop: 5,
+  locationText: {
+    marginLeft: 5,
+    fontSize: 13,
   },
   interactionBar: {
     flexDirection: 'row',
@@ -269,49 +329,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 8,
-  },
-  featuredComments: {
-    marginTop: 12,
-  },
-  commentsTitle: {
-    fontSize: 14,
-    marginBottom: 8,
-  },
-  comment: {
-    flexDirection: 'row',
-    marginBottom: 10,
-  },
-  commentAvatar: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    marginRight: 8,
-  },
-  commentContent: {
-    flex: 1,
-    borderRadius: 12,
-    padding: 8,
-  },
-  commentHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  commentAuthor: {
-    fontWeight: 'bold',
-    fontSize: 13,
-    marginRight: 5,
-  },
-  commentTime: {
-    fontSize: 11,
-  },
-  commentText: {
-    fontSize: 13,
-    marginTop: 3,
-  },
-  viewMoreComments: {
-    alignItems: 'center',
-    marginTop: 5,
-    padding: 8,
   },
 });
 

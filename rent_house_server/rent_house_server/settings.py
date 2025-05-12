@@ -57,7 +57,11 @@ INSTALLED_APPS = [
     'oauth2_provider',
 ]
 
-OAUTH2_PROVIDER = { 'OAUTH2_BACKEND_CLASS': 'oauth2_provider.oauth2_backends.JSONOAuthLibCore' }
+OAUTH2_PROVIDER = { 
+    'ERROR_RESPONSE_WITH_SCOPES': True,
+    'OAUTH2_BACKEND_CLASS': 'oauth2_provider.oauth2_backends.JSONOAuthLibCore',
+    'OAUTH2_VALIDATOR_CLASS': 'rent_house.auth_validators.CustomOAuth2Validator'
+}
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
@@ -66,6 +70,8 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 10,
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
+    # Add custom exception handler
+    # 'EXCEPTION_HANDLER': 'rent_house.exception_handlers.custom_exception_handler',
 }
 
 AUTH_USER_MODEL = 'rent_house.User'
@@ -209,6 +215,29 @@ LOGGING = {
     },
 }
 
+
+
+# Telegram Bot Settings
+TELEGRAM_DEBUG_ENABLED = os.getenv('TELEGRAM_DEBUG_ENABLED', 'False').lower() == 'true'
+TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID', '')
+TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', '')
+
+# Email Configuration with Gmail
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')  # Add to .env
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')  # App password from Google
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER)
+
+# Verification settings
+VERIFICATION_CODE_EXPIRY_MINUTES = 30  # Time in minutes before verification codes expire
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+]
+
 # Only add Telegram handler if enabled
 if TELEGRAM_DEBUG_ENABLED:
     LOGGING['handlers']['telegram'] = {
@@ -219,20 +248,8 @@ if TELEGRAM_DEBUG_ENABLED:
     LOGGING['loggers']['django']['handlers'].append('telegram')
     LOGGING['loggers']['rent_house']['handlers'].append('telegram')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-TELEGRAM_DEBUG_ENABLED = os.getenv('TELEGRAM_DEBUG_ENABLED', 'False').lower() == 'true'TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID', '')TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', '')# Telegram Bot SettingsVERIFICATION_CODE_EXPIRY_MINUTES = 30  # Time in minutes before verification codes expire# Verification settingsDEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER)EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')  # App password from GoogleEMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')  # Add to .envEMAIL_USE_TLS = TrueEMAIL_PORT = 587EMAIL_HOST = 'smtp.gmail.com'EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'# Email Configuration with Gmail
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:8000',
+    'https://*.ngrok-free.app',
+    'https://light-mudfish-primary.ngrok-free.app'
+]

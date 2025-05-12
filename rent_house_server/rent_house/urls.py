@@ -2,7 +2,6 @@ from django.urls import path, include
 from . import views
 from rest_framework.routers import DefaultRouter
 
-
 router = DefaultRouter()
 router.register(r'users', views.UserViewSet, basename='user')
 # Home page
@@ -19,13 +18,14 @@ router.register(r'chats', views.ChatGroupViewSet, basename='chat-group')
 router.register(r'messages', views.MessageViewSet, basename='message')
 
 urlpatterns = [
-    path('api/', include(router.urls)),
-    
+    path('ping/', views.ping_view, name='ping'),
+    path('', include(router.urls)),
     # Authentication endpoints
-    path('api/register/', views.RegisterView.as_view(), name='register'),
-    path('api/verify-email/', views.VerifyEmailView.as_view(), name='verify-email'),
-    path('api/resend-verification/', views.ResendVerificationView.as_view(), name='resend-verification'),
-    path('api/check-verification-status/', views.CheckVerificationStatusView.as_view(), name='check-verification-status'),
+    path('register/', views.RegisterView.as_view(), name='register'),
+    path('verify-email/', views.VerifyEmailView.as_view(), name='verify-email'),
+    path('resend-verification/', views.ResendVerificationView.as_view(), name='resend-verification'),
+    path('check-verification-status/', views.CheckVerificationStatusView.as_view(), name='check-verification-status'),
+    
 ]
 
 

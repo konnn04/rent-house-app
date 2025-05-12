@@ -12,7 +12,8 @@ class NewFeedViewSet(viewsets.ViewSet):
     parser_classes = [parsers.MultiPartParser]
     pagination_class = PageNumberPagination  # Use default pagination
 
-    @action(detail=False, methods=['get'], url_path='new-feed', permission_classes=[permissions.IsAuthenticated])
+    # , permission_classes=[permissions.IsAuthenticated]
+    @action(detail=False, methods=['get'], url_path='new-feed')
     def new_feed(self, request):
         user = request.user
         posts = Post.objects.filter(is_active=True).order_by('-created_at')

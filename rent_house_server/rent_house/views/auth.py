@@ -48,7 +48,7 @@ class RegisterView(generics.CreateAPIView):
             "user_id": user.id,
             "email": user.email,
         }
-        
+         
         # Nếu đang ở môi trường phát triển, trả về mã xác thực để testing
         if settings.DEBUG:
             response_data["verification_code"] = verification_code.code
