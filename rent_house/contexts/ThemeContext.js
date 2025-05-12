@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { useColorScheme } from 'react-native';
 import Colors from '../constants/Colors';
 import { paperThemes } from '../styles/paperTheme';
@@ -14,6 +14,19 @@ export const ThemeProvider = ({ children }) => {
     loadTheme();
   }, []);
 
+  // Consider listening to system theme changes
+  useEffect(() => {
+    const subscription = ThemeManager.listenToSystemThemeChanges(newTheme => {
+      // Optional: automatically follow system theme changes
+      if (userPreferSystemTheme) {
+        setTheme(newTheme);
+        ThemeManager.setTheme(newTheme);
+      }
+    });
+    
+    return () => subscription?.remove?.();
+  }, []);
+
   const loadTheme = async () => {
     const savedTheme = await ThemeManager.getTheme();
     setTheme(savedTheme || systemTheme || 'light');
@@ -24,16 +37,19 @@ export const ThemeProvider = ({ children }) => {
     await ThemeManager.setTheme(newTheme);
     setTheme(newTheme);
   };
-
-  const value = {
+  
+  // Use useMemo to optimize re-renders
+  const contextValue = useMemo(() => ({
     theme,
     toggleTheme,
     colors: Colors[theme],
-    paperTheme: paperThemes[theme]
-  };
+    paperTheme: paperThemes[theme],
+    isDark: theme === 'dark',
+    getComponentTheme: (lightStyle, darkStyle) => theme === 'dark' ? darkStyle : lightStyle
+  }), [theme]);
 
   return (
-    <ThemeContext.Provider value={value}>
+    <ThemeContext.Provider value={contextValue}>
       {children}
     </ThemeContext.Provider>
   );

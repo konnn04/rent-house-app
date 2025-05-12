@@ -4,7 +4,7 @@ import { ActivityIndicator, Text, View } from 'react-native';
 import { styles } from '../../styles/style';
 
 import { Alert } from 'react-native';
-import { checkInternetConnection } from '../../utils/Apis';
+import { checkInternetConnection } from '../../utils/Fetch';
 
 export default function Loading() {
   const navigation = useNavigation();

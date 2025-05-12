@@ -44,7 +44,7 @@ export const authStyles = (colors) => {
       backgroundColor: colors.backgroundPrimary, // Sử dụng màu nền từ theme
     },
     authTitle: {
-      fontSize: 60,
+      fontSize: 24,
       fontWeight: "bold",
       marginBottom: 10,
       textAlign: "center",
@@ -97,7 +97,7 @@ export const homeStyles = StyleSheet.create({
     marginTop: 25,
   },
   title: {
-    fontSize: 32,
+    fontSize: 24,
     fontWeight: 'bold',
   },
   greeting: {
@@ -129,7 +129,7 @@ export const homeStyles = StyleSheet.create({
   },
   postsList: {
     paddingTop: 10,
-    paddingBottom: 70, // Extra space for tab navigation
+    paddingBottom: 100,
   },
   loadingFooter: {
     flexDirection: 'row',

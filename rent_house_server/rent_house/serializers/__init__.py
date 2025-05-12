@@ -9,6 +9,7 @@ from .chat import ChatGroupSerializer, ChatGroupDetailSerializer, ChatMembership
 from .follow import FollowSerializer
 from .room_rental import RoomRentalSerializer
 from .auth import RegisterSerializer, VerifyEmailSerializer, ResendVerificationSerializer, CheckVerificationStatusSerializer
+from .profile import ProfileSerializer, PublicProfileSerializer
 
 # Export all serializers to maintain backward compatibility
 __all__ = [
@@ -22,5 +23,6 @@ __all__ = [
     'ChatMembershipSerializer', 'MessageSerializer',
     'FollowSerializer', 'RoomRentalSerializer',
     'RegisterSerializer', 'VerifyEmailSerializer', 'ResendVerificationSerializer',
-    'CheckVerificationStatusSerializer'
+    'CheckVerificationStatusSerializer',
+    'ProfileSerializer', 'PublicProfileSerializer'
 ]

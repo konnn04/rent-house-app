@@ -16,6 +16,7 @@ router.register(r'follows', views.FollowViewSet, basename='follow')
 router.register(r'rentals', views.RoomRentalViewSet, basename='room-rental')
 router.register(r'chats', views.ChatGroupViewSet, basename='chat-group')
 router.register(r'messages', views.MessageViewSet, basename='message')
+router.register(r'profiles', views.ProfileViewSet, basename='profile')
 
 urlpatterns = [
     path('ping/', views.ping_view, name='ping'),

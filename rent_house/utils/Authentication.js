@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CLIENT_ID, CLIENT_SECRET } from "../constants/Config";
-import { api } from "./Apis";
+import { api } from "./Fetch";
 
 export const login = async (username, password) => {
   try {
@@ -106,5 +106,14 @@ export const verifyToken = async () => {
   } catch (error) {
     console.error("Token verification error:", error);
     return false;
+  }
+};
+
+export const logout = async () => {
+  try {
+    await AsyncStorage.removeItem("access_token");
+    await AsyncStorage.removeItem("refresh_token");
+  } catch (error) {
+    console.error("Logout error:", error);
   }
 };

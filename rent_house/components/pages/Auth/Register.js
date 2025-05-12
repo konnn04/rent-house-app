@@ -1,14 +1,12 @@
 import { useNavigation } from '@react-navigation/native';
 import React, { useState } from 'react';
-import { Image, ScrollView, StyleSheet, View } from 'react-native';
+import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import {
   Button,
   Checkbox,
   HelperText,
   SegmentedButtons,
-  Text,
-  TextInput,
-  useTheme as usePaperTheme
+  TextInput
 } from 'react-native-paper';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { register } from '../../../utils/Authentication';
@@ -44,7 +42,6 @@ export default function Register() {
   
   const navigation = useNavigation();
   const { colors } = useTheme();
-  const paperTheme = usePaperTheme();
 
   // Field change handlers with error clearing
   const handleFieldChange = (field, value) => {
@@ -196,7 +193,7 @@ export default function Register() {
 
   return (
     <ScrollView 
-      style={styles.container}
+      style={[styles.container, { backgroundColor: colors.backgroundPrimary}]}
       showsVerticalScrollIndicator={false}
       contentContainerStyle={styles.scrollContent}
     >
@@ -209,11 +206,30 @@ export default function Register() {
         />
       </View>
       
-      <Text variant="headlineMedium" style={styles.title}>RENT HOUSE</Text>
-      <Text variant="titleMedium" style={styles.subtitle}>Đăng ký tài khoản mới</Text>
+      <Text style={[styles.title, { color: colors.textPrimary }]}>RENT HOUSE</Text>
+      <Text style={[styles.subtitle, { color: colors.textPrimary }]}>Đăng ký tài khoản mới</Text>
       
       {/* Form Container */}
       <View style={styles.formContainer}>
+        {/* Role Selection */}
+        <Text style={[styles.sectionLabel, { color: colors.textPrimary }]}>Bạn là:</Text>
+        <SegmentedButtons
+          value={role}
+          onValueChange={setRole}
+          style={styles.segmentedButtons}
+          buttons={[
+            {
+              value: 'renter',
+              label: 'Người thuê',
+            },
+            {
+              value: 'owner',
+              label: 'Chủ nhà',
+            },
+          ]}
+        />
+
+
         {/* Name Row */}
         <View style={styles.rowContainer}>
           <View style={styles.halfInputContainer}>
@@ -336,23 +352,7 @@ export default function Register() {
           </HelperText>
         ) : null}
         
-        {/* Role Selection */}
-        <Text variant="bodyMedium" style={styles.sectionLabel}>Bạn là</Text>
-        <SegmentedButtons
-          value={role}
-          onValueChange={setRole}
-          style={styles.segmentedButtons}
-          buttons={[
-            {
-              value: 'renter',
-              label: 'Người thuê',
-            },
-            {
-              value: 'owner',
-              label: 'Chủ nhà',
-            },
-          ]}
-        />
+        
       </View>
       
       {/* Terms and Conditions */}
@@ -363,8 +363,7 @@ export default function Register() {
           color={colors.primary}
         />
         <Text 
-          variant="bodyMedium" 
-          style={styles.termsText}
+          style={[styles.termsText, { color: colors.textPrimary }]}
           onPress={() => setTermsAccepted(!termsAccepted)}
         >
           Tôi đồng ý với{' '}
@@ -430,6 +429,7 @@ const styles = StyleSheet.create({
   title: {
     fontWeight: 'bold',
     textAlign: 'center',
+    fontSize: 24,
   },
   subtitle: {
     textAlign: 'center',

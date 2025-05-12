@@ -1,12 +1,42 @@
-import { MD3DarkTheme, MD3LightTheme } from 'react-native-paper';
+import { DarkTheme as NavigationDarkTheme, DefaultTheme as NavigationDefaultTheme } from '@react-navigation/native';
+import { MD3DarkTheme, MD3LightTheme, adaptNavigationTheme } from 'react-native-paper';
 import Colors from '../constants/Colors';
 
-// Create custom themes based on your color palette
+// Adapt navigation theme to work with react-native-paper
+const { LightTheme: NavigationLightThemeAdapted, DarkTheme: NavigationDarkThemeAdapted } 
+  = adaptNavigationTheme({
+    reactNavigationLight: NavigationDefaultTheme,
+    reactNavigationDark: NavigationDarkTheme,
+  });
+
+// Define custom fonts with all required variants
+const customFonts = {
+  regular: {
+    fontFamily: 'System',
+    fontWeight: 'normal',
+  },
+  medium: {
+    fontFamily: 'System',
+    fontWeight: '500',
+  },
+  bold: {
+    fontFamily: 'System',
+    fontWeight: 'bold',
+  },
+  heavy: {
+    fontFamily: 'System',
+    fontWeight: '900',
+  },
+};
+
+// Create combined themes for React Navigation + React Native Paper
 export const paperThemes = {
   light: {
     ...MD3LightTheme,
+    ...NavigationLightThemeAdapted,
     colors: {
       ...MD3LightTheme.colors,
+      ...NavigationLightThemeAdapted.colors,
       primary: Colors.light.accentColor,
       onPrimary: '#ffffff',
       primaryContainer: Colors.light.accentColorLight,
@@ -40,11 +70,38 @@ export const paperThemes = {
       warning: Colors.light.warningColor,
       info: Colors.light.infoColor,
     },
+    // Fix for typography variants
+    fonts: {
+      ...MD3LightTheme.fonts,
+      ...customFonts,
+      // Add missing Paper typography variants
+      displayLarge: { ...customFonts.regular, fontSize: 57, lineHeight: 64 },
+      displayMedium: { ...customFonts.regular, fontSize: 45, lineHeight: 52 },
+      displaySmall: { ...customFonts.regular, fontSize: 36, lineHeight: 44 },
+      headlineLarge: { ...customFonts.regular, fontSize: 32, lineHeight: 40 },
+      headlineMedium: { ...customFonts.regular, fontSize: 28, lineHeight: 36 },
+      headlineSmall: { ...customFonts.regular, fontSize: 24, lineHeight: 32 },
+      titleLarge: { ...customFonts.regular, fontSize: 22, lineHeight: 28 },
+      titleMedium: { ...customFonts.medium, fontSize: 16, lineHeight: 24 },
+      titleSmall: { ...customFonts.medium, fontSize: 14, lineHeight: 20 },
+      bodyLarge: { ...customFonts.regular, fontSize: 16, lineHeight: 24 },
+      bodyMedium: { ...customFonts.regular, fontSize: 14, lineHeight: 20 },
+      bodySmall: { ...customFonts.regular, fontSize: 12, lineHeight: 16 },
+      labelLarge: { ...customFonts.medium, fontSize: 14, lineHeight: 20 },
+      labelMedium: { ...customFonts.medium, fontSize: 12, lineHeight: 16 },
+      labelSmall: { ...customFonts.medium, fontSize: 11, lineHeight: 16 },
+    },
+    // Add custom properties for your app's specific needs
+    custom: {
+      statusBarStyle: 'dark-content',
+    }
   },
   dark: {
     ...MD3DarkTheme,
+    ...NavigationDarkThemeAdapted,
     colors: {
       ...MD3DarkTheme.colors,
+      ...NavigationDarkThemeAdapted.colors,
       primary: Colors.dark.accentColor,
       onPrimary: '#ffffff',
       primaryContainer: Colors.dark.accentColorLight,
@@ -78,5 +135,30 @@ export const paperThemes = {
       warning: Colors.dark.warningColor,
       info: Colors.dark.infoColor,
     },
+    // Fix for typography variants
+    fonts: {
+      ...MD3DarkTheme.fonts,
+      ...customFonts,
+      // Add missing Paper typography variants
+      displayLarge: { ...customFonts.regular, fontSize: 57, lineHeight: 64 },
+      displayMedium: { ...customFonts.regular, fontSize: 45, lineHeight: 52 },
+      displaySmall: { ...customFonts.regular, fontSize: 36, lineHeight: 44 },
+      headlineLarge: { ...customFonts.regular, fontSize: 32, lineHeight: 40 },
+      headlineMedium: { ...customFonts.regular, fontSize: 28, lineHeight: 36 },
+      headlineSmall: { ...customFonts.regular, fontSize: 24, lineHeight: 32 },
+      titleLarge: { ...customFonts.regular, fontSize: 22, lineHeight: 28 },
+      titleMedium: { ...customFonts.medium, fontSize: 16, lineHeight: 24 },
+      titleSmall: { ...customFonts.medium, fontSize: 14, lineHeight: 20 },
+      bodyLarge: { ...customFonts.regular, fontSize: 16, lineHeight: 24 },
+      bodyMedium: { ...customFonts.regular, fontSize: 14, lineHeight: 20 },
+      bodySmall: { ...customFonts.regular, fontSize: 12, lineHeight: 16 },
+      labelLarge: { ...customFonts.medium, fontSize: 14, lineHeight: 20 },
+      labelMedium: { ...customFonts.medium, fontSize: 12, lineHeight: 16 },
+      labelSmall: { ...customFonts.medium, fontSize: 11, lineHeight: 16 },
+    },
+    // Add custom properties for your app's specific needs
+    custom: {
+      statusBarStyle: 'light-content',
+    }
   },
 };

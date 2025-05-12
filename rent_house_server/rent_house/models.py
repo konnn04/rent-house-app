@@ -427,7 +427,7 @@ class Post(BaseModel):
         max_length=20, 
         choices=[(post_type.value[0], post_type.name) for post_type in PostType]
     )
-    title = models.CharField(max_length=50, null=True, blank=True)
+    title = models.CharField(max_length=100, null=True, blank=True)
     content = models.TextField()
     address = models.TextField(null=True, blank=True)
     latitude = models.FloatField(null=True, blank=True)

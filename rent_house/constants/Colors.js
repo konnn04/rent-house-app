@@ -24,7 +24,7 @@ export default {
     accentColorLight: "#121c2b",
     successColor: "#198754",
     warningColor: "#fffb00",
-    dangerColor: "#ae1e2c",
+    dangerColor: "#fe1e2c",
     infoColor: "#00738a",
     borderColor: "#000000"
   },
