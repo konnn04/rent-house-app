@@ -12,7 +12,7 @@ export default {
     successColor: "#198754",
     warningColor: "#fffb00",
     dangerColor: "#dc3545",
-    infoColor: "#00738a",
+    infoColor: "#00C6ED",
     borderColor: "#b0bdc9"
   },
   dark: {
