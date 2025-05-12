@@ -3,15 +3,11 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
 
-import HomeScreen from './MainPage/HomeScreen';
-import ChatScreen from './MainPage/ChatScreen';
-import FindHouseScreen from './MainPage/FindHouseScreen';
-import ProfileScreen from './MainPage/ProfileScreen';
-import Notices from './MainPage/Notices';
 import { useTheme } from '../../contexts/ThemeContext';
 import ChatScreen from './main/ChatScreen';
 import FindHouseScreen from './main/FindHouseScreen';
 import HomeScreen from './main/home/HomeScreen';
+import Notices from './main/Notices';
 import ProfileScreen from './main/profile/ProfileScreen';
 
 import LanguageSettingsScreen from '../settings/LanguageSettingsScreen';
@@ -105,7 +101,7 @@ export default function Main() {
           right: 0,
           elevation: 0,
           height: 45,
-          opacity: 0.97,
+          opacity: 1,
         },
       })}
     >
@@ -113,7 +109,7 @@ export default function Main() {
       <Tab.Screen name="Notice" component={Notices} options={{ headerShown: false }}/>
       <Tab.Screen name="Find" component={FindHouseScreen} options={{ headerShown: false }}/>
       <Tab.Screen name="Chat" component={ChatScreen} options={{ headerShown: false }}/>
-      <Tab.Screen name="Profile" component={ProfileScreen} options={{ headerShown: false }}/>
+      <Tab.Screen name="Profile" component={ProfileStackScreen} options={{ headerShown: false }}/>
     </Tab.Navigator>
   );
 }
