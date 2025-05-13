@@ -4,6 +4,7 @@ export const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
+    paddingBottom: 50,
   },
   loadingContainer: {
     flex: 1,
@@ -91,14 +92,19 @@ export const homeStyles = StyleSheet.create({
   },
   headerTop: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 8,
-    marginTop: 25,
+    marginTop: 20,
+    gap: 10,
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
+  },
+  logo: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
   },
   greeting: {
     fontSize: 16,

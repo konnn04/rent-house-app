@@ -2,6 +2,7 @@ from rest_framework import serializers
 from rent_house.models import User
 from django.db.models import Avg, Count
 from django.contrib.contenttypes.models import ContentType
+from rent_house.serializers.post import PostSerializer
 
 class ProfileSerializer(serializers.ModelSerializer):
     """Serializer for displaying user profile information"""
@@ -38,6 +39,8 @@ class DetailedProfileSerializer(ProfileSerializer):
     avg_rating = serializers.SerializerMethodField()
     house_count = serializers.SerializerMethodField()
     room_count = serializers.SerializerMethodField()
+    posts = serializers.SerializerMethodField()
+    houses = serializers.SerializerMethodField()
     
     class Meta(ProfileSerializer.Meta):
         fields = ProfileSerializer.Meta.fields + (
@@ -80,6 +83,17 @@ class DetailedProfileSerializer(ProfileSerializer):
             return None
         # Tính tổng số phòng từ tất cả nhà/căn hộ
         return sum(house.rooms.count() for house in obj.houses.all())
+    
+    def get_posts(self, obj):
+        """Trả về danh sách bài đăng của người dùng"""
+        request = self.context.get('request')
+        if not request or not request.user.is_authenticated:
+            return None
+        
+        # Lọc bài đăng theo người dùng
+        posts = obj.posts.all()
+        serializer = PostSerializer(posts, many=True, context=self.context)
+        return serializer.data
 
 
 class PublicProfileSerializer(ProfileSerializer):
@@ -114,7 +128,7 @@ class PublicProfileSerializer(ProfileSerializer):
         if not houses.exists():
             return None
             
-        avg = houses.annotate(avg=Avg('rates__star')).aggregate(total_avg=Avg('avg'))
+        avg = houses.annotate(avg=Avg('ratings__star')).aggregate(total_avg=Avg('avg'))
         return avg['total_avg']
     
     def get_is_followed(self, obj):

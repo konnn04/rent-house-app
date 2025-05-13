@@ -1,19 +1,19 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import {
-    ActivityIndicator,
-    Dimensions,
-    FlatList,
-    Image,
-    Modal,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  Dimensions,
+  FlatList,
+  Image,
+  Modal,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { useTheme } from '../../contexts/ThemeContext';
 
-const ImageGallery = ({ mediaItems = [] }) => {
+export const ImageGallery = ({ mediaItems = [] }) => {
   const { colors } = useTheme();
   const [imageLoadError, setImageLoadError] = useState({});
   const [imageLoading, setImageLoading] = useState({});
@@ -343,5 +343,3 @@ const styles = StyleSheet.create({
     height: '80%',
   },
 });
-
-export default ImageGallery;

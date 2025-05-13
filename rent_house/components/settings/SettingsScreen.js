@@ -5,7 +5,7 @@ import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Divider, List, Switch, Text } from 'react-native-paper';
 import { useTheme } from '../../contexts/ThemeContext';
 
-const SettingsScreen = () => {
+export const SettingsScreen = () => {
   const { colors, theme, toggleTheme } = useTheme();
   const navigation = useNavigation();
   
@@ -93,6 +93,7 @@ const SettingsScreen = () => {
           
           <List.Item
             title="Thông tin ứng dụng"
+            onPress={() => navigation.navigate('AboutApp')}
             description="Phiên bản 1.0.0"
             left={props => <List.Icon {...props} icon="information" color={colors.accentColor} />}
             right={() => <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />}
@@ -132,5 +133,3 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 });
-
-export default SettingsScreen;

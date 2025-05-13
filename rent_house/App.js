@@ -4,9 +4,9 @@ import React from 'react';
 import { StatusBar, StyleSheet, View } from 'react-native';
 import { Provider as PaperProvider } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import AuthScreen from './components/pages/Auth/Main';
-import Loading from './components/pages/Loading';
-import Main from './components/pages/Main';
+import { AuthStackScreen } from './components/auth/AuthStackScreen';
+import { Loading } from './components/common/Loading';
+import { Main } from './components/Main';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { SettingsProvider } from './contexts/SettingContext';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
@@ -34,7 +34,7 @@ const AppContent = () => {
             ) : userToken ? (
               <RootStack.Screen name="Main" component={Main} />
             ) : (
-              <RootStack.Screen name="AuthScreen" component={AuthScreen} />
+              <RootStack.Screen name="AuthScreen" component={AuthStackScreen} />
             )}
           </RootStack.Navigator>
         </NavigationContainer>

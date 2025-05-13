@@ -6,7 +6,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Divider, RadioButton } from 'react-native-paper';
 import { useTheme } from '../../contexts/ThemeContext';
 
-const LanguageSettingsScreen = () => {
+export const LanguageSettingsScreen = () => {
   const navigation = useNavigation();
   const { colors } = useTheme();
   const [selectedLanguage, setSelectedLanguage] = useState('vi');
@@ -111,5 +111,3 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   }
 });
-
-export default LanguageSettingsScreen;

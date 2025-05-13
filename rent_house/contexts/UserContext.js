@@ -52,7 +52,7 @@ export const UserProvider = ({ children }) => {
       setLoading(true);
       setError(null);
       
-      const response = await api.get('/api/profiles/me/');
+      const response = await api.get('/api/users/current-user/');
       setUserData(response.data);
       
       // Lưu vào cache
@@ -70,7 +70,7 @@ export const UserProvider = ({ children }) => {
     try {
       setLoading(true);
       
-      const response = await api.patch('/api/profiles/update/', formData);
+      const response = await api.patch('/api/users/current-user/', formData);
       
       // Cập nhật state và cache
       const updatedUserData = { ...userData, ...response.data };

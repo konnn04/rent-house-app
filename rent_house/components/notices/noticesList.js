@@ -1,8 +1,7 @@
-import react from 'react';
-import { View, Text, Touchable } from 'react-native';  
+import { Text, View } from 'react-native';
 import { useTheme } from '../../../contexts/ThemeContext';
 
-const Notices = ({notice}) => {
+export const NoticesList = ({notice}) => {
     const { colors } = useTheme();
     return (
         <View style={styles.container}>
@@ -10,8 +9,6 @@ const Notices = ({notice}) => {
         </View>
     );
 }
-
-export default Notices;
 
 const styles = {   
     container: {

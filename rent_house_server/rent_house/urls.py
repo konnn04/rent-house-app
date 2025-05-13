@@ -1,6 +1,7 @@
 from django.urls import path, include
 from . import views
 from rest_framework.routers import DefaultRouter
+from rent_house.admin_views import admin_dashboard
 
 router = DefaultRouter()
 router.register(r'users', views.UserViewSet, basename='user')
@@ -26,6 +27,7 @@ urlpatterns = [
     path('verify-email/', views.VerifyEmailView.as_view(), name='verify-email'),
     path('resend-verification/', views.ResendVerificationView.as_view(), name='resend-verification'),
     path('check-verification-status/', views.CheckVerificationStatusView.as_view(), name='check-verification-status'),
+    path('admin/dashboard/', admin_dashboard, name='admin_dashboard'),
     
 ]
 

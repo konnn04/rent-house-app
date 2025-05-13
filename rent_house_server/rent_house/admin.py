@@ -6,6 +6,7 @@ from django.utils.safestring import mark_safe
 from rent_house.models import Media, House, Room, Post, Comment, User
 from django.contrib.contenttypes.models import ContentType
 from rent_house.utils import upload_image_to_cloudinary
+from django.contrib.admin.models import LogEntry
 
 # Custom form for avatar uploads
 class CustomUserChangeForm(UserChangeForm):
@@ -90,10 +91,58 @@ class CustomUserAdmin(UserAdmin):
             readonly_fields.append('avatar')
         return readonly_fields
 
-# Register your models here.
-admin.site.register(Media)
-admin.site.register(House)
-admin.site.register(Room)
-admin.site.register(Post)
-admin.site.register(Comment)
-admin.site.register(User, CustomUserAdmin)
+class RentHouseAdminSite(admin.AdminSite):
+    site_header = 'Rent House Administration'
+    site_title = 'Rent House Admin'
+    index_title = 'Dashboard'
+    
+    def get_app_list(self, request):
+        """
+        Return a sorted list of all the installed apps that have been
+        registered in this site.
+        """
+        app_list = super().get_app_list(request)
+        
+        # Add statistics counts to the context
+        from rent_house.models import User, House, Room, Post
+        for app in app_list:
+            if app['app_label'] == 'rent_house':
+                for model in app['models']:
+                    if model['object_name'] == 'User':
+                        model['count'] = User.objects.count()
+                    elif model['object_name'] == 'House':
+                        model['count'] = House.objects.count()
+                    elif model['object_name'] == 'Room':
+                        model['count'] = Room.objects.count()
+                    elif model['object_name'] == 'Post':
+                        model['count'] = Post.objects.count()
+        
+        return app_list
+    
+    def index(self, request, extra_context=None):
+        # Add statistics to the admin index page
+        from rent_house.models import User, House, Room, Post
+        
+        context = {
+            'user_count': User.objects.count(),
+            'house_count': House.objects.count(),
+            'room_count': Room.objects.count(),
+            'post_count': Post.objects.count(),
+        }
+        
+        if extra_context:
+            context.update(extra_context)
+            
+        return super().index(request, context)
+
+# Replace the default admin site
+admin_site = RentHouseAdminSite(name='rentadmin')
+
+# Register your models with the custom admin site
+admin_site.register(Media)
+admin_site.register(House)
+admin_site.register(Room)
+admin_site.register(Post)
+admin_site.register(Comment)
+admin_site.register(User, CustomUserAdmin)
+admin_site.register(LogEntry)  # Register LogEntry to view all actions in admin

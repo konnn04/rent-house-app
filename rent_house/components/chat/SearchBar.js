@@ -1,8 +1,8 @@
 import React from 'react';
-import { TextInput, StyleSheet } from 'react-native';
+import { StyleSheet, TextInput } from 'react-native';
 import { useTheme } from '../../contexts/ThemeContext';
 
-const SearchBar = ({ value, onChangeText }) => {
+export const SearchBar = ({ value, onChangeText }) => {
   const { colors } = useTheme();
   return (
     <TextInput
@@ -26,5 +26,3 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
 });
-
-export default SearchBar;

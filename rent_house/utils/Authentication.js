@@ -31,9 +31,15 @@ export const login = async (username, password) => {
     return response.data;
   } catch (error) {
     console.error("Login error details:", error.response?.data || error.message);
-    throw new Error(
-      "Tên đăng nhập hoặc mật khẩu không chính xác. Vui lòng thử lại."
-    );
+    if (error.response?.status === 401) {
+      throw new Error("Tên đăng nhập hoặc mật khẩu không chính xác");
+    }
+    if (error.response?.status === 400) {
+      throw new Error("Vui lòng kiểm tra lại thông tin đăng nhập");
+    }
+    if (error.response?.status === 500) {
+      throw new Error("Lỗi máy chủ, vui lòng thử lại sau");
+    }
   } 
 };
 

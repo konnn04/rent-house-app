@@ -28,6 +28,7 @@ Sau khi xác thực email qua API `/api/verify-email/`, bạn sẽ nhận đư�
 - [Authentication APIs](authentication_apis.md)
 - [OAuth APIs](oauth_apis.md)
 - [User APIs](user_apis.md)
+- [Profile APIs](profile_apis.md)
 - [House APIs](house_apis.md)
 - [Room APIs](room_apis.md)
 - [Post APIs](post_apis.md)
@@ -37,6 +38,8 @@ Sau khi xác thực email qua API `/api/verify-email/`, bạn sẽ nhận đư�
 - [Follow APIs](follow_apis.md)
 - [Room Rental APIs](room_rental_apis.md)
 - [Chat APIs](chat_apis.md)
+- [Feed APIs](feed_apis.md)
+- [Ping API](ping_apis.md)
 
 ## Mô tả chung về hệ thống
 

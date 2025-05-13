@@ -1,0 +1,280 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block extrastyle %}
+{{ block.super }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  .dashboard-container {
+    padding: 20px;
+  }
+  
+  .dashboard-header {
+    margin-bottom: 30px;
+  }
+  
+  .dashboard-header h1 {
+    font-size: 24px;
+    color: #333;
+    margin-bottom: 10px;
+  }
+  
+  .dashboard-header p {
+    color: #666;
+    font-size: 16px;
+  }
+  
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+  }
+  
+  .stat-card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    padding: 20px;
+  }
+  
+  .stat-card .stat-title {
+    font-size: 14px;
+    color: #777;
+    margin-bottom: 8px;
+  }
+  
+  .stat-card .stat-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: #333;
+  }
+  
+  .stat-card .stat-trend {
+    font-size: 14px;
+    margin-top: 10px;
+  }
+  
+  .stat-trend.positive {
+    color: #22c55e;
+  }
+  
+  .stat-trend.negative {
+    color: #ef4444;
+  }
+  
+  .chart-container {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+    margin-bottom: 30px;
+  }
+  
+  .chart-card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    padding: 20px;
+  }
+  
+  .chart-card h2 {
+    font-size: 18px;
+    color: #333;
+    margin-top: 0;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .data-table {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    padding: 20px;
+    margin-bottom: 30px;
+  }
+  
+  .data-table h2 {
+    font-size: 18px;
+    color: #333;
+    margin-top: 0;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .data-table table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  .data-table table th {
+    background: #f5f5f5;
+    padding: 10px;
+    text-align: left;
+    font-weight: 500;
+    color: #333;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .data-table table td {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+  }
+  
+  @media (max-width: 1024px) {
+    .chart-container {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block bodyclass %}{{ block.super }} dashboard{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+  &rsaquo; {% trans 'Dashboard' %}
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+  <div class="dashboard-header">
+    <h1>{% trans 'Admin Dashboard' %}</h1>
+    <p>{% trans 'Welcome to the Rent House admin dashboard. Here you can view statistics and insights about your application.' %}</p>
+  </div>
+  
+  <!-- Statistics Cards -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-title">{% trans 'Total Users' %}</div>
+      <div class="stat-value">{{ user_count }}</div>
+      <div class="stat-trend positive">+{{ new_users }} {% trans 'in last 30 days' %}</div>
+    </div>
+    
+    <div class="stat-card">
+      <div class="stat-title">{% trans 'Houses' %}</div>
+      <div class="stat-value">{{ house_count }}</div>
+    </div>
+    
+    <div class="stat-card">
+      <div class="stat-title">{% trans 'Rooms' %}</div>
+      <div class="stat-value">{{ room_count }}</div>
+    </div>
+    
+    <div class="stat-card">
+      <div class="stat-title">{% trans 'Posts' %}</div>
+      <div class="stat-value">{{ post_count }}</div>
+      <div class="stat-trend positive">+{{ new_posts }} {% trans 'in last 30 days' %}</div>
+    </div>
+  </div>
+  
+  <!-- Charts Section -->
+  <div class="chart-container">
+    <div class="chart-card">
+      <h2>{% trans 'Posts Activity (Last 30 Days)' %}</h2>
+      <canvas id="postsChart"></canvas>
+    </div>
+    
+    <div class="chart-card">
+      <h2>{% trans 'Users by Role' %}</h2>
+      <canvas id="userRolesChart"></canvas>
+    </div>
+  </div>
+  
+  <!-- Data Tables -->
+  <div class="data-table">
+    <h2>{% trans 'Top Provinces by Houses' %}</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>{% trans 'Province' %}</th>
+          <th>{% trans 'Number of Houses' %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for province in houses_by_province %}
+        <tr>
+          <td>{{ province.province|default:"Not specified" }}</td>
+          <td>{{ province.count }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="2">{% trans 'No data available' %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Posts by day chart
+    var postsCtx = document.getElementById('postsChart').getContext('2d');
+    var postsChart = new Chart(postsCtx, {
+      type: 'line',
+      data: {
+        labels: {{ posts_by_day_data.labels|safe }},
+        datasets: [{
+          label: '{% trans "Posts" %}',
+          data: {{ posts_by_day_data.data|safe }},
+          borderColor: '#EB5B00',
+          backgroundColor: 'rgba(235, 91, 0, 0.1)',
+          tension: 0.3,
+          fill: true
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: 'top',
+          },
+          title: {
+            display: false
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              precision: 0
+            }
+          }
+        }
+      }
+    });
+    
+    // Users by role chart
+    var userRolesCtx = document.getElementById('userRolesChart').getContext('2d');
+    var userRolesChart = new Chart(userRolesCtx, {
+      type: 'doughnut',
+      data: {
+        labels: [{% for role in users_by_role %}'{{ role.role|default:"Not specified" }}',{% endfor %}],
+        datasets: [{
+          data: [{% for role in users_by_role %}{{ role.count }},{% endfor %}],
+          backgroundColor: [
+            '#4f46e5',
+            '#EB5B00',
+            '#0ea5e9',
+            '#22c55e',
+            '#f59e0b'
+          ],
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: 'right',
+          }
+        }
+      }
+    });
+  });
+</script>
+{% endblock %}
