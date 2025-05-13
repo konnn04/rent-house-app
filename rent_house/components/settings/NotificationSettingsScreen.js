@@ -6,7 +6,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Divider, List, Switch } from 'react-native-paper';
 import { useTheme } from '../../contexts/ThemeContext';
 
-const NotificationSettingsScreen = () => {
+export const NotificationSettingsScreen = () => {
   const navigation = useNavigation();
   const { colors } = useTheme();
   
@@ -140,5 +140,3 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
 });
-
-export default NotificationSettingsScreen;

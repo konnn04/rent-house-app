@@ -4,10 +4,12 @@ from rest_framework.response import Response
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import Count, Q
 
-from rent_house.models import House, Room, Media
+from rent_house.models import House, Room, Media, User
 from rent_house.serializers import HouseSerializer, HouseDetailSerializer, RoomSerializer
 from rent_house.permissions import IsOwnerOfHouseOrReadOnly, IsOwnerRoleOrReadOnly
 from rent_house.utils import upload_image_to_cloudinary, delete_cloudinary_image
+
+from django.shortcuts import get_object_or_404
 
 class HouseViewSet(viewsets.ModelViewSet):
     """ViewSet cho quản lý House (nhà/căn hộ)"""
@@ -61,13 +63,18 @@ class HouseViewSet(viewsets.ModelViewSet):
         if area:
             queryset = queryset.filter(address__icontains=area)
             
+        # Filter theo số user sở hữu
+        owner_username = self.request.query_params.get('owner_username')
+        if owner_username:
+            queryset = queryset.filter(owner__username=owner_username)
+
         # Filter theo số phòng có sẵn
         has_rooms = self.request.query_params.get('has_rooms')
         if has_rooms and has_rooms.lower() == 'true':
             queryset = queryset.annotate(
                 available_count=Count('rooms', filter=Q(rooms__cur_people__lt=rooms__max_people))
             ).filter(available_count__gt=0)
-            
+
         return queryset
     
     def perform_create(self, serializer):
@@ -204,3 +211,4 @@ class HouseViewSet(viewsets.ModelViewSet):
             
         serializer = RoomSerializer(rooms, many=True)
         return Response(serializer.data)
+    

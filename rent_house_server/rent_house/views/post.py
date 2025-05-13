@@ -21,6 +21,21 @@ class PostViewSet(viewsets.ModelViewSet):
     ordering_fields = ['created_at']
     ordering = ['-created_at']
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+
+        # Lọc theo người dùng (username)
+        author_username = self.request.query_params.get('author_username')
+        if author_username:
+            queryset = queryset.filter(author__username=author_username)
+
+        # Lọc theo loại bài viết
+        post_type = self.request.query_params.get('type')
+        if post_type:
+            queryset = queryset.filter(type=post_type)
+
+        return queryset
+
     def get_serializer_class(self):
         if self.action == 'retrieve':
             return PostDetailSerializer
@@ -236,3 +251,4 @@ class PostViewSet(viewsets.ModelViewSet):
             
         except ValueError:
             return Response({"error": "Invalid lat, lng, or radius values"}, status=400)
+    

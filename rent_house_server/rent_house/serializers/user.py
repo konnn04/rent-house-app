@@ -8,7 +8,7 @@ class UserSummarySerializer(serializers.ModelSerializer):
     
     class Meta:
         model = User
-        fields = ('id', 'username', 'full_name', 'avatar', 'avatar_thumbnail', 'role')
+        fields = ('id', 'username', 'full_name', 'avatar', 'avatar_thumbnail', 'role', 'first_name', 'last_name')
         
     def get_full_name(self, obj):
         return f"{obj.first_name} {obj.last_name}".strip()
@@ -26,7 +26,28 @@ class UserSummarySerializer(serializers.ModelSerializer):
         
         return obj.avatar
 
-class UserSerializer(serializers.ModelSerializer):   
+class UserSerializer(serializers.ModelSerializer):
+    post_count = serializers.SerializerMethodField()
+    joined_date = serializers.DateTimeField(source='date_joined', read_only=True)
+    follower_count = serializers.SerializerMethodField()
+    following_count = serializers.SerializerMethodField()
+    avg_rating = serializers.SerializerMethodField()
+    house_count = serializers.SerializerMethodField()
+    room_count = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = User
+        fields = ( 
+            'id', 'username', 'email', 'first_name', 'last_name', 'phone_number', 'role', 'address', 'avatar', 'is_active', 'is_staff', 'is_superuser', 'password', 
+            'post_count', 'joined_date', 'follower_count', 'following_count', 
+            'avg_rating', 'house_count', 'room_count'
+        )
+        read_only_fields = ('id', 'is_active', 'is_staff', 'is_superuser', 'email', 'post_count', 'joined_date', 'follower_count', 'following_count', 'avg_rating', 'house_count', 'room_count')
+
+        extra_kwargs = {
+            'password': {'write_only': True, 'required': False},
+        }
+    
     def create(self, validated_data):
         data = validated_data.copy()
         u = User(**data)
@@ -46,11 +67,35 @@ class UserSerializer(serializers.ModelSerializer):
         
         instance.save()
         return instance
-
-    class Meta:
-        model = User
-        fields = ('id', 'username', 'email', 'first_name', 'last_name', 'phone_number', 'role', 'address', 'avatar', 'is_active', 'is_staff', 'is_superuser', 'password')
-        read_only_fields = ('id', 'is_active', 'is_staff', 'is_superuser')
-        extra_kwargs = {
-            'password': {'write_only': True, 'required': False},
-        }
+    
+    def get_post_count(self, obj):
+        """Trả về số lượng bài đăng của người dùng"""
+        return obj.posts.count()
+    
+    def get_follower_count(self, obj):
+        """Trả về số lượng người theo dõi"""
+        return obj.followers.count()
+    
+    def get_following_count(self, obj):
+        """Trả về số lượng người đang theo dõi"""
+        return obj.following.count()
+    
+    def get_avg_rating(self, obj):
+        """Trả về đánh giá trung bình nếu người dùng là chủ sở hữu"""
+        if obj.role != 'owner':
+            return None
+        
+        return None
+    
+    def get_house_count(self, obj):
+        """Trả về số lượng nhà/căn hộ nếu người dùng là chủ sở hữu"""
+        if obj.role != 'owner':
+            return None
+        return obj.houses.count()
+    
+    def get_room_count(self, obj):
+        """Trả về tổng số phòng từ tất cả các nhà/căn hộ của chủ sở hữu"""
+        if obj.role != 'owner':
+            return None
+        # Tính tổng số phòng từ tất cả nhà/căn hộ
+        return sum(house.rooms.count() for house in obj.houses.all())

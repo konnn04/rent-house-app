@@ -255,7 +255,7 @@ class Command(BaseCommand):
                 Media.objects.create(
                     content_type=ContentType.objects.get_for_model(House),
                     object_id=house.id,
-                    url=f'https://konya007.github.io/image-library/houses/h{house.id+1}r{k+1}.jpg',
+                    url=f'https://konya007.github.io/image-library/houses/h{i+1}r{k+1}.jpg',
                     media_type='image',
                     purpose='gallery'
                 )

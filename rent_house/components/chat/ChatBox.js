@@ -1,51 +1,102 @@
+import { useNavigation } from '@react-navigation/native';
 import React from 'react';
-import { style } from 'react-native';
-import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../../contexts/ThemeContext';
 
-const ChatBox = ({ chat }) => {
+export const ChatBox = ({ chat }) => {
+  const navigation = useNavigation();
   const { colors } = useTheme();
+  
+  const navigateToChat = () => {
+    navigation.navigate('ChatDetail', { chatId: chat.id, chatName: chat.name });
+  };
+  
   return (
-    <TouchableOpacity style={chatStyles.chatBox}>
-      <Image source={{ uri: chat.avatar }} style={chatStyles.avatar} />
-      <View style={chatStyles.chatInfo}>
-        <Text style={[chatStyles.chatName, {color: colors.textPrimary}]}>{chat.name}</Text>
-        <Text style={[chatStyles.chatLastMessage, {color: colors.textSecondary}]}>{chat.lastMessage}</Text>
+    <TouchableOpacity 
+      style={[styles.container, { borderBottomColor: colors.borderColor }]}
+      onPress={navigateToChat}
+    >
+      <Image 
+        source={chat.avatar ? { uri: chat.avatar } : require('@assets/images/default-avatar.png')} 
+        style={styles.avatar} 
+      />
+      <View style={styles.contentContainer}>
+        <View style={styles.headerContainer}>
+          <Text style={[styles.name, { color: colors.textPrimary }]} numberOfLines={1}>
+            {chat.name}
+          </Text>
+          <Text style={[styles.time, { color: colors.textSecondary }]}>
+            {chat.lastMessageTime}
+          </Text>
+        </View>
+        <View style={styles.messageContainer}>
+          <Text style={[styles.message, { color: colors.textSecondary }]} numberOfLines={1}>
+            {chat.isGroup && chat.lastMessageSender ? `${chat.lastMessageSender}: ` : ''}
+            {chat.lastMessage}
+          </Text>
+          {chat.unreadCount > 0 && (
+            <View style={[styles.badge, { backgroundColor: colors.accentColor }]}>
+              <Text style={styles.badgeText}>
+                {chat.unreadCount > 99 ? '99+' : chat.unreadCount}
+              </Text>
+            </View>
+          )}
+        </View>
       </View>
-      <Text style={[chatStyles.chatTime,{color: colors.textSecondary}]}>{chat.lastMessageTime}</Text>
     </TouchableOpacity>
   );
 };
 
-const chatStyles = StyleSheet.create({
-  chatBox: {
+const styles = StyleSheet.create({
+  container: {
     flexDirection: 'row',
-    alignItems: 'center',
-    padding: 10,
+    padding: 15,
     borderBottomWidth: 1,
+    alignItems: 'center',
   },
   avatar: {
     width: 50,
     height: 50,
     borderRadius: 25,
-    marginRight: 10,
+    marginRight: 15,
   },
-  chatInfo: {
+  contentContainer: {
     flex: 1,
   },
-  chatName: {
-    fontWeight: 'bold',
+  headerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 5,
+  },
+  name: {
     fontSize: 16,
-    marginBottom: 2,
+    fontWeight: 'bold',
+    flex: 1,
   },
-  chatLastMessage: {
-    color: '#555',
-    fontSize: 14,
-  },
-  chatTime: {
-    color: '#aaa',
+  time: {
     fontSize: 12,
   },
+  messageContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  message: {
+    fontSize: 14,
+    flex: 1,
+  },
+  badge: {
+    minWidth: 20,
+    height: 20,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 5,
+    marginLeft: 10,
+  },
+  badgeText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
 });
-
-export default ChatBox;

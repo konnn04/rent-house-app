@@ -11,17 +11,15 @@ from rent_house.utils import upload_image_to_cloudinary
 class UserViewSet(viewsets.ViewSet, generics.CreateAPIView):
     queryset = User.objects.filter(is_active=True)
     serializer_class = UserSerializer
-    parser_classes = [parsers.MultiPartParser]
+    parser_classes = [parsers.MultiPartParser, parsers.JSONParser]
 
     @action(detail=False, methods=['get', 'patch'], url_path='current-user', permission_classes=[permissions.IsAuthenticated])
     def current_user(self, request):
         user = request.user
         if request.method.__eq__('PATCH'):
             for k, v in request.data.items():
-                if k in ['first_name', 'last_name', 'phone_number']:
+                if k in ['first_name', 'last_name', 'phone_number', 'address']:
                     setattr(user, k, v)
-                elif k.__eq__('password'):
-                    user.set_password(v)
             user.save()
         serializer = UserSerializer(user)
         return Response(serializer.data, status=status.HTTP_200_OK)
