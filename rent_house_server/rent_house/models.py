@@ -59,6 +59,7 @@ class InteractionType(Enum):
     """Types of interactions with posts"""
     LIKE = 'like', 'Thích'
     DISLIKE = 'dislike', 'Không thích'
+    NONE = 'none', 'Không tương tác'
 
     def __str__(self):
         return self.value[1]
@@ -440,10 +441,10 @@ class Post(BaseModel):
         return f"{self.type} by {self.author.username}"
     
     def get_interaction_count(self, interaction_type=None):
-        """Get count of interactions (likes, dislikes)"""
         if interaction_type:
-            return self.interaction_set.filter(type=interaction_type, is_interacted=True).count()
-        return self.interaction_set.filter(is_interacted=True).count()
+            return self.interaction_set.filter(type=interaction_type).count()
+        # Mặc định trả về "like"
+        return self.interaction_set.filter(type=InteractionType.LIKE.value[0]).count()
     
     def get_comment_count(self):
         """Get total comment count"""
@@ -479,10 +480,9 @@ class Interaction(BaseModel):
         max_length=20,
         choices=[(interaction_type.value[0], interaction_type.name) for interaction_type in InteractionType]
     )
-    is_interacted = models.BooleanField(default=False)
 
     class Meta:
-        unique_together = ('user', 'post', 'type')
+        unique_together = ('user', 'post')
 
     def __str__(self):
         return f"{self.user.username} {self.type} Post {self.post.id}"
@@ -613,11 +613,16 @@ class ChatMembership(BaseModel):
             return self.chat_group.messages.count()
         return self.chat_group.messages.filter(created_at__gt=self.last_read_at).count()
     
+    def has_any_message(self):
+        """Check if the chat group has any messages"""
+        return self.chat_group.messages.exists()
+
+    
 class Message(BaseModel):
     """Chat message model"""
     chat_group = models.ForeignKey(ChatGroup, on_delete=models.CASCADE, related_name='messages')
     sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_messages')
-    content = models.TextField()
+    content = models.TextField(null=True, blank=True)
     is_system_message = models.BooleanField(default=False)
     is_removed = models.BooleanField(default=False)
     replied_to = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='replies')

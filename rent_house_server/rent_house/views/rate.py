@@ -2,6 +2,7 @@ from rest_framework import viewsets, permissions, status
 from rest_framework.response import Response
 from django.contrib.contenttypes.models import ContentType
 
+from rent_house import serializers
 from rent_house.models import Rate, House, Media
 from rent_house.serializers import RateSerializer
 from rent_house.utils import upload_image_to_cloudinary

@@ -367,7 +367,6 @@ class Command(BaseCommand):
                 latitude=latitude,
                 longitude=longitude,
                 house_link=house_link,
-                is_active=random.choice([True, True, True, False])  # 75% chance of being active
             )
             
             # Create Media for post
@@ -471,18 +470,17 @@ class Command(BaseCommand):
         interaction_types = [interaction_type.value[0] for interaction_type in InteractionType]
         
         for post in self.posts:
-            num_interactions = random.randint(0, 15)
+            num_interactions = random.randint(0, 25)
             for _ in range(num_interactions):
                 user = random.choice(users)
                 interaction_type = random.choice(interaction_types)
                 
                 # Check if interaction already exists
-                if not Interaction.objects.filter(user=user, post=post, type=interaction_type).exists():
-                    Interaction.objects.create(
+                if not Interaction.objects.filter(user=user, post=post).exists():
+                    Interaction.objects.get_or_create(
                         user=user,
                         post=post,
-                        type=interaction_type,
-                        is_interacted=True
+                        type=interaction_type
                     )
 
     def create_follows(self):

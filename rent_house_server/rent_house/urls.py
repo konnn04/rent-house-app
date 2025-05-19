@@ -16,7 +16,6 @@ router.register(r'notifications', views.NotificationViewSet, basename='notificat
 router.register(r'follows', views.FollowViewSet, basename='follow')
 router.register(r'rentals', views.RoomRentalViewSet, basename='room-rental')
 router.register(r'chats', views.ChatGroupViewSet, basename='chat-group')
-router.register(r'messages', views.MessageViewSet, basename='message')
 router.register(r'profiles', views.ProfileViewSet, basename='profile')
 
 urlpatterns = [
@@ -28,7 +27,6 @@ urlpatterns = [
     path('resend-verification/', views.ResendVerificationView.as_view(), name='resend-verification'),
     path('check-verification-status/', views.CheckVerificationStatusView.as_view(), name='check-verification-status'),
     path('admin/dashboard/', admin_dashboard, name='admin_dashboard'),
-    
 ]
 
 

@@ -180,6 +180,16 @@ Chỉnh sửa theme của ứng dụng trong `utils/Theme.js` và `styles/style.
 - Thay đổi ngôn ngữ
 - Tùy chỉnh giao diện sáng/tối
 
+## Components
+
+- `ImageGallery`: Hiển thị gallery ảnh cho bài đăng và phòng
+- `ChatHeader`: Header component cho màn hình chat
+- `MessageInput`: Component nhập tin nhắn với hỗ trợ gửi ảnh/video
+- `MessageList`: Component hiển thị danh sách tin nhắn
+- `MessageItem`: Component hiển thị từng tin nhắn
+- `MediaPreview`: Component xem trước media trong tin nhắn
+- `MediaViewer`: Component xem ảnh/video full màn hình
+
 ## Giấy Phép
 
 © 2025 Rent House Team. All rights reserved.

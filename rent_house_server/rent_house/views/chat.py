@@ -1,16 +1,14 @@
+from django.contrib.contenttypes.models import ContentType
 from rest_framework import viewsets, permissions, status, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from django.db.models import Q
-from django.contrib.contenttypes.models import ContentType
-from django.utils import timezone
 
 from rent_house.models import ChatGroup, ChatMembership, Message, User, Media
 from rent_house.serializers import (
     ChatGroupSerializer, ChatGroupDetailSerializer, 
-    ChatMembershipSerializer, MessageSerializer
+    MessageSerializer
 )
-from rent_house.utils import upload_image_to_cloudinary, delete_cloudinary_image
+from rent_house.utils import upload_image_to_cloudinary
 from rent_house.firebase_utils import send_chat_notification
 
 class ChatGroupViewSet(viewsets.ModelViewSet):
@@ -54,6 +52,133 @@ class ChatGroupViewSet(viewsets.ModelViewSet):
                 pass
                 
         return chat_group
+    
+    @action(detail=True, methods=['get'], url_path='messages')
+    def messages(self, request, pk=None):
+        """Lấy danh sách tin nhắn của một nhóm chat (có phân trang)"""
+        chat_group = self.get_object()
+        
+        # Lọc tin nhắn của nhóm chat
+        messages = Message.objects.filter(chat_group=chat_group).order_by('-created_at')
+        
+        # Cập nhật trạng thái đã đọc
+        membership = ChatMembership.objects.filter(
+            chat_group=chat_group,
+            user=request.user
+        ).first()
+        
+        if membership:
+            membership.mark_as_read()
+        
+        # Phân trang
+        page = self.paginate_queryset(messages)
+        if page is not None:
+            serializer = MessageSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        
+        # Trường hợp không phân trang
+        serializer = MessageSerializer(messages, many=True)
+        return Response(serializer.data)
+    
+    @action(detail=True, methods=['post'], url_path='send-message')
+    def send_message(self, request, pk=None):
+        chat_group = self.get_object()
+        
+        if not chat_group.members.filter(id=request.user.id).exists():
+            return Response({"error": "Bạn không phải là thành viên của nhóm chat này"}, status=status.HTTP_403_FORBIDDEN)
+        
+        # Kiểm tra xem request có media không
+        media_files = request.FILES.getlist('medias')
+        has_media = len(media_files) > 0
+        print(f"Has media: {media_files}")
+        
+        # Nếu không có cả nội dung và media, trả về lỗi
+        if not has_media and (not request.data.get('content') or not request.data.get('content').strip()):
+            return Response({
+                "error": "Tin nhắn phải có nội dung hoặc ít nhất một media"
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Tạo bản sao của dữ liệu request để có thể sửa đổi
+        request_data = request.data.copy()
+        
+        # Nếu không có content nhưng có media, thêm content rỗng
+        if has_media and (not request_data.get('content') or not request_data.get('content').strip()):
+            request_data['content'] = ""
+        
+        # Thêm chat_group vào dữ liệu trước khi validate
+        request_data['chat_group'] = chat_group.id
+        
+        # Tạo tin nhắn mới với dữ liệu đã điều chỉnh
+        serializer = MessageSerializer(data=request_data)
+        if not serializer.is_valid():
+            print(f"Message validation errors: {serializer.errors}")
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            
+        # Lưu tin nhắn
+        message = serializer.save(sender=request.user)
+        
+        media_items = []
+        
+        # Debug log
+        print(f"Found {len(media_files)} media files")
+        
+        if media_files:
+            for media_file in media_files:
+                media_type = 'image'
+                content_type = getattr(media_file, 'content_type', '') or getattr(media_file, 'type', '')
+                
+                print(f"Media file content_type: {content_type}")
+                
+                if content_type and 'video' in content_type:
+                    media_type = 'video'
+                    folder = "message_videos"
+                else:
+                    folder = "message_images"
+                
+                # Upload lên Cloudinary
+                media_url = upload_image_to_cloudinary(media_file, folder=folder)
+                
+                if media_url:
+                    # Tạo đối tượng Media và thêm vào response
+                    media = Media.objects.create(
+                        content_type=ContentType.objects.get_for_model(Message),
+                        object_id=message.id,
+                        url=media_url,
+                        media_type=media_type,
+                        purpose='attachment',
+                        public_id=media_url.split('/')[-1].split('.')[0]
+                    )
+                    
+                    # Thêm thông tin vào danh sách response
+                    media_items.append({
+                        'id': media.id,
+                        'url': media.url,
+                        'thumbnail': media.get_url('thumbnail') if media_type == 'image' else None,
+                        'media_type': media_type
+                    })
+        
+        # Cập nhật thời gian cập nhật của nhóm chat
+        chat_group.save(update_fields=['updated_at'])
+        
+        # Gửi thông báo đến các thành viên khác trong nhóm
+        recipients = chat_group.members.exclude(id=request.user.id)
+        content_preview = message.content if message.content else "Đã gửi media"
+        
+        for recipient in recipients:
+            send_chat_notification(
+                recipient=recipient,
+                sender=request.user,
+                chat_group=chat_group,
+                message_content=content_preview,
+                message_id=message.id
+            )
+        
+        # Cập nhật response với thông tin media
+        response_data = serializer.data
+        response_data['media'] = media_items
+        
+        return Response(response_data, status=status.HTTP_201_CREATED)
+    
     
     @action(detail=False, methods=['post'])
     def create_direct_chat(self, request):
@@ -168,90 +293,4 @@ class ChatGroupViewSet(viewsets.ModelViewSet):
         
         return Response({"status": "success"})
 
-class MessageViewSet(viewsets.ModelViewSet):
-    """ViewSet cho quản lý tin nhắn (Message)"""
-    serializer_class = MessageSerializer
-    permission_classes = [permissions.IsAuthenticated]
-    filter_backends = [filters.OrderingFilter]
-    ordering = ['created_at']
-    
-    def get_queryset(self):
-        """Chỉ hiển thị tin nhắn của các chat mà user là thành viên"""
-        chat_id = self.request.query_params.get('chat_id')
-        queryset = Message.objects.filter(chat_group__members=self.request.user)
-        
-        if chat_id:
-            queryset = queryset.filter(chat_group_id=chat_id)
-            
-            # Cập nhật thời gian đọc tin nhắn
-            membership = ChatMembership.objects.filter(
-                chat_group_id=chat_id,
-                user=self.request.user
-            ).first()
-            
-            if membership:
-                membership.mark_as_read()
-        
-        return queryset
-    
-    def perform_create(self, serializer):
-        """Gửi tin nhắn mới"""
-        chat_id = self.request.data.get('chat_group')
-        
-        try:
-            chat_group = ChatGroup.objects.get(id=chat_id)
-            
-            # Kiểm tra user có phải là thành viên không
-            if not chat_group.members.filter(id=self.request.user.id).exists():
-                return Response({"error": "Bạn không phải là thành viên của chat này"}, status=status.HTTP_403_FORBIDDEN)
-            
-            # Gửi tin nhắn
-            message = serializer.save(sender=self.request.user)
-            
-            # Xử lý hình ảnh nếu có
-            images = self.request.FILES.getlist('images')
-            if images:
-                for image in images:
-                    image_url = upload_image_to_cloudinary(image, folder="message_images")
-                    if image_url:
-                        Media.objects.create(
-                            content_type=ContentType.objects.get_for_model(Message),
-                            object_id=message.id,
-                            url=image_url,
-                            media_type='image',
-                            purpose='attachment',
-                            public_id=image_url.split('/')[-1].split('.')[0]
-                        )
-            
-            # Update thời gian cập nhật của chat
-            chat_group.save(update_fields=['updated_at'])  # Tự động cập nhật updated_at
-            
-            # Gửi thông báo đến các thành viên khác
-            recipients = chat_group.members.exclude(id=self.request.user.id)
-            for recipient in recipients:
-                send_chat_notification(
-                    recipient=recipient,
-                    sender=self.request.user,
-                    chat_group=chat_group,
-                    message_content=message.content,
-                    message_id=message.id
-                )
-            
-            return message
-            
-        except ChatGroup.DoesNotExist:
-            raise serializers.ValidationError("Chat group không tồn tại")
-    
-    @action(detail=True, methods=['post'])
-    def delete_message(self, request, pk=None):
-        """Xóa tin nhắn (soft delete)"""
-        message = self.get_object()
-        
-        # Chỉ người gửi mới được xóa tin nhắn của mình
-        if message.sender != request.user:
-            return Response({"error": "Không có quyền xóa tin nhắn này"}, status=status.HTTP_403_FORBIDDEN)
-        
-        # Soft delete
-        message.soft_delete()
-        
-        return Response({"status": "success"})
+

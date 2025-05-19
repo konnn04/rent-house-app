@@ -13,6 +13,9 @@ class MessageSerializer(serializers.ModelSerializer):
                  'is_removed', 'replied_to', 'replied_to_preview', 'created_at', 
                  'updated_at', 'media')
         read_only_fields = ('id', 'is_system_message', 'created_at', 'updated_at')
+        extra_kwargs = {
+            'content': {'required': False, 'allow_blank': True},  # Cho phép content rỗng
+        }
     
     def get_media(self, obj):
         """Get media attachments for this message"""
@@ -60,7 +63,7 @@ class ChatGroupSerializer(serializers.ModelSerializer):
         model = ChatGroup
         fields = ('id', 'name', 'description', 'is_group', 'members_summary', 
                  'created_by', 'created_at', 'updated_at', 'last_message', 'unread_count')
-        read_only_fields = ('id', 'created_at', 'updated_at')
+        read_only_fields = ('id', 'created_at', 'updated_at', 'created_by', 'is_group')
     
     def get_members_summary(self, obj):
         """Get summary of chat members"""

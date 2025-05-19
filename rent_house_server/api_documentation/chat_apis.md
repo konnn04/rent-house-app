@@ -171,16 +171,17 @@ Tạo một nhóm chat mới.
 **Headers**:
 ```
 Authorization: Bearer {access_token}
+Content-Type: multipart/form-data
 ```
 
 **Request Body**:
 
-```json
-{
-  "name": "Nhóm thảo luận dự án",
-  "description": "Nhóm chat thảo luận về dự án xây dựng",
-  "members": [123, 456, 789]  // IDs của các thành viên
-}
+```
+name: Nhóm thảo luận dự án
+description: Nhóm chat thảo luận về dự án xây dựng
+members: 123
+members: 456
+members: 789
 ```
 
 **Response (201 Created)**:
@@ -239,7 +240,7 @@ Authorization: Bearer {access_token}
 
 ```json
 {
-  "user_id": 456  // ID của người dùng khác
+  "user_id": 456
 }
 ```
 
@@ -401,10 +402,10 @@ Authorization: Bearer {access_token}
 
 ## Message APIs
 
-### Danh sách tin nhắn
+### Lấy tin nhắn của một nhóm chat
 
 ```
-GET /api/messages/?chat_id=1
+GET /api/chats/{id}/messages/
 ```
 
 Lấy danh sách tin nhắn của một nhóm chat.
@@ -416,7 +417,6 @@ Authorization: Bearer {access_token}
 
 **Query Parameters**:
 
-- `chat_id`: ID của nhóm chat (bắt buộc)
 - `page`: Số trang
 - `page_size`: Số lượng kết quả trên mỗi trang
 
@@ -425,7 +425,7 @@ Authorization: Bearer {access_token}
 ```json
 {
   "count": 20,
-  "next": "https://api.example.com/api/messages/?chat_id=1&page=2",
+  "next": "https://api.example.com/api/chats/1/messages/?page=2",
   "previous": null,
   "results": [
     {
@@ -487,7 +487,7 @@ Authorization: Bearer {access_token}
 ### Gửi tin nhắn
 
 ```
-POST /api/messages/
+POST /api/chats/{id}/send-message/
 ```
 
 Gửi một tin nhắn mới đến nhóm chat.
@@ -501,10 +501,9 @@ Content-Type: multipart/form-data
 **Request Body**:
 
 ```
-chat_group: 1
 content: Phòng này có wifi không ạ?
 replied_to: 2  // Optional - ID của tin nhắn đang trả lời
-images: [file1, file2, ...]  // Optional - Files hình ảnh
+medias: [file1, file2, ...]  // Optional - Files hình ảnh/video
 ```
 
 **Response (201 Created)**:
@@ -539,7 +538,14 @@ images: [file1, file2, ...]  // Optional - Files hình ảnh
   },
   "created_at": "2023-07-15T10:40:00Z",
   "updated_at": "2023-07-15T10:40:00Z",
-  "media": []
+  "media": [
+    {
+      "id": 1,
+      "url": "https://res.cloudinary.com/example/image1.jpg",
+      "thumbnail": "https://res.cloudinary.com/example/c_fill,h_150,w_150/image1.jpg",
+      "media_type": "image"
+    }
+  ]
 }
 ```
 
@@ -547,35 +553,6 @@ images: [file1, file2, ...]  // Optional - Files hình ảnh
 
 ```json
 {
-  "error": "Bạn không phải là thành viên của chat này"
-}
-```
-
-### Xóa tin nhắn
-
-```
-POST /api/messages/{id}/delete_message/
-```
-
-Xóa một tin nhắn đã gửi (soft delete).
-
-**Headers**:
-```
-Authorization: Bearer {access_token}
-```
-
-**Response (200 OK)**:
-
-```json
-{
-  "status": "success"
-}
-```
-
-**Response (403 Forbidden)** - Khi không phải người gửi tin nhắn:
-
-```json
-{
-  "error": "Không có quyền xóa tin nhắn này"
+  "error": "Bạn không phải là thành viên của nhóm chat này"
 }
 ```

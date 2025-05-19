@@ -2,6 +2,7 @@ from rest_framework import serializers
 from rent_house.models import User
 from django.db.models import Avg, Count
 from django.contrib.contenttypes.models import ContentType
+from django.db.models import Q
 from rent_house.serializers.post import PostSerializer
 
 class ProfileSerializer(serializers.ModelSerializer):
@@ -140,5 +141,7 @@ class PublicProfileSerializer(ProfileSerializer):
         # Nếu đang xem profile của chính mình
         if request.user.id == obj.id:
             return False
-            
-        return request.user.following.filter(followee=obj).exists()
+        
+        # Có bảng và đang theo dõi
+        is_followed = obj.followers.filter(Q(follower=request.user) & Q(is_following=True)).exists()
+        return is_followed

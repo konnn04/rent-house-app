@@ -9,7 +9,8 @@ from .rate import RateViewSet
 from .notification import NotificationViewSet
 from .follow import FollowViewSet
 from .room_rental import RoomRentalViewSet
-from .chat import ChatGroupViewSet, MessageViewSet
+from .chat import ChatGroupViewSet
+from .message import MessageViewSet
 from .auth import RegisterView, VerifyEmailView, ResendVerificationView, CheckVerificationStatusView
 from .profile import ProfileViewSet
 from .ping import ping_view

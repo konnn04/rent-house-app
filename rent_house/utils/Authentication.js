@@ -123,3 +123,40 @@ export const logout = async () => {
     console.error("Logout error:", error);
   }
 };
+
+export const verifyIdentity = async (formData) => {
+  try {
+    const response = await api.post('/api/users/verify-identity/', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Identity verification error:", error.response?.data || error.message);
+    if (error.response?.status === 400) {
+      throw new Error("Vui lòng kiểm tra lại thông tin cung cấp");
+    }
+    throw error;
+  }
+};
+
+export const checkVerificationStatus = async () => {
+  try {
+    const response = await api.get('/api/users/verification-status/');
+    return response.data;
+  } catch (error) {
+    console.error("Verification status check error:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
+export const resendVerificationCode = async (email) => {
+  try {
+    const response = await api.post('/api/resend-verification/', { email });
+    return response.data;
+  } catch (error) {
+    console.error("Resend verification error:", error.response?.data || error.message);
+    throw error;
+  }
+};

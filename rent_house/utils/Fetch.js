@@ -9,7 +9,7 @@ export const api = axios.create({
   headers: {
     "Content-Type": "application/json",
     "Accept": "application/json",
-    "ngrok-skip-browser-warning": "true"
+    "User-Agent": "MyApp/1.0"
   }
 });
 
