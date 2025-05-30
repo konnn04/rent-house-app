@@ -4,7 +4,9 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { api } from '../../../utils/Fetch';
+import { truncateText } from '../../../utils/Tools';
 import { ImageGallery } from '../../common/ImageGallery';
+import { CommentsModal } from './components/CommentsModal';
 
 export const PostCard = ({ post }) => {
   const { colors } = useTheme();
@@ -15,6 +17,14 @@ export const PostCard = ({ post }) => {
     type: post.interaction?.type || 'none'  // Sử dụng 'none' là giá trị mặc định
   });
   const navigation = useNavigation();
+  
+  // New states for comment modal and content expansion
+  const [commentModalVisible, setCommentModalVisible] = useState(false);
+  const [isContentExpanded, setIsContentExpanded] = useState(false);
+  
+  // Define the max content length for truncation (200 words ~ 1000 characters)
+  const MAX_CONTENT_LENGTH = 1000;
+  const shouldTruncate = post.content && post.content.length > MAX_CONTENT_LENGTH;
 
   // Format the timestamp to a readable date
   const formatDate = (dateString) => {
@@ -74,6 +84,11 @@ export const PostCard = ({ post }) => {
   // Thay thế các hàm handleLike và handleDislike
   const handleLike = () => handleInteraction('like');
   const handleDislike = () => handleInteraction('dislike');
+  
+  // Handle comment button click
+  const handleCommentClick = () => {
+    setCommentModalVisible(true);
+  };
 
   const toggleOptions = () => {
     setShowOptions(!showOptions);
@@ -92,11 +107,21 @@ export const PostCard = ({ post }) => {
     setImageLoading(prev => ({ ...prev, [index]: false }));
     console.error(`Failed to load image at index ${index}`);
   };
+  
+  // Handle "See more" button click
+  const toggleContentExpansion = () => {
+    setIsContentExpanded(!isContentExpanded);
+  };
 
   // Safety check for null/undefined post
   if (!post) {
     return null;
   }
+  
+  // Determine whether to show truncated or full content
+  const displayContent = shouldTruncate && !isContentExpanded 
+    ? truncateText(post.content, MAX_CONTENT_LENGTH) 
+    : post.content;
 
   return (
     <View style={[styles.postContainer, { backgroundColor: colors.backgroundSecondary }]}>
@@ -162,7 +187,19 @@ export const PostCard = ({ post }) => {
         {post.title && (
           <Text style={[styles.postTitle, { color: colors.accentColor }]}>{post.title}</Text>
         )}
-        <Text style={[styles.postContent, { color: colors.textPrimary }]}>{post.content}</Text>
+        
+        <Text style={[styles.postContent, { color: colors.textPrimary }]}>
+          {displayContent}
+        </Text>
+        
+        {/* "See more" button if content is truncated */}
+        {shouldTruncate && (
+          <TouchableOpacity onPress={toggleContentExpansion}>
+            <Text style={[styles.seeMoreButton, { color: colors.accentColor }]}>
+              {isContentExpanded ? 'Thu gọn' : 'Xem thêm'}
+            </Text>
+          </TouchableOpacity>
+        )}
 
         {/* Thay thế phần Images bằng component ImageGallery */}
         {post.media && post.media.length > 0 && (
@@ -209,8 +246,11 @@ export const PostCard = ({ post }) => {
             />
           </TouchableOpacity>
           
-          {/* Các nút khác giữ nguyên */}
-          <TouchableOpacity style={styles.interactionButton}>
+          {/* Comment button - Updated to open modal */}
+          <TouchableOpacity 
+            style={styles.interactionButton}
+            onPress={handleCommentClick}
+          >
             <Ionicons name="chatbubble-outline" size={20} color={colors.textSecondary} />
             <Text style={{ color: colors.textSecondary, marginLeft: 5 }}>
               {post.comment_count || 0}
@@ -223,6 +263,14 @@ export const PostCard = ({ post }) => {
           </TouchableOpacity>
         </View>
       </View>
+      
+      {/* Comment Modal */}
+      <CommentsModal
+        visible={commentModalVisible}
+        onClose={() => setCommentModalVisible(false)}
+        postId={post.id}
+        colors={colors}
+      />
     </View>
   );
 };
@@ -306,6 +354,11 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 20,
     marginBottom: 10,
+  },
+  seeMoreButton: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 12,
   },
   postMedia: {
     marginBottom: 12,

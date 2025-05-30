@@ -27,10 +27,14 @@ export const CreatePostScreen = () => {
   const navigation = useNavigation();
   const { userData } = useUser();
 
+  // Check if user is an owner
+  const isOwner = userData?.role === 'owner';
+
   // Form states
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [postType, setPostType] = useState('rental_listing');
+  // Set default post type based on user role
+  const [postType, setPostType] = useState(isOwner ? 'rental_listing' : 'question');
   const [address, setAddress] = useState('');
   const [location, setLocation] = useState({ latitude: null, longitude: null });
   const [selectedImages, setSelectedImages] = useState([]);
@@ -117,7 +121,7 @@ export const CreatePostScreen = () => {
       formData.append('latitude', location.latitude);
       formData.append('longitude', location.longitude);
 
-      if (linkedHouse) {
+      if (isOwner && linkedHouse) {
         formData.append('house_link', linkedHouse.id);
       }
 
@@ -157,12 +161,14 @@ export const CreatePostScreen = () => {
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={100}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 20}
     >
       <ScrollView
         style={[styles.container, { backgroundColor: colors.backgroundPrimary }]}
         contentContainerStyle={styles.contentContainer}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={true}
       >
         <View style={styles.header}>
           <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
@@ -179,6 +185,7 @@ export const CreatePostScreen = () => {
             selectedType={postType}
             onSelectType={setPostType}
             colors={colors}
+            isOwner={isOwner}
           />
         </View>
 
@@ -240,32 +247,34 @@ export const CreatePostScreen = () => {
           />
         </View>
 
-        {/* House Link */}
-        <View style={styles.formSection}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-            Liên kết với nhà/phòng (tùy chọn)
-          </Text>
-          <TouchableOpacity
-            style={[
-              styles.linkButton,
-              { backgroundColor: colors.backgroundSecondary }
-            ]}
-            onPress={() => setShowHousePicker(true)}
-          >
-            <Icon name="home-outline" size={24} color={colors.accentColor} />
-            <Text style={{ color: colors.textPrimary, marginLeft: 10 }}>
-              {linkedHouse ? `Đã chọn: ${linkedHouse.title}` : 'Chọn nhà/phòng'}
+        {/* House Link - Only for owners */}
+        {isOwner && (
+          <View style={styles.formSection}>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+              Liên kết với nhà/phòng (tùy chọn)
             </Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.linkButton,
+                { backgroundColor: colors.backgroundSecondary }
+              ]}
+              onPress={() => setShowHousePicker(true)}
+            >
+              <Icon name="home-outline" size={24} color={colors.accentColor} />
+              <Text style={{ color: colors.textPrimary, marginLeft: 10 }}>
+                {linkedHouse ? `Đã chọn: ${linkedHouse.title}` : 'Chọn nhà/phòng'}
+              </Text>
+            </TouchableOpacity>
 
-          {showHousePicker && (
-            <HouseLinkSelector
-              onSelectHouse={handleHouseSelected}
-              onCancel={() => setShowHousePicker(false)}
-              colors={colors}
-            />
-          )}
-        </View>
+            {showHousePicker && (
+              <HouseLinkSelector
+                onSelectHouse={handleHouseSelected}
+                onCancel={() => setShowHousePicker(false)}
+                colors={colors}
+              />
+            )}
+          </View>
+        )}
 
         {/* Location */}
         <View style={styles.formSection}>
@@ -326,7 +335,7 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     padding: 16,
-    paddingBottom: 50,
+    paddingBottom: Platform.OS === 'ios' ? 50 : 100, // Increased bottom padding for Android
   },
   header: {
     marginBottom: 20,

@@ -69,21 +69,22 @@ class DetailedProfileSerializer(ProfileSerializer):
         """Trả về đánh giá trung bình nếu người dùng là chủ sở hữu"""
         if obj.role != 'owner':
             return None
-        
-        return None
-    
+        houses = obj.houses.all()
+        if not houses.exists():
+            return None
+        avg = houses.aggregate(total_avg=serializers.Avg('ratings__star'))
+        return avg['total_avg']
+
     def get_house_count(self, obj):
         """Trả về số lượng nhà/căn hộ nếu người dùng là chủ sở hữu"""
         if obj.role != 'owner':
             return None
         return obj.houses.count()
-    
+
     def get_room_count(self, obj):
         """Trả về tổng số phòng từ tất cả các nhà/căn hộ của chủ sở hữu"""
-        if obj.role != 'owner':
-            return None
-        # Tính tổng số phòng từ tất cả nhà/căn hộ
-        return sum(house.rooms.count() for house in obj.houses.all())
+        # Không còn model Room, trả về None hoặc 0
+        return None
     
     def get_posts(self, obj):
         """Trả về danh sách bài đăng của người dùng"""

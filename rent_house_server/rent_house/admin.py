@@ -3,7 +3,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.forms import UserChangeForm, AdminPasswordChangeForm
 from django.utils.safestring import mark_safe
-from rent_house.models import Media, House, Room, Post, Comment, User
+from rent_house.models import Media, House, Post, Comment, User
 from django.contrib.contenttypes.models import ContentType
 from rent_house.utils import upload_image_to_cloudinary
 from django.contrib.admin.models import LogEntry
@@ -102,9 +102,9 @@ class RentHouseAdminSite(admin.AdminSite):
         registered in this site.
         """
         app_list = super().get_app_list(request)
-        
+
         # Add statistics counts to the context
-        from rent_house.models import User, House, Room, Post
+        from rent_house.models import User, House, Post
         for app in app_list:
             if app['app_label'] == 'rent_house':
                 for model in app['models']:
@@ -112,21 +112,18 @@ class RentHouseAdminSite(admin.AdminSite):
                         model['count'] = User.objects.count()
                     elif model['object_name'] == 'House':
                         model['count'] = House.objects.count()
-                    elif model['object_name'] == 'Room':
-                        model['count'] = Room.objects.count()
                     elif model['object_name'] == 'Post':
                         model['count'] = Post.objects.count()
-        
+
         return app_list
     
     def index(self, request, extra_context=None):
         # Add statistics to the admin index page
-        from rent_house.models import User, House, Room, Post
+        from rent_house.models import User, House, Post
         
         context = {
             'user_count': User.objects.count(),
             'house_count': House.objects.count(),
-            'room_count': Room.objects.count(),
             'post_count': Post.objects.count(),
         }
         
@@ -141,7 +138,6 @@ admin_site = RentHouseAdminSite(name='rentadmin')
 # Register your models with the custom admin site
 admin_site.register(Media)
 admin_site.register(House)
-admin_site.register(Room)
 admin_site.register(Post)
 admin_site.register(Comment)
 admin_site.register(User, CustomUserAdmin)

@@ -272,8 +272,8 @@ export const ChatDetailScreen = () => {
   return (
     <KeyboardAvoidingView
       style={[styles.container, { backgroundColor: colors.backgroundPrimary }]}
-      behavior={Platform.OS === 'ios' ? 'padding' : null}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 30}
     >
       <ChatHeader
         chatData={chatData}
@@ -299,7 +299,10 @@ export const ChatDetailScreen = () => {
             />
           )}
           inverted
-          contentContainerStyle={styles.messagesContainer}
+          contentContainerStyle={[
+            styles.messagesContainer,
+            { paddingBottom: Platform.OS === 'android' ? 60 : 0 } // Add extra padding on Android
+          ]}
           onRefresh={handleRefresh}
           refreshing={refreshing}
           onEndReached={handleLoadMore}

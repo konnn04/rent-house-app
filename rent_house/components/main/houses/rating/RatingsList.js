@@ -1,10 +1,10 @@
 import React from 'react';
 import {
-    FlatList,
-    Image,
-    StyleSheet,
-    Text,
-    View
+  FlatList,
+  Image,
+  StyleSheet,
+  Text,
+  View
 } from 'react-native';
 import { Divider } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -72,7 +72,7 @@ const RatingItem = ({ rating }) => {
   );
 };
 
-export const RatingsList = ({ ratings = [] }) => {
+export const RatingsList = ({ ratings = [], useScrollView = false }) => {
   const { colors } = useTheme();
   
   if (ratings.length === 0) {
@@ -86,6 +86,23 @@ export const RatingsList = ({ ratings = [] }) => {
     );
   }
   
+  // Use View with mapped items instead of FlatList when useScrollView is true
+  if (useScrollView) {
+    return (
+      <View style={styles.listContainer}>
+        {ratings.map((item, index) => (
+          <React.Fragment key={item.id.toString()}>
+            <RatingItem rating={item} />
+            {index < ratings.length - 1 && (
+              <Divider style={[styles.divider, { backgroundColor: colors.borderColor }]} />
+            )}
+          </React.Fragment>
+        ))}
+      </View>
+    );
+  }
+  
+  // Otherwise use FlatList (for standalone screens)
   return (
     <FlatList
       data={ratings}

@@ -1,24 +1,21 @@
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import { useEffect, useState } from 'react';
 import {
-    ActivityIndicator, Alert, Image, KeyboardAvoidingView, Platform,
-    ScrollView, StyleSheet, Text, TouchableOpacity, View
+  ActivityIndicator, Alert, Image, KeyboardAvoidingView, Platform,
+  ScrollView, StyleSheet, Text, TouchableOpacity, View
 } from 'react-native';
 import { Button, HelperText, SegmentedButtons, TextInput } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 import { useTheme } from '../../../../contexts/ThemeContext';
 import { api } from '../../../../utils/Fetch';
+import { LocationPickerComponent } from '../../posts/components/LocationPickerComponent';
 import { ManageHeader } from './components/ManageHeader';
 
-export const AddEditHouseScreen = () => {
+export const AddEditHouseScreen = ({ houseId, isEditing = false }) => {
   const { colors } = useTheme();
   const navigation = useNavigation();
-  const route = useRoute();
-  
-  const isEditing = !!route.params?.houseId;
-  const houseId = route.params?.houseId;
   
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -31,14 +28,17 @@ export const AddEditHouseScreen = () => {
   const [type, setType] = useState('house');
   const [latitude, setLatitude] = useState('');
   const [longitude, setLongitude] = useState('');
+  const [maxRooms, setMaxRooms] = useState('');
+  const [maxPeople, setMaxPeople] = useState('');
   const [images, setImages] = useState([]);
+  const [showLocationPicker, setShowLocationPicker] = useState(false);
   
   const [loading, setLoading] = useState(isEditing);
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
   
   useEffect(() => {
-    if (isEditing) {
+    if (isEditing && houseId) {
       fetchHouseDetails();
     }
   }, [isEditing, houseId]);
@@ -62,6 +62,8 @@ export const AddEditHouseScreen = () => {
       setType(house.type || 'house');
       setLatitude(house.latitude?.toString() || '');
       setLongitude(house.longitude?.toString() || '');
+      setMaxRooms(house.max_rooms?.toString() || '');
+      setMaxPeople(house.max_people?.toString() || '');
       
       // Convert media to the format needed for our image picker
       if (house.media && house.media.length > 0) {
@@ -155,6 +157,17 @@ export const AddEditHouseScreen = () => {
       newErrors.type = 'Vui lòng chọn loại nhà';
     }
     
+    // Validate maxRooms and maxPeople for certain types
+    if (type === 'dormitory' || type === 'room') {
+      if (!maxRooms.trim() || isNaN(maxRooms) || Number(maxRooms) <= 0) {
+        newErrors.maxRooms = 'Vui lòng nhập số phòng tối đa (lớn hơn 0)';
+      }
+      
+      if (!maxPeople.trim() || isNaN(maxPeople) || Number(maxPeople) <= 0) {
+        newErrors.maxPeople = 'Vui lòng nhập số người tối đa (lớn hơn 0)';
+      }
+    }
+    
     if (!isEditing && images.length === 0) {
       newErrors.images = 'Vui lòng chọn ít nhất một ảnh';
     }
@@ -182,6 +195,12 @@ export const AddEditHouseScreen = () => {
       if (trashPrice) formData.append('trash_price', trashPrice);
       if (latitude) formData.append('latitude', latitude);
       if (longitude) formData.append('longitude', longitude);
+      
+      // Add max_rooms and max_people if necessary
+      if (type === 'dormitory' || type === 'room') {
+        formData.append('max_rooms', maxRooms);
+        formData.append('max_people', maxPeople);
+      }
       
       // Add new images (not the ones already in the database)
       const newImages = images.filter(img => !img.id);
@@ -235,6 +254,14 @@ export const AddEditHouseScreen = () => {
     }
   };
   
+  // Handle location selection from map
+  const handleLocationSelected = (selectedAddress, lat, lng) => {
+    setAddress(selectedAddress);
+    setLatitude(lat.toString());
+    setLongitude(lng.toString());
+    setShowLocationPicker(false);
+  };
+  
   if (loading) {
     return (
       <View style={[styles.container, { backgroundColor: colors.backgroundPrimary }]}>
@@ -261,11 +288,33 @@ export const AddEditHouseScreen = () => {
         onBackPress={() => navigation.goBack()}
       />
       
+      {showLocationPicker && (
+        <LocationPickerComponent
+          onLocationSelected={handleLocationSelected}
+          onCancel={() => setShowLocationPicker(false)}
+          initialAddress={address}
+          initialLocation={
+            latitude && longitude 
+              ? { 
+                  latitude: parseFloat(latitude), 
+                  longitude: parseFloat(longitude) 
+                } 
+              : null
+          }
+          colors={colors}
+        />
+      )}
+      
       <KeyboardAvoidingView 
         style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
-        <ScrollView contentContainerStyle={styles.content}>
+        <ScrollView 
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={true}
+        >
           <TextInput
             label="Tiêu đề"
             value={title}
@@ -307,6 +356,51 @@ export const AddEditHouseScreen = () => {
             </HelperText>
           )}
           
+          <Button 
+            mode="outlined" 
+            icon="map-marker" 
+            onPress={() => setShowLocationPicker(true)}
+            style={styles.mapPickerButton}
+          >
+            Chọn vị trí trên bản đồ
+          </Button>
+          
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Tọa độ</Text>
+          <View style={styles.locationInfoContainer}>
+            {latitude && longitude ? (
+              <Text style={[styles.locationConfirmed, {color: colors.successColor}]}>
+                <Icon name="check-circle" size={16} /> Đã chọn vị trí
+              </Text>
+            ) : (
+              <Text style={[styles.locationMissing, {color: colors.warningColor}]}>
+                <Icon name="alert-circle" size={16} /> Chưa chọn vị trí
+              </Text>
+            )}
+          </View>
+          <View style={styles.priceGrid}>
+            <View style={styles.priceItem}>
+              <TextInput
+                label="Vĩ độ"
+                value={latitude}
+                onChangeText={setLatitude}
+                keyboardType="numeric"
+                style={styles.input}
+                disabled={true}
+              />
+            </View>
+            
+            <View style={styles.priceItem}>
+              <TextInput
+                label="Kinh độ"
+                value={longitude}
+                onChangeText={setLongitude}
+                keyboardType="numeric"
+                style={styles.input}
+                disabled={true}
+              />
+            </View>
+          </View>
+          
           <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Loại nhà</Text>
           <SegmentedButtons
             value={type}
@@ -318,10 +412,57 @@ export const AddEditHouseScreen = () => {
             ]}
             style={styles.segmentedButtons}
           />
+          <SegmentedButtons
+            value={type}
+            onValueChange={setType}
+            buttons={[
+              { value: 'studio', label: 'Studio' },
+              { value: 'room', label: 'Phòng trọ' },
+            ]}
+            style={[styles.segmentedButtons, { marginTop: 10 }]}
+          />
           {errors.type && (
             <HelperText type="error" visible={true}>
               {errors.type}
             </HelperText>
+          )}
+          
+          {(type === 'dormitory' || type === 'room') && (
+            <>
+              <View style={styles.row}>
+                <View style={styles.halfInput}>
+                  <TextInput
+                    label="Số phòng tối đa"
+                    value={maxRooms}
+                    onChangeText={setMaxRooms}
+                    keyboardType="numeric"
+                    style={styles.input}
+                    error={!!errors.maxRooms}
+                  />
+                  {errors.maxRooms && (
+                    <HelperText type="error" visible={true}>
+                      {errors.maxRooms}
+                    </HelperText>
+                  )}
+                </View>
+                
+                <View style={styles.halfInput}>
+                  <TextInput
+                    label="Số người tối đa"
+                    value={maxPeople}
+                    onChangeText={setMaxPeople}
+                    keyboardType="numeric"
+                    style={styles.input}
+                    error={!!errors.maxPeople}
+                  />
+                  {errors.maxPeople && (
+                    <HelperText type="error" visible={true}>
+                      {errors.maxPeople}
+                    </HelperText>
+                  )}
+                </View>
+              </View>
+            </>
           )}
           
           <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Giá cả</Text>
@@ -408,7 +549,7 @@ export const AddEditHouseScreen = () => {
             </View>
           </View>
           
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Tọa độ (tùy chọn)</Text>
+          {/* <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Tọa độ (tùy chọn)</Text>
           <View style={styles.priceGrid}>
             <View style={styles.priceItem}>
               <TextInput
@@ -429,7 +570,7 @@ export const AddEditHouseScreen = () => {
                 style={styles.input}
               />
             </View>
-          </View>
+          </View> */}
           
           <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Hình ảnh</Text>
           
@@ -485,7 +626,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 16,
-    paddingBottom: 40,
+    paddingBottom: Platform.OS === 'ios' ? 40 : 80, // Increased bottom padding for Android
   },
   loadingContainer: {
     flex: 1,
@@ -509,6 +650,14 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   priceItem: {
+    width: '48%',
+  },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 10,
+  },
+  halfInput: {
     width: '48%',
   },
   imagesContainer: {
@@ -561,5 +710,21 @@ const styles = StyleSheet.create({
   },
   submitButtonContent: {
     paddingVertical: 10,
+  },
+  mapPickerButton: {
+    marginBottom: 16,
+  },
+  locationInfoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  locationConfirmed: {
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  locationMissing: {
+    fontSize: 14,
+    fontWeight: 'bold',
   },
 });

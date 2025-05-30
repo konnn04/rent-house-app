@@ -92,3 +92,47 @@ export const navigateToChat = (navigation, { chatId, chatName, userId = null }) 
   });
   return true;
 };
+
+/**
+ * Create an optimistic message for immediate UI feedback before API call completes
+ * 
+ * @param {string} content - Message text content
+ * @param {object} userData - Current user data
+ * @param {object} replyingTo - Message being replied to (optional)
+ * @param {array} images - Array of image objects (optional)
+ * @returns {object} Temporary message object
+ */
+export const createOptimisticMessage = (content, userData, replyingTo = null, images = []) => {
+  // Generate a temporary ID (negative to avoid conflicts with server IDs)
+  const tempId = -Math.floor(Math.random() * 1000000);
+  
+  // Current timestamp
+  const now = new Date().toISOString();
+  
+  // Format media items if present
+  const mediaItems = images.map((img, index) => ({
+    id: `temp-${index}-${tempId}`,
+    type: 'image',
+    url: img.uri,
+    thumbnail: img.uri,
+  }));
+  
+  // Create the optimistic message object
+  return {
+    id: tempId,
+    content: content || '',
+    created_at: now,
+    updated_at: now,
+    sender: {
+      id: userData?.id,
+      username: userData?.username,
+      full_name: userData?.full_name || userData?.username,
+      avatar: userData?.avatar,
+    },
+    is_read: true,
+    is_sender: true,
+    is_optimistic: true,  // Flag to identify this as a temporary message
+    replied_to: replyingTo,
+    medias: mediaItems.length > 0 ? mediaItems : null,
+  };
+};

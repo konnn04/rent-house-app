@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import {
-    Dimensions,
-    FlatList,
-    Image,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  Dimensions,
+  FlatList,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { useTheme } from '../../../../contexts/ThemeContext';
 import { ImageViewer } from '../../../common/ImageViewer';

@@ -39,18 +39,12 @@ class RateViewSet(viewsets.ModelViewSet):
         house_id = self.request.data.get('house')
         try:
             house = House.objects.get(id=house_id)
-            
-            # Đảm bảo rằng người dùng là người thuê phòng trong house này
-            is_renter = house.rooms.filter(rentals__user=self.request.user, rentals__is_active=True).exists()
-            
-            if not is_renter:
-                # Hoặc cho phép bất kỳ ai cũng có thể đánh giá (tùy vào yêu cầu)
-                # Trong trường hợp thật, bạn có thể cần xác minh người dùng
-                # đã từng thuê phòng ở đây trước đó
-                pass
-                
+
+            # Không còn kiểm tra is_renter vì không còn room/roomrental
+            # Nếu muốn chỉ cho phép user đã từng thuê nhà đánh giá, cần bổ sung logic khác
+
             rate = serializer.save(user=self.request.user, house=house)
-            
+
             # Xử lý hình ảnh nếu có
             images = self.request.FILES.getlist('images')
             if images:
@@ -65,8 +59,8 @@ class RateViewSet(viewsets.ModelViewSet):
                             purpose='attachment',
                             public_id=image_url.split('/')[-1].split('.')[0]
                         )
-            
+
             return rate
-            
+
         except House.DoesNotExist:
             raise serializers.ValidationError("House không tồn tại")

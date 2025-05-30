@@ -5,7 +5,7 @@ import { useTheme } from '../../../contexts/ThemeContext';
 import { useUser } from '../../../contexts/UserContext';
 import { homeStyles } from '../../../styles/style';
 import { api } from '../../../utils/Fetch';
-import { formatDateToRelative } from '../../../utils/Tools';
+import { timeAgo } from '../../../utils/Tools';
 import { ChatListItem } from './ChatListItem';
 import { SearchBar } from './components/SearchBar';
 
@@ -128,7 +128,7 @@ export const ChatListScreen = () => {
               name: getChatDisplayName(item),
               avatars: getAvatars(item.members_summary, item.is_group),
               lastMessage: item.last_message?.content || 'Chưa có tin nhắn',
-              lastMessageTime: item.last_message ? formatDateToRelative(item.last_message.created_at) : '',
+              lastMessageTime: item.last_message ? timeAgo(item.last_message.created_at) : '',
               unreadCount: item.unread_count || 0,
               isGroup: item.is_group,
               lastMessageSender: item.last_message?.sender?.full_name || ''

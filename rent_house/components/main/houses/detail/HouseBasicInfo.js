@@ -1,9 +1,9 @@
 import {
-    Linking,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  Linking,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { Chip, Divider } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -27,6 +27,7 @@ export const HouseBasicInfo = ({ house }) => {
       'villa': 'Biệt thự',
       'dormitory': 'Ký túc xá',
       'studio': 'Studio',
+      'room': 'Phòng trọ',
     };
     return types[type] || 'Nhà';
   };
@@ -84,14 +85,14 @@ export const HouseBasicInfo = ({ house }) => {
         <View style={styles.statItem}>
           <Icon name="door" size={18} color={colors.accentColor} />
           <Text style={[styles.statText, { color: colors.textSecondary }]}>
-            {house.room_count || 0} phòng
+            {house.max_rooms || 0} phòng
           </Text>
         </View>
         
         <View style={styles.statItem}>
           <Icon name="door-open" size={18} color={colors.accentColor} />
           <Text style={[styles.statText, { color: colors.textSecondary }]}>
-            {house.available_rooms || 0} phòng trống
+            {house.current_rooms || 0} phòng đã dùng
           </Text>
         </View>
         

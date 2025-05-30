@@ -1,16 +1,8 @@
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useCallback, useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    Platform,
-    RefreshControl,
-    ScrollView,
-    Share,
-    StatusBar,
-    StyleSheet,
-    Text,
-    View
+    ActivityIndicator, Alert, Platform, RefreshControl, ScrollView,
+    Share, StatusBar, StyleSheet, Text, View
 } from 'react-native';
 import { IconButton } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -27,7 +19,6 @@ import { HouseGallery } from './HouseGallery';
 import { HousePriceInfo } from './HousePriceInfo';
 import { OwnerInfo } from './OwnerInfo';
 import { RatingsSection } from './RatingsSection';
-import { RoomsList } from './RoomsList';
 
 export const HouseDetailScreen = () => {
     const { colors } = useTheme();
@@ -41,7 +32,7 @@ export const HouseDetailScreen = () => {
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState(null);
-    const [activeTab, setActiveTab] = useState('info'); // 'info', 'rooms', 'reviews'
+    const [activeTab, setActiveTab] = useState('info'); // 'info', 'reviews'
     const [contactLoading, setContactLoading] = useState(false);
 
     // Fetch house details
@@ -173,132 +164,116 @@ export const HouseDetailScreen = () => {
     const isOwner = userData?.id === house?.owner?.id;
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: colors.backgroundPrimary }]} edges={['top']}>
-            <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.backgroundPrimary }]} edges={['top']}>
+        <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
 
-            {/* Header */}
-            <View style={styles.header}>
-                <IconButton
-                    icon="arrow-left"
-                    iconColor="white"
-                    size={24}
-                    style={styles.backButton}
-                    onPress={handleGoBack}
-                />
+        {/* Header */}
+        <View style={styles.header}>
+          <IconButton
+              icon="arrow-left"
+              iconColor="white"
+              size={24}
+              style={styles.backButton}
+              onPress={handleGoBack}
+          />
 
-                <View style={styles.headerActions}>
-                    <IconButton
-                        icon="share-variant"
-                        iconColor="white"
-                        size={24}
-                        style={styles.actionButton}
-                        onPress={handleShare}
-                    />
+          <View style={styles.headerActions}>
+              <IconButton
+                  icon="share-variant"
+                  iconColor="white"
+                  size={24}
+                  style={styles.actionButton}
+                  onPress={handleShare}
+              />
 
-                    {isOwner && (
-                        <IconButton
-                            icon="pencil"
-                            iconColor="white"
-                            size={24}
-                            style={styles.actionButton}
-                            onPress={handleEditHouse}
-                        />
-                    )}
-                </View>
-            </View>
+              {isOwner && (
+                  <IconButton
+                      icon="pencil"
+                      iconColor="white"
+                      size={24}
+                      style={styles.actionButton}
+                      onPress={handleEditHouse}
+                  />
+              )}
+          </View>
+        </View>
 
-            {/* Main Content */}
-            {house && (
-                <View style={styles.contentContainer}>
-                    {/* Gallery and Basic Info */}
-                    <ScrollView
-                        refreshControl={
-                            <RefreshControl
-                                refreshing={refreshing}
-                                onRefresh={handleRefresh}
-                                colors={[colors.accentColor]}
-                                tintColor={colors.accentColor}
-                            />
-                        }
-                        style={styles.scrollView}
-                        contentContainerStyle={styles.scrollViewContent}
-                        showsVerticalScrollIndicator={false}
-                    >
-                        {/* Gallery */}
-                        <HouseGallery media={house.media} />
+        {/* Main Content */}
+        {house && (
+          <View style={styles.contentContainer}>
+              {/* Gallery and Basic Info */}
+              <ScrollView
+                  refreshControl={
+                      <RefreshControl
+                          refreshing={refreshing}
+                          onRefresh={handleRefresh}
+                          colors={[colors.accentColor]}
+                          tintColor={colors.accentColor}
+                      />
+                  }
+                  style={styles.scrollView}
+                  contentContainerStyle={styles.scrollViewContent}
+                  showsVerticalScrollIndicator={false}
+              >
+                  {/* Gallery */}
+                  <HouseGallery media={house.media} />
 
-                        {/* Basic Info */}
-                        <HouseBasicInfo house={house} />
+                  {/* Basic Info */}
+                  <HouseBasicInfo house={house} />
 
-                        {/* Tab Navigation */}
-                        <View style={[styles.tabContainer, { backgroundColor: colors.backgroundSecondary }]}>
-                            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                                <Text
-                                    style={[
-                                        styles.tabButton,
-                                        activeTab === 'info' && [styles.activeTab, { borderColor: colors.accentColor }],
-                                        { color: activeTab === 'info' ? colors.accentColor : colors.textSecondary }
-                                    ]}
-                                    onPress={() => setActiveTab('info')}
-                                >
-                                    Thông tin
-                                </Text>
-                                <Text
-                                    style={[
-                                        styles.tabButton,
-                                        activeTab === 'rooms' && [styles.activeTab, { borderColor: colors.accentColor }],
-                                        { color: activeTab === 'rooms' ? colors.accentColor : colors.textSecondary }
-                                    ]}
-                                    onPress={() => setActiveTab('rooms')}
-                                >
-                                    Phòng ({house.room_count || 0})
-                                </Text>
-                                <Text
-                                    style={[
-                                        styles.tabButton,
-                                        activeTab === 'reviews' && [styles.activeTab, { borderColor: colors.accentColor }],
-                                        { color: activeTab === 'reviews' ? colors.accentColor : colors.textSecondary }
-                                    ]}
-                                    onPress={() => setActiveTab('reviews')}
-                                >
-                                    Đánh giá ({house.avg_rating ? `${house.avg_rating.toFixed(1)}★` : 'Chưa có'})
-                                </Text>
-                            </ScrollView>
-                        </View>
-                        
-                        {/* Tab Content */}
-                        {activeTab === 'info' && (
-                            <View style={styles.tabContent}>
-                                <HousePriceInfo house={house} />
-                                {house.description && <DescriptionSection description={house.description} />}
-                                <OwnerInfo owner={house.owner} />
-                            </View>
-                        )}
-                        
-                        {activeTab === 'rooms' && (
-                            <View style={styles.tabContent}>
-                                <RoomsList rooms={house.rooms} houseId={house.id} isOwner={isOwner} />
-                            </View>
-                        )}
-                        
-                        {activeTab === 'reviews' && (
-                            <View style={styles.tabContent}>
-                                <RatingsSection houseId={house.id} avgRating={house.avg_rating} />
-                            </View>
-                        )}
-                    </ScrollView>
+                  {/* Tab Navigation */}
+                  <View style={[styles.tabContainer, { backgroundColor: colors.backgroundSecondary }]}>
+                      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                          <Text
+                              style={[
+                                  styles.tabButton,
+                                  activeTab === 'info' && [styles.activeTab, { borderColor: colors.accentColor }],
+                                  { color: activeTab === 'info' ? colors.accentColor : colors.textSecondary }
+                              ]}
+                              onPress={() => setActiveTab('info')}
+                          >
+                              Thông tin
+                          </Text>
+                          <Text
+                              style={[
+                                  styles.tabButton,
+                                  activeTab === 'reviews' && [styles.activeTab, { borderColor: colors.accentColor }],
+                                  { color: activeTab === 'reviews' ? colors.accentColor : colors.textSecondary }
+                              ]}
+                              onPress={() => setActiveTab('reviews')}
+                          >
+                              Đánh giá ({house.avg_rating ? `${house.avg_rating.toFixed(1)}★` : 'Chưa có'})
+                          </Text>
+                      </ScrollView>
+                  </View>
+                  
+                  {/* Tab Content */}
+                  {activeTab === 'info' && (
+                      <View style={styles.tabContent}>
+                          <OwnerInfo owner={house.owner} />
+                          <HousePriceInfo house={house} />
+                          {house.description && <DescriptionSection description={house.description} />}
+                      </View>
+                  )}
+                  
+                  {activeTab === 'reviews' && (
+                      <View style={styles.tabContent}>
+                          <RatingsSection houseId={house.id} avgRating={house.avg_rating} insideScrollView={true} />
+                      </View>
+                  )}
+              </ScrollView>
 
-                    {/* Contact Section - only show if user is not the owner */}
-                    {!isOwner && house && (
-                        <ContactSection 
-                            house={house} 
-                            onContactPress={handleContactOwner} 
-                            isLoading={contactLoading}
-                        />
-                    )}
-                </View>
-            )}
-        </SafeAreaView>
+              {/* Contact Section - only show if user is not the owner */}
+              {!isOwner && house && (
+                  <ContactSection 
+                      house={house} 
+                      onContactPress={handleContactOwner} 
+                      isLoading={contactLoading}
+                  />
+              )}
+          </View>
+        )}
+      </SafeAreaView>
     );
 };
 

@@ -4,14 +4,13 @@ from django.db.models import Count
 from django.db.models.functions import TruncDay, TruncMonth
 from datetime import datetime, timedelta
 
-from rent_house.models import User, House, Room, Post, Comment
+from rent_house.models import User, House, Post, Comment
 
 @staff_member_required
 def admin_dashboard(request):
     # Basic statistics
     user_count = User.objects.count()
     house_count = House.objects.count()
-    room_count = Room.objects.count()
     post_count = Post.objects.count()
     
     # Get new registrations in the last 30 days
@@ -48,7 +47,6 @@ def admin_dashboard(request):
     context = {
         'user_count': user_count,
         'house_count': house_count,
-        'room_count': room_count,
         'post_count': post_count,
         'new_users': new_users,
         'new_posts': new_posts,

@@ -6,7 +6,7 @@ import { useTheme } from '../../../contexts/ThemeContext';
 import { useUser } from "../../../contexts/UserContext";
 import { createDirectChat } from '../../../utils/ChatUtils';
 import { api } from '../../../utils/Fetch';
-import { formatDateToRelative } from '../../../utils/Tools';
+import { timeAgo } from '../../../utils/Tools';
 import { HouseCard } from '../houses/components/HouseCard';
 import { PostCard } from '../posts/PostCard';
 
@@ -272,7 +272,7 @@ export const PublicProfile = () => {
           <View style={styles.infoRow}>
             <Icon name="calendar-outline" size={18} color={colors.textSecondary} />
             <Text style={[styles.infoText, { color: colors.textPrimary }]}>
-              Tham gia từ {formatDateToRelative(profileData.joined_date)}
+              Tham gia từ {timeAgo(profileData.joined_date)}
             </Text>
           </View>
 

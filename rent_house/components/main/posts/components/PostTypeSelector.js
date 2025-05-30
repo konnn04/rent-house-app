@@ -1,40 +1,51 @@
+import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
-export const PostTypeSelector = ({ selectedType, onSelectType, colors }) => {
-  // Available post types and their display information
+export const PostTypeSelector = ({ selectedType, onSelectType, colors, isOwner }) => {
+  // Define available post types based on user role
   const postTypes = [
     {
+      id: 'question',
+      title: 'Câu hỏi',
+      icon: 'help-circle',
+      description: 'Đặt câu hỏi về nhà thuê, phòng trọ',
+      available: true, // Available for all users
+    },
+    {
+      id: 'news',
+      title: 'Tin tức',
+      icon: 'newspaper',
+      description: 'Chia sẻ tin tức về thị trường bất động sản',
+      available: true, // Available for all users
+    },
+    {
       id: 'rental_listing',
-      label: 'Cho thuê',
-      icon: 'home-city',
-      description: 'Đăng thông tin cho thuê nhà/phòng',
-    },
-    {
-      id: 'search_listing',
-      label: 'Tìm thuê',
-      icon: 'magnify',
-      description: 'Đăng thông tin tìm nhà/phòng để thuê',
-    },
-    {
-      id: 'roommate',
-      label: 'Tìm bạn ở ghép',
-      icon: 'account-group',
-      description: 'Đăng thông tin tìm bạn ở ghép',
+      title: 'Cho thuê',
+      icon: 'home',
+      description: 'Đăng tin cho thuê nhà hoặc phòng',
+      available: isOwner, // Only available for owners
     },
   ];
 
+  // Filter post types based on availability
+  const availablePostTypes = postTypes.filter((type) => type.available);
+
   return (
     <View style={styles.container}>
-      {postTypes.map((type) => (
+      {availablePostTypes.map((type) => (
         <TouchableOpacity
           key={type.id}
           style={[
             styles.typeButton,
+            selectedType === type.id && styles.selectedTypeButton,
             {
-              backgroundColor: selectedType === type.id 
-                ? colors.accentColor 
-                : colors.backgroundSecondary,
+              backgroundColor:
+                selectedType === type.id
+                  ? colors.accentColor
+                  : colors.backgroundSecondary,
+              borderColor:
+                selectedType === type.id ? colors.accentColor : colors.borderColor,
             },
           ]}
           onPress={() => onSelectType(type.id)}
@@ -42,30 +53,15 @@ export const PostTypeSelector = ({ selectedType, onSelectType, colors }) => {
           <Icon
             name={type.icon}
             size={24}
-            color={selectedType === type.id ? '#FFFFFF' : colors.textSecondary}
+            color={selectedType === type.id ? '#fff' : colors.textSecondary}
           />
           <Text
             style={[
-              styles.typeLabel,
-              {
-                color: selectedType === type.id ? '#FFFFFF' : colors.textPrimary,
-              },
+              styles.typeButtonText,
+              { color: selectedType === type.id ? '#fff' : colors.textPrimary },
             ]}
           >
-            {type.label}
-          </Text>
-          <Text
-            style={[
-              styles.typeDescription,
-              {
-                color: selectedType === type.id
-                  ? 'rgba(255,255,255,0.8)'
-                  : colors.textSecondary,
-              },
-            ]}
-            numberOfLines={2}
-          >
-            {type.description}
+            {type.title}
           </Text>
         </TouchableOpacity>
       ))}
@@ -77,24 +73,22 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginVertical: 8,
   },
   typeButton: {
     flex: 1,
-    borderRadius: 8,
-    padding: 12,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: 8,
+    borderWidth: 1,
     marginHorizontal: 4,
-    minHeight: 100,
   },
-  typeLabel: {
-    fontWeight: 'bold',
-    marginTop: 8,
-    marginBottom: 4,
+  selectedTypeButton: {
+    borderWidth: 1,
   },
-  typeDescription: {
+  typeButtonText: {
+    marginTop: 5,
+    fontWeight: '500',
     fontSize: 12,
-    textAlign: 'center',
   },
 });

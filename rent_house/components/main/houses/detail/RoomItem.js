@@ -1,9 +1,9 @@
 import {
-    Image,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { Badge } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';

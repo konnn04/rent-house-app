@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    StyleSheet,
-    Text,
-    View
+  ActivityIndicator,
+  Alert,
+  StyleSheet,
+  Text,
+  View
 } from 'react-native';
 import { Button, Divider } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -16,7 +17,7 @@ import { AddRatingModal } from '../rating/AddRatingModal';
 import { RateFilterOptions } from '../rating/RateFilterOptions';
 import { RatingsList } from '../rating/RatingsList';
 
-export const RatingsSection = ({ houseId, avgRating = 0 }) => {
+export const RatingsSection = ({ houseId, avgRating = 0, insideScrollView = false }) => {
   const { colors } = useTheme();
   const { userData } = useUser();
   
@@ -197,8 +198,8 @@ export const RatingsSection = ({ houseId, avgRating = 0 }) => {
       
       <Divider style={[styles.divider, { backgroundColor: colors.borderColor }]} />
       
-      {/* Ratings list */}
-      <RatingsList ratings={ratings} />
+      {/* Ratings list - use useScrollView=true when inside another ScrollView */}
+      <RatingsList ratings={ratings} useScrollView={insideScrollView} />
       
       {/* Add/Edit rating modal */}
       <AddRatingModal

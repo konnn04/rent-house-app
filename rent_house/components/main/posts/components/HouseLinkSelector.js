@@ -13,7 +13,7 @@ import {
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { api } from '../../../../utils/Fetch';
 
-export const HouseLinkSelector = ({ onSelectHouse, onCancel, colors }) => {
+export const HouseLinkSelector = ({ onSelectHouse, onCancel, colors, navigation }) => {
   const [loading, setLoading] = useState(true);
   const [houses, setHouses] = useState([]);
   const [filteredHouses, setFilteredHouses] = useState([]);
@@ -154,7 +154,8 @@ export const HouseLinkSelector = ({ onSelectHouse, onCancel, colors }) => {
                 style={[styles.createHouseButton, { backgroundColor: colors.accentColor }]}
                 onPress={() => {
                   onCancel();
-                  // Navigate to create house screen - add this functionality if needed
+                  // Navigate to AddHouse screen
+                  navigation.navigate('AddHouse');
                 }}
               >
                 <Text style={styles.createHouseButtonText}>Tạo nhà/phòng mới</Text>

@@ -43,8 +43,9 @@ export const ManageHouse = () => {
       let availableRooms = 0;
       
       response.data.results.forEach(house => {
-        totalRooms += house.room_count || 0;
-        availableRooms += house.available_rooms || 0;
+        totalRooms += house.max_rooms || 0;
+        const usedRooms = house.current_rooms || 0;
+        availableRooms += Math.max(0, (house.max_rooms || 0) - usedRooms);
       });
       
       setStatistics({
@@ -53,11 +54,6 @@ export const ManageHouse = () => {
         availableRooms,
         pendingVerifications: 0 // This will be updated from another API
       });
-      
-      // Check if user is verified (has ID verification)
-      // In a real app, this would come from an API endpoint
-      // For now, we'll use a placeholder value
-    //   setIsVerified(userData?.is_verified || false);
       
     } catch (err) {
       console.error('Error fetching houses:', err);
@@ -98,14 +94,6 @@ export const ManageHouse = () => {
   };
   
   const handleAddHouse = () => {
-    // if (!isVerified) {
-    //   // Redirect to identity verification first
-    //   navigation.navigate('IdentityVerification', { 
-    //     redirectAfter: 'AddHouse'
-    //   });
-    //   return;
-    // }
-    
     navigation.navigate('AddHouse');
   };
   
@@ -115,13 +103,6 @@ export const ManageHouse = () => {
   
   const handleViewHouse = (house) => {
     navigation.navigate('HouseDetail', { houseId: house.id });
-  };
-  
-  const handleManageRooms = (house) => {
-    navigation.navigate('RoomList', { 
-      houseId: house.id,
-      houseTitle: house.title || `Nhà ${house.id}`
-    });
   };
   
   const renderEmptyState = () => (
@@ -235,13 +216,6 @@ export const ManageHouse = () => {
                 >
                   <Icon name="pencil" size={20} color="#fff" />
                 </TouchableOpacity>
-                
-                <TouchableOpacity
-                  style={[styles.roomsButton, { backgroundColor: colors.infoColor }]}
-                  onPress={() => handleManageRooms(item)}
-                >
-                  <Icon name="door" size={20} color="#fff" />
-                </TouchableOpacity>
               </View>
               
               {!item.is_verified && (
@@ -329,19 +303,6 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   editButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
-    elevation: 5,
-    marginRight: 8,
-  },
-  roomsButton: {
     width: 40,
     height: 40,
     borderRadius: 20,

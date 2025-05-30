@@ -7,7 +7,7 @@ import {
     View
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { formatDateToRelative } from '../../../utils/Tools';
+import { timeAgo } from '../../../utils/Tools';
 
 // Map loại thông báo đến icon tương ứng
 const NOTIFICATION_TYPE_ICONS = {
@@ -73,7 +73,7 @@ export const NotificationCard = memo(({ item, onPress, onMenuPress, colors }) =>
                     {item.content}
                 </Text>
                 <Text style={[styles.notificationTime, { color: colors.textSecondary }]}>
-                    {formatDateToRelative(item.created_at)}
+                    {timeAgo(item.created_at)}
                 </Text>
             </View>
 

@@ -5,9 +5,9 @@ from django.db.models import Q
 from django.contrib.auth.hashers import make_password
 from django.core.management import call_command
 from rent_house.models import (
-    User, House, Room, Post, Comment, Interaction, Follow, 
+    User, House, Post, Comment, Interaction, Follow, 
     Notification, ChatGroup, ChatMembership, Message, Rate, Media, 
-    Role, HouseType, PostType, InteractionType, NotificationType, RoomRental, ContentType
+    Role, HouseType, PostType, InteractionType, NotificationType, ContentType
 )
 
 class Command(BaseCommand):
@@ -23,9 +23,6 @@ class Command(BaseCommand):
                 
                 # Create houses
                 self.create_houses()
-                
-                # Create rooms
-                self.create_rooms()
                 
                 # Create posts
                 self.create_posts()
@@ -247,6 +244,7 @@ class Command(BaseCommand):
                 type=house_type,
                 base_price=random.randint(300, 1500) * 100000,
                 is_verified=random.choice([True, False])
+                # Không tạo room/rentalroom nữa
             )
             
             # Create Media for house
@@ -261,58 +259,6 @@ class Command(BaseCommand):
                 )
             
             self.houses.append(house)
-
-    def create_rooms(self):
-        self.stdout.write('[INFO] Đang tạo ROOM...')
-        
-        self.rooms = []
-        for i, house in enumerate(self.houses):
-            num_rooms = random.randint(2, 5)
-            for j in range(num_rooms):
-                max_people = random.randint(1, 4)
-                cur_people = random.randint(0, max_people)
-                
-                room = Room.objects.create(
-                    house=house,
-                    title=f"Phòng số {j+1} thuộc [{house.title}]",
-                    description=f"Một phòng ngủ tiện nghi, sạch sẽ và thoáng mát.",
-                    price=random.randint(150, 500) * 100000,
-                    max_people=max_people,
-                    cur_people=cur_people,
-                    bedrooms=random.randint(1, 2),
-                    bathrooms=random.randint(1, 2),
-                    area=random.uniform(15.0, 40.0)
-                )
-                
-                # Create Media for room
-                num_images = 5
-                for k in range(num_images):
-                    Media.objects.create(
-                        content_type=ContentType.objects.get_for_model(Room),
-                        object_id=room.id,
-                        url=f'https://konya007.github.io/image-library/houses/h{i+1}r{k+1}.jpg',
-                        media_type='image',
-                        purpose='gallery'
-                    )
-                
-                self.rooms.append(room)
-                
-                # Create RoomRental entries for some rooms
-                if cur_people > 0:
-                    available_renters = User.objects.filter(role=Role.RENTER.value[0])[:cur_people]
-                    for renter in available_renters:
-                        # Create a rental agreement
-                        from datetime import date, timedelta
-                        start_date = date.today() - timedelta(days=random.randint(30, 180))
-                        
-                        RoomRental.objects.create(
-                            user=renter,
-                            room=room,
-                            start_date=start_date,
-                            end_date=start_date + timedelta(days=random.randint(180, 365)) if random.random() < 0.7 else None,
-                            is_active=True,
-                            price_agreed=room.price * (1 - random.uniform(0, 0.1))  # Slight discount
-                        )
 
     def create_posts(self):
         self.stdout.write('[INFO] Đang tạo POST...')

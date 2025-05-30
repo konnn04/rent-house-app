@@ -1,7 +1,7 @@
 import {
-    StyleSheet,
-    Text,
-    View
+  StyleSheet,
+  Text,
+  View
 } from 'react-native';
 import { Divider } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -17,6 +17,7 @@ export const HousePriceInfo = ({ house }) => {
     { icon: 'water', name: 'Nước', value: house.water_fee, unit: '/m³' },
     { icon: 'wifi', name: 'Internet', value: house.internet_fee, unit: '/tháng' },
     { icon: 'broom', name: 'Dịch vụ', value: house.service_fee, unit: '/tháng' },
+    { icon: 'delete-outline', name: 'Rác', value: house.trash_fee, unit: '/tháng' },
   ];
   
   return (
@@ -55,17 +56,21 @@ export const HousePriceInfo = ({ house }) => {
         Chi phí hàng tháng
       </Text>
       
-      {/* Utility fees in a horizontal layout */}
-      <View style={styles.utilitiesContainer}>
+      {/* Utility fees in a table layout */}
+      <View style={styles.utilityTable}>
         {utilityFees.map((fee, index) => (
-          <View key={index} style={styles.utilityItem}>
-            <View style={[styles.iconContainer, { backgroundColor: colors.accentColorLight }]}>
-              <Icon name={fee.icon} size={18} color={colors.accentColor} />
+          <View key={index} style={styles.tableRow}>
+            <View style={styles.tableCell}>
+              <View style={styles.nameContainer}>
+                <Icon name={fee.icon} size={18} color={colors.accentColor} style={styles.icon} />
+                <Text style={[styles.utilityName, { color: colors.textPrimary }]}>{fee.name}</Text>
+              </View>
             </View>
-            <Text style={[styles.utilityName, { color: colors.textPrimary }]}>{fee.name}</Text>
-            <Text style={[styles.utilityValue, { color: colors.textSecondary }]}>
-              {fee.value ? `${formatCurrency(fee.value)} ${fee.unit}` : 'Liên hệ'}
-            </Text>
+            <View style={styles.tableCell}>
+              <Text style={[styles.utilityValue, { color: colors.textSecondary }]}>
+                {fee.value ? `${formatCurrency(fee.value)} ${fee.unit}` : 'Liên hệ'}
+              </Text>
+            </View>
           </View>
         ))}
       </View>
@@ -105,33 +110,32 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: 'bold',
   },
-  utilitiesContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
+  utilityTable: {
     marginTop: 5,
   },
-  utilityItem: {
-    width: '48%',
-    marginBottom: 15,
-    padding: 10,
-    borderRadius: 8,
-    backgroundColor: 'rgba(0,0,0,0.03)',
+  tableRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.05)',
   },
-  iconContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+  tableCell: {
     justifyContent: 'center',
+  },
+  nameContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+  },
+  icon: {
+    marginRight: 8,
   },
   utilityName: {
     fontSize: 14,
     fontWeight: '500',
-    marginBottom: 2,
   },
   utilityValue: {
-    fontSize: 13,
+    fontSize: 14,
+    textAlign: 'right',
   },
 });

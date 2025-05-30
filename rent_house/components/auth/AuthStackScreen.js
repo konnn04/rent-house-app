@@ -1,5 +1,5 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { View } from 'react-native';
+import { KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
 import { useTheme } from '../../contexts/ThemeContext';
 import { CantLogin } from './CantLogin';
 import { Login } from './Login';
@@ -9,11 +9,24 @@ import { Verify } from './Verify';
 // Create stack navigator for authentication screens
 const AuthStack = createNativeStackNavigator();
 
+// KeyboardAvoidingView wrapper component
+const KeyboardAvoidingWrapper = ({ children, colors }) => {
+  return (
+    <KeyboardAvoidingView 
+      style={[styles.container, { backgroundColor: colors.backgroundPrimary }]}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      enabled
+    >
+      {children}
+    </KeyboardAvoidingView>
+  );
+};
+
 export const AuthStackScreen = () => {
   const { colors } = useTheme();
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.backgroundPrimary }}>
+    <KeyboardAvoidingWrapper colors={colors}>
       <AuthStack.Navigator
         initialRouteName="Login"
         screenOptions={{
@@ -49,6 +62,12 @@ export const AuthStackScreen = () => {
           options={{ title: 'Không thể đăng nhập' }}
         />
       </AuthStack.Navigator>
-    </View>
+    </KeyboardAvoidingWrapper>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  }
+});

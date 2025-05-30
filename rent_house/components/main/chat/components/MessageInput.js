@@ -3,6 +3,7 @@ import { useState } from 'react';
 import {
   Alert,
   Image,
+  Platform,
   ScrollView,
   StyleSheet,
   TextInput,
@@ -203,6 +204,7 @@ const styles = StyleSheet.create({
   inputContainer: {
     borderTopWidth: 1,
     borderTopColor: 'rgba(0,0,0,0.1)',
+    paddingBottom: Platform.OS === 'ios' ? 0 : 5, // Add padding on Android
   },
   replyingToContainer: {
     flexDirection: 'row',
@@ -222,6 +224,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 8,
+    paddingBottom: Platform.OS === 'ios' ? 8 : 12, // Extra padding for Android
   },
   input: {
     flex: 1,
@@ -230,6 +233,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     maxHeight: 120,
     marginRight: 8,
+    textAlignVertical: 'center', // Helps with Android text alignment
   },
   sendButton: {
     borderRadius: 20,

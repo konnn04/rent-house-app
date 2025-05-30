@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useEffect, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Button, TextInput } from 'react-native-paper';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { useUser } from '../../../contexts/UserContext';
@@ -87,105 +87,113 @@ export const EditProfileScreen = () => {
     }
   };
 
-  // Giữ nguyên phần return của component
   return (
-    <View style={[styles.container, { backgroundColor: colors.backgroundPrimary }]}>
-      <View style={[styles.header, { backgroundColor: colors.backgroundSecondary }]}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Cập nhật thông tin</Text>
-        <View style={{ width: 24 }} />
+    <KeyboardAvoidingView 
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={{ flex: 1 }}
+    >
+      <View style={[styles.container, { backgroundColor: colors.backgroundPrimary }]}>
+        <View style={[styles.header, { backgroundColor: colors.backgroundSecondary }]}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
+          </TouchableOpacity>
+          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Cập nhật thông tin</Text>
+          <View style={{ width: 24 }} />
+        </View>
+
+        <ScrollView 
+          style={styles.formContainer}
+          contentContainerStyle={{ paddingBottom: 100 }}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.formGroup}>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>Họ</Text>
+            <TextInput
+              value={formData.first_name}
+              onChangeText={(text) => handleInputChange('first_name', text)}
+              style={[styles.input, { backgroundColor: colors.backgroundSecondary }]}
+              mode="outlined"
+              outlineColor={colors.borderColor}
+              activeOutlineColor={colors.accentColor}
+              error={!!errors.first_name}
+            />
+            {errors.first_name && (
+              <Text style={styles.errorText}>{errors.first_name}</Text>
+            )}
+          </View>
+
+          <View style={styles.formGroup}>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>Tên</Text>
+            <TextInput
+              value={formData.last_name}
+              onChangeText={(text) => handleInputChange('last_name', text)}
+              style={[styles.input, { backgroundColor: colors.backgroundSecondary }]}
+              mode="outlined"
+              outlineColor={colors.borderColor}
+              activeOutlineColor={colors.accentColor}
+              error={!!errors.last_name}
+            />
+            {errors.last_name && (
+              <Text style={styles.errorText}>{errors.last_name}</Text>
+            )}
+          </View>
+
+          <View style={styles.formGroup}>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>Số điện thoại</Text>
+            <TextInput
+              value={formData.phone_number}
+              onChangeText={(text) => handleInputChange('phone_number', text)}
+              style={[styles.input, { backgroundColor: colors.backgroundSecondary }]}
+              mode="outlined"
+              keyboardType="phone-pad"
+              outlineColor={colors.borderColor}
+              activeOutlineColor={colors.accentColor}
+              error={!!errors.phone_number}
+            />
+            {errors.phone_number && (
+              <Text style={styles.errorText}>{errors.phone_number}</Text>
+            )}
+          </View>
+
+          <View style={styles.formGroup}>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>Địa chỉ</Text>
+            <TextInput
+              value={formData.address}
+              onChangeText={(text) => handleInputChange('address', text)}
+              style={[styles.input, { backgroundColor: colors.backgroundSecondary }]}
+              mode="outlined"
+              keyboardType="phone-pad"
+              outlineColor={colors.borderColor}
+              activeOutlineColor={colors.accentColor}
+              error={!!errors.address}
+            />
+            {errors.address && (
+              <Text style={styles.errorText}>{errors.address}</Text>
+            )}
+          </View>
+
+          <View style={styles.actions}>
+            <Button
+              mode="outlined"
+              onPress={() => navigation.goBack()}
+              style={[styles.actionButton, { borderColor: colors.borderColor }]}
+              labelStyle={{ color: colors.textPrimary }}
+            >
+              Hủy
+            </Button>
+            <Button
+              mode="contained"
+              onPress={handleSubmit}
+              loading={loading || contextLoading}
+              disabled={loading || contextLoading}
+              style={[styles.actionButton, { backgroundColor: colors.accentColor }]}
+            >
+              Lưu thay đổi
+            </Button>
+          </View>
+        </ScrollView>
       </View>
-
-      <ScrollView style={styles.formContainer}>
-        <View style={styles.formGroup}>
-          <Text style={[styles.label, { color: colors.textSecondary }]}>Họ</Text>
-          <TextInput
-            value={formData.first_name}
-            onChangeText={(text) => handleInputChange('first_name', text)}
-            style={[styles.input, { backgroundColor: colors.backgroundSecondary }]}
-            mode="outlined"
-            outlineColor={colors.borderColor}
-            activeOutlineColor={colors.accentColor}
-            error={!!errors.first_name}
-          />
-          {errors.first_name && (
-            <Text style={styles.errorText}>{errors.first_name}</Text>
-          )}
-        </View>
-
-        <View style={styles.formGroup}>
-          <Text style={[styles.label, { color: colors.textSecondary }]}>Tên</Text>
-          <TextInput
-            value={formData.last_name}
-            onChangeText={(text) => handleInputChange('last_name', text)}
-            style={[styles.input, { backgroundColor: colors.backgroundSecondary }]}
-            mode="outlined"
-            outlineColor={colors.borderColor}
-            activeOutlineColor={colors.accentColor}
-            error={!!errors.last_name}
-          />
-          {errors.last_name && (
-            <Text style={styles.errorText}>{errors.last_name}</Text>
-          )}
-        </View>
-
-        <View style={styles.formGroup}>
-          <Text style={[styles.label, { color: colors.textSecondary }]}>Số điện thoại</Text>
-          <TextInput
-            value={formData.phone_number}
-            onChangeText={(text) => handleInputChange('phone_number', text)}
-            style={[styles.input, { backgroundColor: colors.backgroundSecondary }]}
-            mode="outlined"
-            keyboardType="phone-pad"
-            outlineColor={colors.borderColor}
-            activeOutlineColor={colors.accentColor}
-            error={!!errors.phone_number}
-          />
-          {errors.phone_number && (
-            <Text style={styles.errorText}>{errors.phone_number}</Text>
-          )}
-        </View>
-
-        <View style={styles.formGroup}>
-          <Text style={[styles.label, { color: colors.textSecondary }]}>Địa chỉ</Text>
-          <TextInput
-            value={formData.address}
-            onChangeText={(text) => handleInputChange('address', text)}
-            style={[styles.input, { backgroundColor: colors.backgroundSecondary }]}
-            mode="outlined"
-            keyboardType="phone-pad"
-            outlineColor={colors.borderColor}
-            activeOutlineColor={colors.accentColor}
-            error={!!errors.address}
-          />
-          {errors.address && (
-            <Text style={styles.errorText}>{errors.address}</Text>
-          )}
-        </View>
-
-        <View style={styles.actions}>
-          <Button
-            mode="outlined"
-            onPress={() => navigation.goBack()}
-            style={[styles.actionButton, { borderColor: colors.borderColor }]}
-            labelStyle={{ color: colors.textPrimary }}
-          >
-            Hủy
-          </Button>
-          <Button
-            mode="contained"
-            onPress={handleSubmit}
-            loading={loading || contextLoading}
-            disabled={loading || contextLoading}
-            style={[styles.actionButton, { backgroundColor: colors.accentColor }]}
-          >
-            Lưu thay đổi
-          </Button>
-        </View>
-      </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 };
 
