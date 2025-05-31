@@ -25,3 +25,4 @@ __all__ = [
     'CheckVerificationStatusSerializer',
     'ProfileSerializer', 'PublicProfileSerializer'
 ]
+ 
