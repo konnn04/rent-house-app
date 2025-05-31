@@ -71,3 +71,16 @@ class IsOwnerRoleOrReadOnly(permissions.BasePermission):
 
         # Chỉ user đã đăng nhập và có role OWNER mới có thể tạo
         return request.user.is_authenticated and request.user.role == Role.OWNER.value[0]
+
+class IsOwnerOrReadOnly(permissions.BasePermission):
+    """
+    Custom permission to only allow owners of an object to edit or delete it.
+    """
+    
+    def has_object_permission(self, request, view, obj):
+        # Read permissions are allowed to any request
+        if request.method in permissions.SAFE_METHODS:
+            return True
+            
+        # Write permissions are only allowed to the owner
+        return obj.sender == request.user

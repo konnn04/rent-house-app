@@ -4,7 +4,6 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { CantLogin } from './CantLogin';
 import { Login } from './Login';
 import { Register } from './Register';
-import { Verify } from './Verify';
 
 // Create stack navigator for authentication screens
 const AuthStack = createNativeStackNavigator();
@@ -48,12 +47,6 @@ export const AuthStackScreen = () => {
           name="Register"
           component={Register}
           options={{ title: 'Đăng ký tài khoản' }}
-        />
-
-        <AuthStack.Screen
-          name="Verify"
-          component={Verify}
-          options={{ title: 'Xác thực tài khoản' }}
         />
 
         <AuthStack.Screen

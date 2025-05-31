@@ -1,17 +1,17 @@
 import { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    FlatList,
-    Image,
-    Modal,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  FlatList,
+  Image,
+  Modal,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { api } from '../../../../utils/Fetch';
+import { getMyHousesService } from '../../../../services/houseService';
 
 export const HouseLinkSelector = ({ onSelectHouse, onCancel, colors, navigation }) => {
   const [loading, setLoading] = useState(true);
@@ -29,11 +29,11 @@ export const HouseLinkSelector = ({ onSelectHouse, onCancel, colors, navigation 
     try {
       setLoading(true);
       setError(null);
-      
-      const response = await api.get('/api/houses/my_houses/');
-      if (response.data.results) {
-        setHouses(response.data.results);
-        setFilteredHouses(response.data.results);
+
+      const data = await getMyHousesService();
+      if (data.results) {
+        setHouses(data.results);
+        setFilteredHouses(data.results);
       }
     } catch (error) {
       console.error('Error fetching houses:', error);

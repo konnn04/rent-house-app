@@ -3,8 +3,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { useUser } from '../../../contexts/UserContext';
+import { getChatsService } from "../../../services/chatService";
 import { homeStyles } from '../../../styles/style';
-import { api } from '../../../utils/Fetch';
 import { timeAgo } from '../../../utils/Tools';
 import { ChatListItem } from './ChatListItem';
 import { SearchBar } from './components/SearchBar';
@@ -16,19 +16,39 @@ export const ChatListScreen = () => {
   const [chats, setChats] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [nextPageUrl, setNextPageUrl] = useState(null);
   const [error, setError] = useState(null);
   const { userData } = useUser();
   const navigation = useNavigation();
 
-  const fetchChats = useCallback(async () => {
+  // Fetch chats with lazy loading
+  const fetchChats = useCallback(async (isRefresh = false) => {
     try {
       setError(null);
-      if (!refreshing) setLoading(true);
-      
-      const response = await api.get('/api/chats/');
-      
-      if (response.status === 200) {
-        setChats(response.data.results || []);
+      if (isRefresh) {
+        setRefreshing(true);
+      } else if (nextPageUrl && !isRefresh) {
+        setLoadingMore(true);
+      } else {
+        setLoading(true);
+      }
+
+      let data;
+      if (!isRefresh && nextPageUrl) {
+        data = await getChatsService(nextPageUrl);
+      } else {
+        data = await getChatsService();
+      }
+
+      setNextPageUrl(data.next || null);
+
+      const results = Array.isArray(data.results) ? data.results : [];
+
+      if (isRefresh) {
+        setChats(results);
+      } else {
+        setChats(prev => [...prev, ...results]);
       }
     } catch (err) {
       console.error('Error fetching chats:', err);
@@ -36,25 +56,32 @@ export const ChatListScreen = () => {
     } finally {
       setLoading(false);
       setRefreshing(false);
+      setLoadingMore(false);
     }
-  }, [refreshing]);
+  }, [nextPageUrl]);
 
   useEffect(() => {
-    fetchChats();
-  }, [fetchChats]);
+    fetchChats(true);
+  }, []);
 
   // Khi đang xem component này, làm mới danh sách chat
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
-      fetchChats();
+      fetchChats(true);
     });
     return unsubscribe;
   }, [navigation, fetchChats]);
 
   const onRefresh = useCallback(() => {
-    setRefreshing(true);
-    fetchChats();
+    setNextPageUrl(null);
+    fetchChats(true);
   }, [fetchChats]);
+
+  // Lazy load more
+  const handleLoadMore = () => {
+    if (loadingMore || !nextPageUrl) return;
+    fetchChats(false);
+  };
 
   const getAvatars = (members, isGroup) => {
     if (isGroup) {
@@ -63,7 +90,7 @@ export const ChatListScreen = () => {
     return members[0]?.username !== userData?.username
       ? [members[0].avatar_thumbnail]
       : [members[1].avatar_thumbnail];
-    }
+  }
 
   // Lọc danh sách chat theo từ khóa tìm kiếm
   const filteredChats = chats.filter(chat => {
@@ -89,7 +116,6 @@ export const ChatListScreen = () => {
       : chat.members_summary[1].full_name;
   };
 
-
   if (loading && !refreshing) {
     return (
       <View style={[styles.container, { backgroundColor: colors.backgroundPrimary, justifyContent: 'center', alignItems: 'center' }]}>
@@ -105,7 +131,7 @@ export const ChatListScreen = () => {
         <Text style={{ color: colors.dangerColor, textAlign: 'center', marginBottom: 20 }}>{error}</Text>
         <TouchableOpacity 
           style={[styles.retryButton, { backgroundColor: colors.accentColor }]}
-          onPress={fetchChats}
+          onPress={() => fetchChats(true)}
         >
           <Text style={{ color: 'white' }}>Thử lại</Text>
         </TouchableOpacity>
@@ -142,6 +168,16 @@ export const ChatListScreen = () => {
             colors={[colors.accentColor]}
             tintColor={colors.accentColor}
           />
+        }
+        onEndReached={handleLoadMore}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={
+          loadingMore ? (
+            <View style={{ padding: 10, alignItems: 'center' }}>
+              <ActivityIndicator size="small" color={colors.accentColor} />
+              <Text style={{ color: colors.textSecondary, marginTop: 5 }}>Đang tải thêm...</Text>
+            </View>
+          ) : null
         }
         ListEmptyComponent={
           <View style={styles.emptyContainer}>

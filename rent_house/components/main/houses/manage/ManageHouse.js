@@ -6,7 +6,7 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 import { useTheme } from '../../../../contexts/ThemeContext';
 import { useUser } from '../../../../contexts/UserContext';
-import { api } from '../../../../utils/Fetch';
+import { getMyHousesService } from '../../../../services/houseService';
 import { HouseCard } from '../components/HouseCard';
 import { ManageHeader } from './components/ManageHeader';
 
@@ -27,52 +27,76 @@ export const ManageHouse = () => {
     pendingVerifications: 0
   });
   const [isVerified, setIsVerified] = useState(true);
+  const [nextPageUrl, setNextPageUrl] = useState(null);
+  const [loadingMore, setLoadingMore] = useState(false);
   
-  const fetchHouses = async () => {
+  const fetchHouses = async (refresh = false) => {
     try {
       setError(null);
-      if (!refreshing) setLoading(true);
-      
-      // Fetch houses
-      const response = await api.get('/api/houses/my_houses/');
-      setHouses(response.data.results || []);
-      
+      if (!refresh && !refreshing) setLoading(true);
+
+      let response;
+      if (!refresh && nextPageUrl) {
+        response = await getMyHousesService(nextPageUrl);
+      } else {
+        response = await getMyHousesService();
+      }
+
+      // Nếu có phân trang, response có thể là object với results, count, next
+      const results = response.results || response.data?.results || [];
+      const count = response.count || response.data?.count || 0;
+      const next = response.next || response.data?.next || null;
+
+      setNextPageUrl(next);
+
+      setHouses(prev =>
+        refresh ? results : [...(prev || []), ...results]
+      );
+
       // Calculate statistics
-      const totalHouses = response.data.count || 0;
+      const totalHouses = count;
       let totalRooms = 0;
       let availableRooms = 0;
-      
-      response.data.results.forEach(house => {
+
+      results.forEach(house => {
         totalRooms += house.max_rooms || 0;
         const usedRooms = house.current_rooms || 0;
         availableRooms += Math.max(0, (house.max_rooms || 0) - usedRooms);
       });
-      
+
       setStatistics({
         totalHouses,
         totalRooms,
         availableRooms,
         pendingVerifications: 0 // This will be updated from another API
       });
-      
+
     } catch (err) {
       console.error('Error fetching houses:', err);
       setError('Không thể tải danh sách nhà. Vui lòng thử lại sau.');
     } finally {
       setLoading(false);
       setRefreshing(false);
+      setLoadingMore(false);
     }
   };
-  
+
   useEffect(() => {
-    fetchHouses();
+    fetchHouses(true);
   }, []);
-  
+
   const handleRefresh = () => {
     setRefreshing(true);
-    fetchHouses();
+    setNextPageUrl(null);
+    fetchHouses(true);
   };
-  
+
+  const handleLoadMore = () => {
+    if (loadingMore || !nextPageUrl) return;
+    setLoadingMore(true);
+    fetchHouses(false);
+  };
+
   const handleSearch = () => {
     // Implement search functionality
     // For now, we'll just filter the houses by title
@@ -236,6 +260,16 @@ export const ManageHouse = () => {
               colors={[colors.accentColor]}
               tintColor={colors.accentColor}
             />
+          }
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={
+            loadingMore ? (
+              <View style={{ padding: 16, alignItems: 'center' }}>
+                <ActivityIndicator size="small" color={colors.accentColor} />
+                <Text style={{ color: colors.textSecondary, marginTop: 5 }}>Đang tải thêm...</Text>
+              </View>
+            ) : null
           }
         />
       )}

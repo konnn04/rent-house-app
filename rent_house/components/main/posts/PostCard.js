@@ -3,7 +3,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../../../contexts/ThemeContext';
-import { api } from '../../../utils/Fetch';
+import { interactWithPostService } from '../../../services/postService';
 import { truncateText } from '../../../utils/Tools';
 import { ImageGallery } from '../../common/ImageGallery';
 import { CommentsModal } from './components/CommentsModal';
@@ -62,13 +62,13 @@ export const PostCard = ({ post }) => {
       }));
       
       // Gọi API
-      const response = await api.post(`/api/posts/${post.id}/interact/`, { type });
-      
-      if (response.data) {
+      const data = await interactWithPostService(post.id, newType);
+
+      if (data) {
         // Cập nhật state từ kết quả API
         setInteraction({
-          like_count: response.data.like_count,
-          type: response.data.type
+          like_count: data.like_count,
+          type: data.type
         });
       }
     } catch (error) {

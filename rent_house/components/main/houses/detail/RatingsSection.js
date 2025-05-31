@@ -10,7 +10,10 @@ import { Button, Divider } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../../../../contexts/ThemeContext';
 import { useUser } from '../../../../contexts/UserContext';
-import { api } from '../../../../utils/Fetch';
+import {
+  createHouseRatingService,
+  getHouseRatingsService
+} from '../../../../services/houseService';
 
 // Import rating components
 import { AddRatingModal } from '../rating/AddRatingModal';
@@ -34,18 +37,15 @@ export const RatingsSection = ({ houseId, avgRating = 0, insideScrollView = fals
     try {
       setLoading(true);
       setError(null);
-      
-      const url = `/api/rates/?house_id=${houseId}${minStar > 0 ? `&min_star=${minStar}` : ''}`;
-      const response = await api.get(url);
-      
-      setRatings(response.data.results || []);
-      
+      const data = await getHouseRatingsService(houseId, null, minStar);
+      setRatings(data.results || []);
+
       // Check if user has already rated
       if (userData) {
-        const userRating = response.data.results.find(
+        const userRating = data.results.find(
           rating => rating.user.id === userData.id
         );
-        
+
         if (userRating) {
           setUserHasRated(true);
           setUserRating(userRating);
@@ -91,11 +91,8 @@ export const RatingsSection = ({ houseId, avgRating = 0, insideScrollView = fals
         });
       }
       
-      await api.post('/api/rates/', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      await createHouseRatingService(formData);
+      Alert.alert('Thành công', 'Đánh giá của bạn đã được thêm thành công.');
       
       // Refresh ratings
       fetchRatings(filter);

@@ -4,7 +4,7 @@ import { ActivityIndicator, Text, View } from 'react-native';
 import { styles } from '../../styles/style';
 
 import { Alert } from 'react-native';
-import { checkInternetConnection } from '../../utils/Fetch';
+import { checkStatusFromServer } from '../../services/Api';
 
 export const Loading = () => {
   const navigation = useNavigation();
@@ -13,7 +13,7 @@ export const Loading = () => {
     let timer = null;
     
     const checkConnection = async () => {
-      const connected = await checkInternetConnection();
+      const connected = await checkStatusFromServer();
       console.log('Connection status:', connected);
       setIsConnected(connected);
       

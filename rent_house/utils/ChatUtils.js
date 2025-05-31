@@ -1,5 +1,5 @@
 import { Alert } from 'react-native';
-import { api } from './Fetch';
+import { createDirectChatService } from '../services/chatService';
 
 /**
  * Creates or gets an existing direct chat with a user and navigates to that chat
@@ -15,17 +15,15 @@ export const createDirectChat = async (userId, userName, navigation, setLoading 
     if (setLoading) setLoading(true);
     
     // Call the API to create or get existing direct chat
-    const response = await api.post('/api/chats/create_direct_chat/', {
-      user_id: userId
-    });
-    
+    const data = await createDirectChatService(userId);
+
     // Navigate to chat with the received chat ID
-    if (response.data && response.data.id) {
+    if (data && data.id) {
       navigation.navigate('Chat', {
         screen: 'ChatDetail',
         params: { 
-          chatId: response.data.id, 
-          chatName: response.data.name || userName
+          chatId: data.id, 
+          chatName: data.name || userName
         }
       });
       return true;

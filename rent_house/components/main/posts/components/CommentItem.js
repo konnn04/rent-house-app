@@ -1,15 +1,15 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useCallback, useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    Image,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { useUser } from '../../../../contexts/UserContext';
-import { api } from '../../../../utils/Fetch';
+import { getPostCommentsService } from '../../../../services/postService';
 import { timeAgo } from '../../../../utils/Tools';
 import { ImageGallery } from '../../../common/ImageGallery';
 
@@ -28,19 +28,15 @@ export const CommentItem = ({ comment, onReply, colors, postId }) => {
     
     try {
       setLoadingReplies(true);
-      
-      const response = await api.get(
-        `/api/comments/post_comments/?post_id=${postId}&parent_id=${comment.id}&page=${pageNum}`
-      );
-      
-      if (response.data.results) {
+      const data = await getPostCommentsService(postId, comment.id, pageNum);
+      if (data.results) {
         if (append) {
-          setReplies(prev => [...prev, ...response.data.results]);
+          setReplies(prev => [...prev, ...data.results]);
         } else {
-          setReplies(response.data.results);
+          setReplies(data.results);
         }
-        
-        setHasMoreReplies(!!response.data.next);
+
+        setHasMoreReplies(!!data.next);
         setPage(pageNum);
       }
     } catch (error) {

@@ -9,7 +9,11 @@ import { Button, HelperText, SegmentedButtons, TextInput } from 'react-native-pa
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 import { useTheme } from '../../../../contexts/ThemeContext';
-import { api } from '../../../../utils/Fetch';
+import {
+  createHouseService,
+  getDetailHouseService,
+  updateHouseService
+} from '../../../../services/houseService';
 import { LocationPickerComponent } from '../../posts/components/LocationPickerComponent';
 import { ManageHeader } from './components/ManageHeader';
 
@@ -46,10 +50,8 @@ export const AddEditHouseScreen = ({ houseId, isEditing = false }) => {
   const fetchHouseDetails = async () => {
     try {
       setLoading(true);
-      
-      const response = await api.get(`/api/houses/${houseId}/`);
-      const house = response.data;
-      
+      const house = await getDetailHouseService(houseId);
+
       // Populate form fields
       setTitle(house.title || '');
       setDescription(house.description || '');
@@ -215,24 +217,16 @@ export const AddEditHouseScreen = ({ houseId, isEditing = false }) => {
         });
       });
       
-      let response;
+      let data;
       
       if (isEditing) {
         // Update existing house
-        response = await api.patch(`/api/houses/${houseId}/`, formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        });
+        data = await updateHouseService(houseId, formData);
       } else {
         // Create new house
-        response = await api.post('/api/houses/', formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        });
+        data = await createHouseService(formData);
       }
-      
+
       Alert.alert(
         isEditing ? 'Cập nhật thành công' : 'Tạo thành công',
         isEditing ? 'Thông tin nhà đã được cập nhật.' : 'Nhà đã được tạo thành công.',

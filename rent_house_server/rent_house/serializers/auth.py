@@ -3,17 +3,30 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Q
+from django.utils import timezone
 
 from rent_house.models import User, VerificationCode
+
+class PreRegisterSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
+    
+    def validate_email(self, value):
+        """
+        Validate that the email is not already registered
+        """
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("Email đã được đăng ký.")
+        return value
 
 class RegisterSerializer(serializers.ModelSerializer):
     password2 = serializers.CharField(write_only=True, required=True)
     email = serializers.EmailField(required=True)
+    verification_code = serializers.CharField(write_only=True, required=True)
     
     class Meta:
         model = User
         fields = ('username', 'email', 'password', 'password2', 'first_name', 
-                 'last_name', 'phone_number', 'role')
+                 'last_name', 'phone_number', 'role', 'verification_code')
         extra_kwargs = {
             'password': {'write_only': True},
             'first_name': {'required': True},
@@ -38,7 +51,7 @@ class RegisterSerializer(serializers.ModelSerializer):
     
     def validate(self, attrs):
         """
-        Kiểm tra mật khẩu khớp nhau không
+        Kiểm tra mật khẩu khớp nhau không và mã xác thực hợp lệ
         """
         if attrs['password'] != attrs['password2']:
             raise serializers.ValidationError({"password": "Mật khẩu không khớp."})
@@ -48,15 +61,36 @@ class RegisterSerializer(serializers.ModelSerializer):
             validate_password(attrs['password'])
         except ValidationError as e:
             raise serializers.ValidationError({"password": list(e)})
+        
+        # Kiểm tra mã xác thực
+        email = attrs['email']
+        code = attrs['verification_code']
+        
+        verification = VerificationCode.objects.filter(
+            email=email,
+            code=code,
+            user=None,
+            is_used=False
+        ).order_by('-created_at').first()
+        
+        if not verification:
+            raise serializers.ValidationError({"verification_code": "Mã xác thực không hợp lệ."})
+        
+        if not verification.is_valid():
+            raise serializers.ValidationError({"verification_code": "Mã xác thực đã hết hạn."})
+        
+        # Lưu đối tượng verification để sử dụng trong create()
+        self.verification = verification
             
         return attrs
     
     @transaction.atomic
     def create(self, validated_data):
-        # Xóa trường password2 không dùng
+        # Xóa trường không cần thiết
         validated_data.pop('password2')
+        validated_data.pop('verification_code')
         
-        # Tạo user nhưng chưa active
+        # Tạo user và kích hoạt luôn (đã xác thực email)
         user = User.objects.create(
             username=validated_data['username'],
             email=validated_data['email'],
@@ -64,15 +98,17 @@ class RegisterSerializer(serializers.ModelSerializer):
             last_name=validated_data.get('last_name', ''),
             phone_number=validated_data.get('phone_number', ''),
             role=validated_data.get('role', 'renter'),
-            is_active=False  # Chưa kích hoạt cho đến khi xác minh email
+            is_active=True  # Kích hoạt ngay vì đã xác thực email
         )
         
         # Đặt mật khẩu
         user.set_password(validated_data['password'])
         user.save()
         
-        # Tạo mã xác thực
-        VerificationCode.generate_code(user)
+        # Đánh dấu mã xác thực đã sử dụng
+        self.verification.is_used = True
+        self.verification.user = user  # Liên kết với user mới tạo
+        self.verification.save()
         
         return user
 
@@ -135,4 +171,3 @@ class CheckVerificationStatusSerializer(serializers.Serializer):
             return value
         except User.DoesNotExist:
             raise serializers.ValidationError("Username hoặc email không tồn tại trong hệ thống")
- 

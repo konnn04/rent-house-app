@@ -11,7 +11,12 @@ import {
 import { Divider, Menu } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../../../contexts/ThemeContext';
-import { api } from '../../../utils/Fetch';
+import {
+    deleteNotificationService,
+    getNotificationsService,
+    markAllNotificationsAsReadService,
+    markNotificationAsReadService
+} from '../../../services/notificationService';
 
 import { NotificationCard } from "./NotificationCard";
 
@@ -25,57 +30,68 @@ export const NoticeScreen = () => {
     const [selectedNotification, setSelectedNotification] = useState(null);
     const [menuVisible, setMenuVisible] = useState(false);
     const [hasError, setHasError] = useState(false);
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
 
-    // Fetch notifications - Sửa lại URL ban đầu để đúng định dạng phân trang
-    const fetchNotifications = useCallback(async (url = `/api/notifications?page=1`, append = false) => {
+    // Fetch notifications - tối ưu để tránh gọi API liên tục
+    const fetchNotifications = useCallback(async (isRefresh = false) => {
+        // Nếu đang tải, bỏ qua request mới
+        if ((loading && !isRefresh) || (loadingMore && !isRefresh) || (refreshing && !isRefresh)) {
+            return;
+        }
+        
         try {
-            if (!append) {
-                setHasError(false);
+            // Cập nhật trạng thái loading phù hợp
+            if (isRefresh) {
+                setRefreshing(true);
+                setNextPageUrl(null);
+                setPage(1);
+            } else if (nextPageUrl) {
+                setLoadingMore(true);
+            } else {
+                setLoading(true);
             }
-
-            // Kiểm tra nếu url là full URL (bắt đầu với http/https), lấy chỉ path
-            let apiUrl = url;
-            if (url.startsWith('http')) {
-                const urlObj = new URL(url);
-                apiUrl = urlObj.pathname + urlObj.search;
-            }
-
-            console.log('Fetching notifications from:', apiUrl); // Logging để debug
-
-            const response = await api.get(apiUrl);
-            if (response.status === 200) {
-                const { results, next } = response.data;
-
+            
+            setHasError(false);
+            
+            // Gọi service với tham số phù hợp
+            const response = await getNotificationsService(isRefresh ? null : nextPageUrl);
+            
+            if (response) {
+                const { results, next } = response;
+                
                 if (results && Array.isArray(results)) {
                     setNotifications(prev => {
-                        if (append) {
-                            // Loại bỏ các thông báo trùng lặp
+                        if (isRefresh) {
+                            return results;
+                        } else {
+                            // Tránh trùng lặp khi thêm dữ liệu mới
                             const existingIds = new Set(prev.map(item => item.id));
                             const newItems = results.filter(item => !existingIds.has(item.id));
                             return [...prev, ...newItems];
                         }
-                        return results;
                     });
-
-                    // Xử lý nextPageUrl
+                    
+                    // Cập nhật trạng thái phân trang
                     setNextPageUrl(next);
-                    console.log('Next page URL:', next); // Logging để debug
+                    setHasMore(!!next);
+                    if (!isRefresh) {
+                        setPage(page + 1);
+                    }
                 } else {
-                    if (!append) {
+                    if (isRefresh) {
                         setNotifications([]);
                     }
                     setNextPageUrl(null);
+                    setHasMore(false);
                 }
             } else {
                 throw new Error('Failed to fetch notifications');
             }
         } catch (error) {
             console.error('Error fetching notifications:', error);
-            if (error.response && error.response.status === 401) {
-                console.error('Authentication error - token may have expired');
-                // Có thể thêm logic refresh token ở đây nếu cần
-            }
-            if (!append) {
+            if (!isRefresh) {
+                // Chỉ hiển thị lỗi khi refresh hoặc load ban đầu
                 setHasError(true);
             }
         } finally {
@@ -83,43 +99,35 @@ export const NoticeScreen = () => {
             setRefreshing(false);
             setLoadingMore(false);
         }
-    }, []);
-
+    }, [loading, loadingMore, refreshing, nextPageUrl, page]);
+    
+    // Chỉ gọi API khi component mount
     useEffect(() => {
-        fetchNotifications();
-    }, [fetchNotifications]);
-
-    // Pull to refresh
+        fetchNotifications(true);
+    }, []);
+    
+    // Pull to refresh - chỉ gọi khi người dùng chủ động thực hiện refresh
     const handleRefresh = useCallback(() => {
-        setRefreshing(true);
-        fetchNotifications();
-    }, [fetchNotifications]);
-
-    // Cải thiện handleLoadMore để xử lý URL tốt hơn
+        if (refreshing) return; // Tránh refresh khi đang refresh
+        fetchNotifications(true);
+    }, [fetchNotifications, refreshing]);
+    
+    // Load more - chỉ gọi khi cần và có thêm dữ liệu
     const handleLoadMore = useCallback(() => {
-        if (loadingMore || !nextPageUrl || loading || refreshing) return;
-
-        console.log('Loading more with URL:', nextPageUrl);
-
-        // Kiểm tra nextPageUrl có phải là URL hợp lệ không
-        if (typeof nextPageUrl !== 'string' || nextPageUrl.trim() === '') {
-            console.warn('Invalid nextPageUrl:', nextPageUrl);
-            return;
+        if (loadingMore || !hasMore || loading || refreshing) return;
+        
+        // Thêm debounce để tránh gọi nhiều lần liên tiếp
+        if (nextPageUrl) {
+            fetchNotifications(false);
         }
-
-        // Thêm khoảng thời gian nhỏ trước khi tải thêm để tránh tải quá nhanh
-        setTimeout(() => {
-            setLoadingMore(true);
-            fetchNotifications(nextPageUrl, true);
-        }, 300);
-    }, [loadingMore, nextPageUrl, fetchNotifications, loading, refreshing]);
+    }, [loadingMore, hasMore, nextPageUrl, fetchNotifications, loading, refreshing]);
 
     // Mark notification as read
     const markAsRead = useCallback(async (notification) => {
         if (notification.is_read) return;
 
         try {
-            await api.patch(`/api/notifications/${notification.id}/mark_as_read/`);
+            await markNotificationAsReadService(notification.id);
 
             // Update local state
             setNotifications(prev =>
@@ -151,7 +159,7 @@ export const NoticeScreen = () => {
     // Mark all as read
     const handleMarkAllAsRead = useCallback(async () => {
         try {
-            await api.post('/api/notifications/mark_all_as_read/');
+            await markAllNotificationsAsReadService();
             setNotifications(prev => prev.map(item => ({ ...item, is_read: true })));
             setMenuVisible(false);
         } catch (error) {
@@ -164,7 +172,7 @@ export const NoticeScreen = () => {
         if (!selectedNotification) return;
 
         try {
-            await api.delete(`/api/notifications/${selectedNotification.id}/`);
+            await deleteNotificationService(selectedNotification.id);
             setNotifications(prev => prev.filter(item => item.id !== selectedNotification.id));
             setMenuVisible(false);
         } catch (error) {
@@ -293,7 +301,7 @@ export const NoticeScreen = () => {
                         />
                     }
                     onEndReached={handleLoadMore}
-                    onEndReachedThreshold={0.5}
+                    onEndReachedThreshold={0.3} // Giảm ngưỡng để tránh gọi quá sớm
                     ListFooterComponent={renderFooter}
                     // Tối ưu performance của FlatList
                     windowSize={3}

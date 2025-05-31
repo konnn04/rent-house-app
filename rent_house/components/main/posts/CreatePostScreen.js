@@ -16,7 +16,7 @@ import {
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { useUser } from '../../../contexts/UserContext';
-import { api } from '../../../utils/Fetch';
+import { createPostService } from '../../../services/postService';
 import { HouseLinkSelector } from './components/HouseLinkSelector';
 import { ImagePickerComponent } from './components/ImagePickerComponent';
 import { LocationPickerComponent } from './components/LocationPickerComponent';
@@ -140,11 +140,7 @@ export const CreatePostScreen = () => {
       });
 
       // Submit post
-      const response = await api.post('/api/posts/', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      });
+      const data = await createPostService(formData);
 
       // Navigate back on success
       Alert.alert('Thành công', 'Bài đăng đã được tạo thành công', [

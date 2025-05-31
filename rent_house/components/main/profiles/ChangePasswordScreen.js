@@ -51,7 +51,7 @@ export const ChangePasswordScreen = () => {
     if (!validateForm()) return;
 
     setLoading(true);
-    const result = await changeUserPassword(formData);
+    const result = await changeUserPassword(formData.current_password, formData.new_password);
     setLoading(false);
 
     if (result.success) {

@@ -14,8 +14,13 @@ import { Button, Portal } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { useUser } from '../../../contexts/UserContext';
+import {
+  deleteMessageService,
+  editMessageService,
+  getChatContentService,
+  getInfoChatService
+} from "../../../services/chatService";
 import { getChatDetailsFromRoute } from '../../../utils/ChatUtils';
-import { api } from '../../../utils/Fetch';
 
 // Import custom components
 import { ChatHeader } from './components/ChatHeader';
@@ -39,6 +44,7 @@ export const ChatDetailScreen = () => {
   const [messageLoading, setMessageLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [messagesNextUrl, setMessagesNextUrl] = useState(null);
   const [error, setError] = useState(null);
   const [page, setPage] = useState(1);
   const [hasMorePages, setHasMorePages] = useState(true);
@@ -65,8 +71,8 @@ export const ChatDetailScreen = () => {
       setError(null);
       if (!refreshing) setLoading(true);
 
-      const response = await api.get(`/api/chats/${chatId}/`);
-      setChatData(response.data);
+      const chatInfo = await getInfoChatService(chatId);
+      setChatData(chatInfo);
 
     } catch (err) {
       console.error('Error fetching chat data:', err);
@@ -77,40 +83,37 @@ export const ChatDetailScreen = () => {
     }
   }, [chatId, refreshing]);
 
-  // Fetch messages
-  const fetchMessages = useCallback(async (pageNum = 1, loadMore = false) => {
+  // Fetch messages with pagination
+  const fetchMessages = useCallback(async (isRefresh = false) => {
     if (!chatId) return;
-
     try {
-      if (!loadMore) {
+      if (isRefresh) {
         setMessageLoading(true);
       } else {
         setLoadingMore(true);
       }
-
-      const response = await api.get(`/api/chats/${chatId}/messages/?page=${pageNum}&page_size=20`);
-
-      if (response.data.results) {
-        if (loadMore) {
-          setMessages(prevMessages => [...prevMessages, ...response.data.results]);
-        } else {
-          setMessages(response.data.results);
-        }
-
-        setHasMorePages(!!response.data.next);
-        setPage(pageNum);
+      let data;
+      if (!isRefresh && messagesNextUrl) {
+        data = await getChatContentService(chatId, messagesNextUrl);
+      } else {
+        data = await getChatContentService(chatId);
       }
-
+      setMessagesNextUrl(data.next || null);
+      const results = Array.isArray(data.results) ? data.results : [];
+      if (isRefresh) {
+        setMessages(results);
+      } else {
+        setMessages(prev => [...prev, ...results]);
+      }
     } catch (err) {
       console.error('Error fetching messages:', err);
-      if (!loadMore) {
-        setError('Không thể tải tin nhắn. Vui lòng thử lại sau.');
-      }
+      if (isRefresh) setError('Không thể tải tin nhắn. Vui lòng thử lại sau.');
     } finally {
       setMessageLoading(false);
       setLoadingMore(false);
+      setRefreshing(false);
     }
-  }, [chatId]);
+  }, [chatId, messagesNextUrl]);
 
   // Scroll to bottom if flag is set
   useEffect(() => {
@@ -123,7 +126,7 @@ export const ChatDetailScreen = () => {
   // Initial data loading
   useEffect(() => {
     fetchChatDetails();
-    fetchMessages();
+    fetchMessages(true);
   }, [fetchChatDetails, fetchMessages]);
 
   // Handle message long press
@@ -153,16 +156,16 @@ export const ChatDetailScreen = () => {
             style: 'destructive',
             onPress: async () => {
               try {
-                await api.delete(`/api/chats/${chatId}/messages/${message.id}/`);
-                // Update message locally to show as deleted
+                await deleteMessageService(message.id);
                 setMessages(prev =>
                   prev.map(msg =>
                     msg.id === message.id ? { ...msg, is_removed: true } : msg
                   )
                 );
               } catch (error) {
-                console.error('Error deleting message:', error);
-                Alert.alert('Lỗi', 'Không thể xóa tin nhắn. Vui lòng thử lại sau.');
+                let msg = 'Không thể xóa tin nhắn. Vui lòng thử lại sau.';
+                if (error.response?.data?.error) msg = error.response.data.error;
+                Alert.alert('Lỗi', msg);
               }
             }
           }
@@ -173,19 +176,37 @@ export const ChatDetailScreen = () => {
     }
   };
 
+  // Handle message edit
+  const handleEditMessage = async (messageId, newContent) => {
+    try {
+      const updated = await editMessageService(messageId, { content: newContent });
+      setMessages(prev =>
+        prev.map(msg =>
+          msg.id === messageId ? { ...msg, ...updated } : msg
+        )
+      );
+      return { success: true };
+    } catch (error) {
+      let msg = 'Không thể sửa tin nhắn. Vui lòng thử lại sau.';
+      if (error.response?.data?.error) msg = error.response.data.error;
+      return { success: false, error: msg };
+    }
+  };
+
   // Refresh data on pull
   const handleRefresh = useCallback(() => {
     setRefreshing(true);
+    setMessagesNextUrl(null);
     fetchChatDetails();
-    fetchMessages(1, false);
+    fetchMessages(true);
   }, [fetchChatDetails, fetchMessages]);
 
   // Load more messages when scrolling up
   const handleLoadMore = useCallback(() => {
-    if (hasMorePages && !loadingMore) {
-      fetchMessages(page + 1, true);
+    if (messagesNextUrl && !loadingMore) {
+      fetchMessages(false);
     }
-  }, [fetchMessages, hasMorePages, loadingMore, page]);
+  }, [fetchMessages, messagesNextUrl, loadingMore]);
 
   // Navigate back
   const handleBackPress = useCallback(() => {
@@ -296,14 +317,15 @@ export const ChatDetailScreen = () => {
               message={item}
               currentUserId={userData?.id}
               onLongPress={handleMessageLongPress}
+              // Truyền hàm edit vào Message nếu cần
+              onEdit={handleEditMessage}
             />
           )}
           inverted
           contentContainerStyle={[
             styles.messagesContainer,
-            { paddingBottom: Platform.OS === 'android' ? 60 : 0 } // Add extra padding on Android
+            { paddingBottom: Platform.OS === 'android' ? 60 : 0 }
           ]}
-          onRefresh={handleRefresh}
           refreshing={refreshing}
           onEndReached={handleLoadMore}
           onEndReachedThreshold={0.3}
@@ -338,6 +360,7 @@ export const ChatDetailScreen = () => {
           onClose={() => setActionsVisible(false)}
           onReply={handleReply}
           onDelete={handleDeleteMessage}
+          onEdit={handleEditMessage}
           message={selectedMessage}
           isCurrentUser={selectedMessage?.sender?.id === userData?.id}
           position={messageActionPosition}

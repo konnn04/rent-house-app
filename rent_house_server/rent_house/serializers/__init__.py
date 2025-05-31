@@ -4,9 +4,9 @@ from .post import PostSerializer, PostDetailSerializer
 from .comment import CommentSerializer, CommentDetailSerializer
 from .rate import RateSerializer
 from .notification import NotificationSerializer
-from .chat import ChatGroupSerializer, ChatGroupDetailSerializer, ChatMembershipSerializer, MessageSerializer
+from .chat import MessageSerializer, ChatMembershipSerializer, ChatGroupSerializer, ChatGroupDetailSerializer, ChatGroupUpdateSerializer
 from .follow import FollowSerializer
-from .auth import RegisterSerializer, VerifyEmailSerializer, ResendVerificationSerializer, CheckVerificationStatusSerializer
+from .auth import PreRegisterSerializer, RegisterSerializer, VerifyEmailSerializer, ResendVerificationSerializer, CheckVerificationStatusSerializer
 from .profile import ProfileSerializer, PublicProfileSerializer
 
 # Export all serializers to maintain backward compatibility
@@ -18,7 +18,9 @@ __all__ = [
     'RateSerializer', 'NotificationSerializer',
     'ChatGroupSerializer', 'ChatGroupDetailSerializer', 
     'ChatMembershipSerializer', 'MessageSerializer',
-    'FollowSerializer',
+    'ChatGroupUpdateSerializer',
+    'FollowSerializer', 
+    'PreRegisterSerializer',
     'RegisterSerializer', 'VerifyEmailSerializer', 'ResendVerificationSerializer',
     'CheckVerificationStatusSerializer',
     'ProfileSerializer', 'PublicProfileSerializer'

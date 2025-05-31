@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Image,
   RefreshControl,
   ScrollView,
   Share,
@@ -11,13 +12,15 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
-import { IconButton } from 'react-native-paper';
+import { Button, IconButton, Menu } from 'react-native-paper';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { useUser } from '../../../contexts/UserContext';
-import { api } from '../../../utils/Fetch';
+import { getPostDetailsService } from '../../../services/postService';
+import { timeAgo } from '../../../utils/Tools';
+import { ImageGallery } from '../../common/ImageGallery';
 import { CommentSection } from './components/CommentSection';
-import { PostHeader } from './components/PostHeader';
-import { PostMedia } from './components/PostMedia';
+import { HouseLink } from './components/HouseLink';
 
 export const PostDetail = () => {
   const { colors } = useTheme();
@@ -45,9 +48,8 @@ export const PostDetail = () => {
     try {
       if (!refreshing) setLoading(true);
       
-      const response = await api.get(`/api/posts/${postId}/`);
-      setPost(response.data);
-      
+      const data = await getPostDetailsService(postId);
+      setPost(data);
     } catch (err) {
       console.error('Error fetching post:', err);
       setError('Không thể tải bài đăng. Vui lòng thử lại sau.');
@@ -162,18 +164,15 @@ export const PostDetail = () => {
         </View>
         
         <View style={styles.errorContainer}>
-          <IconButton
-            icon="alert-circle-outline" 
-            size={50} 
-            iconColor={colors.dangerColor} 
-          />
+          <Icon name="alert-circle-outline" size={50} color={colors.dangerColor} />
           <Text style={[styles.errorText, { color: colors.dangerColor }]}>{error}</Text>
-          <TouchableOpacity
-            style={[styles.retryButton, { backgroundColor: colors.accentColor }]}
+          <Button
+            mode="contained"
             onPress={fetchPostDetails}
+            style={{ backgroundColor: colors.accentColor, marginTop: 20 }}
           >
-            <Text style={styles.retryButtonText}>Thử lại</Text>
-          </TouchableOpacity>
+            Thử lại
+          </Button>
         </View>
       </View>
     );
@@ -181,6 +180,7 @@ export const PostDetail = () => {
   
   return (
     <View style={[styles.container, { backgroundColor: colors.backgroundPrimary }]}>
+      {/* Header */}
       <View style={[styles.header, { backgroundColor: colors.backgroundPrimary }]}>
         <IconButton
           icon="arrow-left"
@@ -197,89 +197,164 @@ export const PostDetail = () => {
         />
       </View>
       
-      <View style={styles.contentContainer}>
-        <ScrollView
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={handleRefresh}
-              colors={[colors.accentColor]}
-              tintColor={colors.accentColor}
-            />
-          }
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollViewContent}
-        >
-          {post && (
-            <>
-              <PostHeader 
-                post={post} 
-                onUserPress={handleUserPress} 
-                onOptionsPress={handleShowMenu}
-                colors={colors}
-              />
-              
-              <View style={styles.postContent}>
-                {post.title && (
-                  <Text style={[styles.postTitle, { color: colors.accentColor }]}>
-                    {post.title}
+      <ScrollView
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            colors={[colors.accentColor]}
+            tintColor={colors.accentColor}
+          />
+        }
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingBottom: 120 }}
+      >
+        {post && (
+          <View style={[styles.postContent, { backgroundColor: colors.backgroundSecondary }]}>
+            {/* Post Header - Author Info */}
+            <View style={styles.postHeader}>
+              <TouchableOpacity style={styles.postUserInfo} onPress={handleUserPress}>
+                {post.author.avatar ? (
+                  <Image source={{ uri: post.author.avatar }} style={styles.userAvatar} />
+                ) : (
+                  <View style={[styles.userAvatar, { backgroundColor: colors.accentColor }]}>
+                    <Text style={styles.avatarText}>{post.author.full_name.charAt(0)}</Text>
+                  </View>
+                )}
+                <View>
+                  <Text style={[styles.userName, { color: colors.textPrimary }]}>
+                    {post.author.full_name}
                   </Text>
-                )}
-                
-                <Text style={[styles.postText, { color: colors.textPrimary }]}>
-                  {post.content}
-                </Text>
-                
-                {post.media && post.media.length > 0 && (
-                  <PostMedia media={post.media} colors={colors} />
-                )}
-                
-                {post.address && (
-                  <View style={styles.locationContainer}>
-                    <IconButton
-                      icon="map-marker"
-                      size={20}
-                      iconColor={colors.textSecondary}
-                      style={styles.locationIcon}
-                    />
-                    <Text style={[styles.locationText, { color: colors.textSecondary }]}>
-                      {post.address}
-                    </Text>
-                  </View>
-                )}
-                
-                {post.house_link && (
-                  <View style={[styles.houseLink, { backgroundColor: colors.backgroundSecondary }]}>
-                    <Text style={[styles.houseLinkTitle, { color: colors.textPrimary }]}>
-                      Liên kết với:
-                    </Text>
-                    <TouchableOpacity
-                      onPress={() => navigation.navigate('HouseDetail', { houseId: post.house_link.id })}
-                    >
-                      <Text style={[styles.houseLinkText, { color: colors.accentColor }]}>
-                        {post.house_link.title}
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                )}
+                  <Text style={[styles.postTime, { color: colors.textSecondary }]}>
+                    {timeAgo(post.created_at)}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.optionsButton} 
+                onPress={handleShowMenu}
+              >
+                <Icon name="dots-vertical" size={24} color={colors.textSecondary} />
+              </TouchableOpacity>
+              
+              <Menu
+                visible={menuVisible}
+                onDismiss={() => setMenuVisible(false)}
+                anchor={menuAnchor}
+                contentStyle={{ backgroundColor: colors.backgroundPrimary }}
+              >
+                <Menu.Item 
+                  onPress={() => {
+                    setMenuVisible(false);
+                    handleShare();
+                  }} 
+                  title="Chia sẻ"
+                  leadingIcon="share-variant"
+                  titleStyle={{ color: colors.textPrimary }}
+                />
+                <Menu.Item 
+                  onPress={() => {
+                    setMenuVisible(false);
+                    // Report functionality
+                  }} 
+                  title="Báo cáo"
+                  leadingIcon="flag"
+                  titleStyle={{ color: colors.dangerColor }}
+                />
+              </Menu>
+            </View>
+            
+            {/* Post Title */}
+            <Text style={[styles.postTitle, { color: colors.textPrimary }]}>
+              {post.title}
+            </Text>
+            
+            {/* Post Content */}
+            <Text style={[styles.postContentText, { color: colors.textPrimary }]}>
+              {post.content}
+            </Text>
+            
+            {/* Post Media */}
+            {post.media && post.media.length > 0 && (
+              <View style={styles.postMedia}>
+                <ImageGallery mediaItems={post.media} />
               </View>
-              
-              <View style={[styles.separator, { backgroundColor: colors.borderColor }]} />
-              
-              <View style={styles.commentsContainer}>
-                <Text style={[styles.commentsTitle, { color: colors.textPrimary }]}>
-                  Bình luận ({post.comment_count || 0})
-                </Text>
-                
-                <CommentSection 
-                  postId={post.id}
+            )}
+            
+            {/* Linked House if any */}
+            {post.house_link && (
+              <View style={styles.houseLink}>
+                <HouseLink 
+                  house={post.house_link} 
+                  onRemove={null} 
+                  readOnly={true}
                   colors={colors}
                 />
               </View>
-            </>
-          )}
-        </ScrollView>
-      </View>
+            )}
+
+            {/* Post Location */}
+            {post.address && (
+              <View style={styles.locationContainer}>
+                <Icon name="map-marker" size={16} color={colors.accentColor} />
+                <Text style={[styles.locationText, { color: colors.textSecondary }]}>
+                  {post.address}
+                </Text>
+              </View>
+            )}
+            
+            {/* Like/Comment Count */}
+            <View style={[styles.statsContainer, { borderColor: colors.borderColor }]}>
+              <Text style={{ color: colors.textSecondary }}>
+                {post.likes_count} lượt thích • {post.comments_count} bình luận
+              </Text>
+            </View>
+            
+            {/* Actions Buttons */}
+            <View style={[styles.actionsContainer, { borderColor: colors.borderColor }]}>
+              <Button 
+                icon={post.liked ? "thumb-up" : "thumb-up-outline"}
+                mode="text"
+                onPress={handleLike}
+                style={styles.actionButton}
+                labelStyle={{ color: post.liked ? colors.accentColor : colors.textSecondary }}
+              >
+                Thích
+              </Button>
+              
+              <Button 
+                icon="comment-outline"
+                mode="text"
+                style={styles.actionButton}
+                labelStyle={{ color: colors.textSecondary }}
+              >
+                Bình luận
+              </Button>
+              
+              <Button 
+                icon="share-outline"
+                mode="text"
+                onPress={handleShare}
+                style={styles.actionButton}
+                labelStyle={{ color: colors.textSecondary }}
+              >
+                Chia sẻ
+              </Button>
+            </View>
+          </View>
+        )}
+        
+        {/* Comments Section */}
+        {post && (
+          <View style={[
+            styles.commentsContainer, 
+            { backgroundColor: colors.backgroundSecondary }
+          ]}>
+            <CommentSection postId={postId} />
+          </View>
+        )}
+      </ScrollView>
     </View>
   );
 };
@@ -290,10 +365,12 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 5,
-    height: 60,
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.1)',
   },
   headerTitle: {
     fontSize: 18,
@@ -311,78 +388,90 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   errorText: {
+    marginTop: 10,
     textAlign: 'center',
-    marginVertical: 15,
-    fontSize: 16,
-  },
-  retryButton: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 5,
-  },
-  retryButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
-  },
-  contentContainer: {
-    flex: 1,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollViewContent: {
-    paddingBottom: 20,
   },
   postContent: {
-    padding: 15,
+    margin: 12,
+    padding: 16,
+    borderRadius: 12,
+  },
+  postHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+  },
+  postUserInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  userAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  avatarText: {
+    fontSize: 18,
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  userName: {
+    fontWeight: '600',
+    fontSize: 15,
+  },
+  postTime: {
+    fontSize: 12,
+  },
+  optionsButton: {
+    padding: 5,
   },
   postTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 10,
+    marginBottom: 12,
   },
-  postText: {
+  postContentText: {
     fontSize: 16,
     lineHeight: 24,
-    marginBottom: 15,
+    marginBottom: 16,
+  },
+  postMedia: {
+    marginBottom: 16,
+  },
+  houseLink: {
+    marginBottom: 16,
   },
   locationContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 5,
-  },
-  locationIcon: {
-    margin: 0,
-    marginRight: -5,
+    marginBottom: 16,
   },
   locationText: {
+    marginLeft: 8,
     fontSize: 14,
   },
-  houseLink: {
-    marginTop: 15,
-    padding: 10,
-    borderRadius: 8,
+  statsContainer: {
+    paddingVertical: 12,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    marginBottom: 8,
+    borderColor: 'rgba(0,0,0,0.1)',
   },
-  houseLinkTitle: {
-    fontSize: 14,
-    marginBottom: 5,
+  actionsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
   },
-  houseLinkText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  separator: {
-    height: 1,
-    marginVertical: 10,
-  },
-  commentsContainer: {
-    paddingHorizontal: 15,
-    paddingTop: 10,
+  actionButton: {
     flex: 1,
   },
-  commentsTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 15,
+  commentsContainer: {
+    margin: 12,
+    borderRadius: 12,
+    paddingTop: 16,
+    paddingBottom: 20,
   },
 });

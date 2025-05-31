@@ -2,22 +2,22 @@ import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useCallback, useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    FlatList,
-    Image,
-    Keyboard,
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    TouchableWithoutFeedback,
-    View
+  ActivityIndicator,
+  FlatList,
+  Image,
+  Keyboard,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View
 } from 'react-native';
 import { useUser } from '../../../../contexts/UserContext';
-import { api } from '../../../../utils/Fetch';
+import { createPostCommentService, getPostCommentsService } from '../../../../services/postService';
 import { CommentItem } from './CommentItem';
 
 export const CommentsModal = ({ visible, onClose, postId, colors }) => {
@@ -44,17 +44,17 @@ export const CommentsModal = ({ visible, onClose, postId, colors }) => {
       } else {
         setLoadingMore(true);
       }
-      
-      const response = await api.get(`/api/comments/post_comments/?post_id=${postId}&page=${pageNum}`);
-      
-      if (response.data.results) {
+
+      const data = await getPostCommentsService(postId, null, pageNum);
+
+      if (data.results) {
         if (loadMore) {
-          setComments(prev => [...prev, ...response.data.results]);
+          setComments(prev => [...prev, ...data.results]);
         } else {
-          setComments(response.data.results);
+          setComments(data.results);
         }
-        
-        setHasMorePages(!!response.data.next);
+
+        setHasMorePages(!!data.next);
         setPage(pageNum);
       }
     } catch (error) {
@@ -113,11 +113,7 @@ export const CommentsModal = ({ visible, onClose, postId, colors }) => {
         });
       });
       
-      const response = await api.post('/api/comments/', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      const data = await createPostCommentService(formData);
       
       // Add new comment to the list
       if (replyingTo) {
@@ -131,7 +127,7 @@ export const CommentsModal = ({ visible, onClose, postId, colors }) => {
         );
       } else {
         // Add to beginning of the list if it's a top-level comment
-        setComments(prev => [response.data, ...prev]);
+        setComments(prev => [data, ...prev]);
       }
       
       // Clear input

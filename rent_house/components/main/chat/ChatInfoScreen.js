@@ -14,9 +14,8 @@ import {
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { useUser } from '../../../contexts/UserContext';
+import { getInfoChatService, leaveChatService } from '../../../services/chatService';
 import { getChatDetailsFromRoute } from '../../../utils/ChatUtils';
-import { api } from '../../../utils/Fetch';
-
 // Component hiển thị thành viên
 const MemberItem = ({ member, isCurrentUser, isAdmin, onRemoveMember }) => {
   const { colors } = useTheme();
@@ -77,10 +76,10 @@ export const ChatInfoScreen = () => {
     try {
       setLoading(true);
       setError(null);
-      
-      const response = await api.get(`/api/chats/${chatId}/`);
-      setChatData(response.data);
-      
+
+      const infoChat = await getInfoChatService(chatId);
+      setChatData(infoChat.data);
+
     } catch (err) {
       console.error('Error fetching chat info:', err);
       setError('Không thể tải thông tin. Vui lòng thử lại sau.');
@@ -134,8 +133,8 @@ export const ChatInfoScreen = () => {
           style: 'destructive',
           onPress: async () => {
             try {
-              await api.post(`/api/chats/${chatId}/leave_group/`);
-              
+              await leaveChatService(chatId);
+
               // Quay lại màn hình danh sách chat
               navigation.navigate('Chats');
               

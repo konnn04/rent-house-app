@@ -11,8 +11,8 @@ import {
 } from 'react-native';
 import { Button, IconButton, Surface, Text } from 'react-native-paper';
 import { useTheme } from '../../../../contexts/ThemeContext';
+import { sendMessageService } from '../../../../services/chatService';
 import { createOptimisticMessage } from '../../../../utils/ChatUtils';
-import { api } from '../../../../utils/Fetch';
 
 export const MessageInput = ({ chatId, onMessageSent, replyingTo, onCancelReply, userData }) => {
   const [message, setMessage] = useState('');
@@ -101,11 +101,7 @@ export const MessageInput = ({ chatId, onMessageSent, replyingTo, onCancelReply,
       if (replyingTo) onCancelReply();
       
       // Actually send the message
-      await api.post(`/api/chats/${chatId}/send-message/`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      await sendMessageService(chatId, formData);
       
     } catch (error) {
       console.error('Error sending message:', error);

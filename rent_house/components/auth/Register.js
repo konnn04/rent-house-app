@@ -1,5 +1,5 @@
 import { useNavigation } from '@react-navigation/native';
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import {
   Button,
@@ -8,10 +8,11 @@ import {
   SegmentedButtons,
   TextInput
 } from 'react-native-paper';
+import { useAuth } from '../../contexts/AuthContext'; // Adjust the import path as needed
 import { useTheme } from '../../contexts/ThemeContext';
-import { register } from '../../utils/Authentication';
 
-export  function Register() {
+export function Register() {
+  const { register, preRegister } = useAuth();
   // User information
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -22,6 +23,12 @@ export  function Register() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [role, setRole] = useState('renter');
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [verificationCode, setVerificationCode] = useState('');
+  const [isCodeSent, setIsCodeSent] = useState(false);
+  const [isSendingCode, setIsSendingCode] = useState(false);
+  const [codeMessage, setCodeMessage] = useState('');
+  const [countdown, setCountdown] = useState(0);
+  const countdownRef = useRef(null);
   
   // UI state
   const [isLoading, setIsLoading] = useState(false);
@@ -37,11 +44,81 @@ export  function Register() {
     email: '',
     phone: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    verificationCode: ''
   });
   
   const navigation = useNavigation();
   const { colors } = useTheme();
+
+  // Đếm ngược khi gửi mã xác thực
+  useEffect(() => {
+    if (countdown > 0) {
+      countdownRef.current = setTimeout(() => setCountdown(countdown - 1), 1000);
+    } else {
+      clearTimeout(countdownRef.current);
+    }
+    return () => clearTimeout(countdownRef.current);
+  }, [countdown]);
+
+  // Gửi mã xác thực đến email
+  const handleSendCode = async () => {
+    if (isSendingCode || countdown > 0) return;
+    setCodeMessage('');
+    setError('');
+    setFieldErrors(prev => ({ ...prev, email: '' }));
+    if (!email.trim()) {
+      setFieldErrors(prev => ({ ...prev, email: 'Vui lòng nhập email' }));
+      return;
+    }
+    setIsSendingCode(true);
+    try {
+      const result = await preRegister(email.trim());
+      setIsCodeSent(true);
+      setCodeMessage(result.message || 'Mã xác thực đã được gửi đến email của bạn.');
+      setCountdown(60);
+    } catch (error) {
+      if (error.response && error.response.data) {
+        const errorData = error.response.data;
+        if (errorData.email) {
+          setFieldErrors(prev => ({ ...prev, email: errorData.email.join(' ') }));
+        } else {
+          setError(errorData.detail || errorData.message || 'Gửi mã xác thực thất bại');
+        }
+      } else {
+        setError(error.message || 'Gửi mã xác thực thất bại');
+      }
+    } finally {
+      setIsSendingCode(false);
+    }
+  };
+
+  // Gửi lại mã xác thực
+  const handleResendCode = async () => {
+    if (isSendingCode || countdown > 0) return;
+    setCodeMessage('');
+    setError('');
+    setFieldErrors(prev => ({ ...prev, email: '' }));
+    setIsSendingCode(true);
+    try {
+      const result = await preRegister(email.trim());
+      setCodeMessage(result.message || 'Mã xác thực mới đã được gửi đến email của bạn.');
+      setCountdown(60);
+    } catch (error) {
+      if (error.response && error.response.data) {
+        const errorData = error.response.data;
+        if (errorData.email) {
+          setFieldErrors(prev => ({ ...prev, email: errorData.email.join(' ') }));
+        } else {
+          setError(errorData.detail || errorData.message || 'Gửi lại mã xác thực thất bại');
+        }
+      } else {
+        setError(error.message || 'Gửi lại mã xác thực thất bại');
+      }
+    } finally {
+      setIsSendingCode(false);
+    }
+  };
 
   // Field change handlers with error clearing
   const handleFieldChange = (field, value) => {
@@ -64,6 +141,7 @@ export  function Register() {
       case 'phone': setPhone(value); break;
       case 'password': setPassword(value); break;
       case 'confirmPassword': setConfirmPassword(value); break;
+      case 'verificationCode': setVerificationCode(value); break;
     }
   };
 
@@ -79,7 +157,8 @@ export  function Register() {
       email: '',
       phone: '',
       password: '',
-      confirmPassword: ''
+      confirmPassword: '',
+      verificationCode: ''
     });
     
     // Client-side validation
@@ -123,6 +202,11 @@ export  function Register() {
       newFieldErrors.confirmPassword = 'Mật khẩu xác nhận không khớp';
       hasValidationErrors = true;
     }
+    
+    if (!verificationCode.trim()) {
+      newFieldErrors.verificationCode = 'Vui lòng nhập mã xác thực';
+      hasValidationErrors = true;
+    }
 
     if (!termsAccepted) {
       setError('Vui lòng đồng ý với điều khoản sử dụng');
@@ -138,7 +222,17 @@ export  function Register() {
     
     try {
       // Attempt registration
-      const result = await register(username, password, confirmPassword, email, firstName, lastName, phone, role);
+      const result = await register(
+        username,
+        password,
+        confirmPassword,
+        email,
+        firstName,
+        lastName,
+        phone,
+        role,
+        verificationCode
+      );
       
       // If we got here, registration was successful
       // Check for success message format from the API
@@ -166,12 +260,17 @@ export  function Register() {
         // Process each field error from the API response
         Object.keys(errorData).forEach(field => {
           if (Array.isArray(errorData[field])) {
-            // Join multiple error messages for the same field
-            newFieldErrors[field] = errorData[field].join(' ');
+            // Map API field to UI field
+            let uiField = field;
+            if (field === 'phone_number') uiField = 'phone';
+            if (field === 'verification_code') uiField = 'verificationCode';
+            newFieldErrors[uiField] = errorData[field].join(' ');
             hasFieldErrors = true;
           } else if (typeof errorData[field] === 'string') {
-            // Handle string error messages
-            newFieldErrors[field] = errorData[field];
+            let uiField = field;
+            if (field === 'phone_number') uiField = 'phone';
+            if (field === 'verification_code') uiField = 'verificationCode';
+            newFieldErrors[uiField] = errorData[field];
             hasFieldErrors = true;
           }
         });
@@ -287,13 +386,59 @@ export  function Register() {
           mode="outlined"
           keyboardType="email-address"
           autoCapitalize="none"
+          editable={!isSendingCode}
         />
         {fieldErrors.email ? (
           <HelperText type="error" visible={true}>
             {fieldErrors.email}
           </HelperText>
         ) : null}
-        
+
+        {/* Mã xác thực + Gửi/Gửi lại mã */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+          <View style={{ flex: 2 }}>
+            <TextInput
+              label="Mã xác thực"
+              value={verificationCode}
+              onChangeText={(text) => handleFieldChange('verificationCode', text)}
+              style={[
+                styles.input,
+                fieldErrors.verificationCode ? styles.inputError : null,
+                { marginBottom: 0 }
+              ]}
+              mode="outlined"
+              keyboardType="number-pad"
+              maxLength={6}
+            />
+          </View>
+          <View style={{ width: 10 }} />
+          <Button
+            mode="outlined"
+            onPress={isCodeSent ? handleResendCode : handleSendCode}
+            loading={isSendingCode}
+            disabled={isSendingCode || !email.trim() || countdown > 0}
+            style={{ flex: 1, minWidth: 100 }}
+            contentStyle={{ paddingVertical: 4 }}
+          >
+            {isSendingCode
+              ? 'Đang gửi...'
+              : isCodeSent
+                ? (countdown > 0 ? `Gửi lại mã (${countdown}s)` : 'Gửi lại mã')
+                : 'Gửi mã'
+            }
+          </Button>
+        </View>
+        {fieldErrors.verificationCode ? (
+          <HelperText type="error" visible={true}>
+            {fieldErrors.verificationCode}
+          </HelperText>
+        ) : null}
+        {codeMessage ? (
+          <HelperText type="info" visible={true}>
+            {codeMessage}
+          </HelperText>
+        ) : null}
+
         {/* Phone */}
         <TextInput
           label="Số điện thoại"
@@ -389,7 +534,7 @@ export  function Register() {
         mode="contained"
         onPress={handleRegister}
         loading={isLoading}
-        disabled={isLoading}
+        disabled={isLoading || !isCodeSent}
         style={styles.button}
         contentStyle={styles.buttonContent}
       >

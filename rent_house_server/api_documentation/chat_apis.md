@@ -1,22 +1,26 @@
-# Chat and Message APIs
+# Chat & Messaging API Documentation
 
-## Chat Group APIs
+## Overview
 
-### Danh sách nhóm chat
+The Chat API allows users to:
+- Create and manage chat conversations (1:1 or group chats)
+- Send and receive text messages and media
+- View message history
+- Manage group membership
 
-```
+## ChatGroup Endpoints
+
+### List User's Chat Groups
+
+```http
 GET /api/chats/
 ```
 
-Lấy danh sách các nhóm chat mà người dùng là thành viên.
+Retrieves all chat conversations that the authenticated user is a member of, sorted by most recent activity.
 
-**Headers**:
-```
-Authorization: Bearer {access_token}
-```
+**Authentication:** Required
 
 **Response (200 OK)**:
-
 ```json
 {
   "count": 5,
@@ -62,26 +66,22 @@ Authorization: Bearer {access_token}
       },
       "unread_count": 1
     }
-    // ... more chat groups
+    // Additional chat groups...
   ]
 }
 ```
 
-### Chi tiết nhóm chat
+### Get Chat Details
 
-```
+```http
 GET /api/chats/{id}/
 ```
 
-Lấy thông tin chi tiết của một nhóm chat.
+Retrieves detailed information about a specific chat group, including all members and their statuses.
 
-**Headers**:
-```
-Authorization: Bearer {access_token}
-```
+**Authentication:** Required
 
 **Response (200 OK)**:
-
 ```json
 {
   "id": 1,
@@ -123,23 +123,6 @@ Authorization: Bearer {access_token}
   "unread_count": 1,
   "members": [
     {
-      "id": 2,
-      "chat_group": 1,
-      "user": {
-        "id": 123,
-        "username": "renter1",
-        "full_name": "Renter One",
-        "avatar_thumbnail": "https://example.com/avatars/renter1_thumb.jpg",
-        "role": "renter"
-      },
-      "is_admin": false,
-      "nickname": null,
-      "last_read_at": "2023-07-15T10:45:00Z",
-      "unread_count": 1,
-      "created_at": "2023-07-15T10:30:00Z",
-      "updated_at": "2023-07-15T10:30:00Z"
-    },
-    {
       "id": 1,
       "chat_group": 1,
       "user": {
@@ -155,26 +138,39 @@ Authorization: Bearer {access_token}
       "unread_count": 0,
       "created_at": "2023-07-15T10:30:00Z",
       "updated_at": "2023-07-15T10:30:00Z"
+    },
+    {
+      "id": 2,
+      "chat_group": 1,
+      "user": {
+        "id": 123,
+        "username": "renter1",
+        "full_name": "Renter One",
+        "avatar_thumbnail": "https://example.com/avatars/renter1_thumb.jpg",
+        "role": "renter"
+      },
+      "is_admin": false,
+      "nickname": null,
+      "last_read_at": "2023-07-15T10:45:00Z",
+      "unread_count": 1,
+      "created_at": "2023-07-15T10:30:00Z",
+      "updated_at": "2023-07-15T10:30:00Z"
     }
   ]
 }
 ```
 
-### Tạo nhóm chat
+### Create Group Chat
 
-```
+```http
 POST /api/chats/
 ```
 
-Tạo một nhóm chat mới.
+Creates a new group chat with multiple members.
 
-**Headers**:
-```
-Authorization: Bearer {access_token}
-Content-Type: multipart/form-data
-```
+**Authentication:** Required
 
-**Request Body**:
+**Request Body (multipart/form-data)**:
 
 ```
 name: Nhóm thảo luận dự án
@@ -223,18 +219,15 @@ members: 789
 }
 ```
 
-### Tạo hoặc lấy chat 1-1
+### Create or Get 1-1 Chat
 
-```
+```http
 POST /api/chats/create_direct_chat/
 ```
 
-Tạo một cuộc trò chuyện 1-1 với một người dùng khác, hoặc lấy cuộc trò chuyện đã tồn tại.
+Creates a 1-1 chat with another user, or retrieves an existing chat.
 
-**Headers**:
-```
-Authorization: Bearer {access_token}
-```
+**Authentication:** Required
 
 **Request Body**:
 
@@ -288,7 +281,7 @@ Authorization: Bearer {access_token}
 }
 ```
 
-**Response (404 Not Found)** - Khi người dùng không tồn tại:
+**Response (404 Not Found)** - When the user does not exist:
 
 ```json
 {
@@ -296,18 +289,15 @@ Authorization: Bearer {access_token}
 }
 ```
 
-### Thêm thành viên vào nhóm chat
+### Add Member to Chat Group
 
-```
+```http
 POST /api/chats/{id}/add_member/
 ```
 
-Thêm một thành viên mới vào nhóm chat (yêu cầu là admin của nhóm).
+Adds a new member to a chat group (requires admin privileges).
 
-**Headers**:
-```
-Authorization: Bearer {access_token}
-```
+**Authentication:** Required
 
 **Request Body**:
 
@@ -326,7 +316,7 @@ Authorization: Bearer {access_token}
 }
 ```
 
-**Response (403 Forbidden)** - Khi không có quyền thêm thành viên:
+**Response (403 Forbidden)** - When lacking permission to add members:
 
 ```json
 {
@@ -334,18 +324,15 @@ Authorization: Bearer {access_token}
 }
 ```
 
-### Xóa thành viên khỏi nhóm chat
+### Remove Member from Chat Group
 
-```
+```http
 POST /api/chats/{id}/remove_member/
 ```
 
-Xóa một thành viên khỏi nhóm chat (yêu cầu là admin của nhóm).
+Removes a member from a chat group (requires admin privileges).
 
-**Headers**:
-```
-Authorization: Bearer {access_token}
-```
+**Authentication:** Required
 
 **Request Body**:
 
@@ -363,7 +350,7 @@ Authorization: Bearer {access_token}
 }
 ```
 
-**Response (403 Forbidden)** - Khi không có quyền xóa thành viên:
+**Response (403 Forbidden)** - When lacking permission to remove members:
 
 ```json
 {
@@ -371,18 +358,15 @@ Authorization: Bearer {access_token}
 }
 ```
 
-### Rời khỏi nhóm chat
+### Leave Chat Group
 
-```
+```http
 POST /api/chats/{id}/leave_group/
 ```
 
-Rời khỏi một nhóm chat.
+Leaves a chat group.
 
-**Headers**:
-```
-Authorization: Bearer {access_token}
-```
+**Authentication:** Required
 
 **Response (200 OK)**:
 
@@ -392,7 +376,7 @@ Authorization: Bearer {access_token}
 }
 ```
 
-**Response (400 Bad Request)** - Khi cố gắng rời khỏi chat 1-1:
+**Response (400 Bad Request)** - When trying to leave a 1-1 chat:
 
 ```json
 {
@@ -402,23 +386,20 @@ Authorization: Bearer {access_token}
 
 ## Message APIs
 
-### Lấy tin nhắn của một nhóm chat
+### Get Messages of a Chat Group
 
-```
+```http
 GET /api/chats/{id}/messages/
 ```
 
-Lấy danh sách tin nhắn của một nhóm chat.
+Retrieves message history for a chat group.
 
-**Headers**:
-```
-Authorization: Bearer {access_token}
-```
+**Authentication:** Required
 
 **Query Parameters**:
 
-- `page`: Số trang
-- `page_size`: Số lượng kết quả trên mỗi trang
+- `page`: Page number
+- `page_size`: Number of results per page
 
 **Response (200 OK)**:
 
@@ -484,21 +465,17 @@ Authorization: Bearer {access_token}
 }
 ```
 
-### Gửi tin nhắn
+### Send Message
 
-```
+```http
 POST /api/chats/{id}/send-message/
 ```
 
-Gửi một tin nhắn mới đến nhóm chat.
+Sends a new message to a chat group.
 
-**Headers**:
-```
-Authorization: Bearer {access_token}
-Content-Type: multipart/form-data
-```
+**Authentication:** Required
 
-**Request Body**:
+**Request Body (multipart/form-data)**:
 
 ```
 content: Phòng này có wifi không ạ?
@@ -549,10 +526,115 @@ medias: [file1, file2, ...]  // Optional - Files hình ảnh/video
 }
 ```
 
-**Response (403 Forbidden)** - Khi không phải là thành viên của chat:
+**Response (403 Forbidden)** - When not a member of the chat:
 
 ```json
 {
   "error": "Bạn không phải là thành viên của nhóm chat này"
+}
+```
+
+### Update Message
+
+```http
+PATCH /api/messages/{id}/
+```
+
+Updates the content of an existing message.
+
+**Authentication:** Required
+
+**Request Body**:
+
+```json
+{
+  "content": "Đã chỉnh sửa: Phòng này có wifi không ạ?"
+}
+```
+
+**Response (200 OK)**:
+
+```json
+{
+  "id": 3,
+  "chat_group": 1,
+  "sender": {
+    "id": 123,
+    "username": "renter1",
+    "full_name": "Renter One",
+    "avatar": "https://example.com/avatars/renter1.jpg",
+    "avatar_thumbnail": "https://example.com/avatars/renter1_thumb.jpg",
+    "role": "renter"
+  },
+  "content": "Đã chỉnh sửa: Phòng này có wifi không ạ?",
+  "is_system_message": false,
+  "is_removed": false,
+  "replied_to": 2,
+  "replied_to_preview": {
+    "id": 2,
+    "sender": {
+      "id": 123,
+      "username": "renter1",
+      "full_name": "Renter One",
+      "avatar_thumbnail": "https://example.com/avatars/renter1_thumb.jpg",
+      "role": "renter"
+    },
+    "content": "Tôi quan tâm đến Phòng 101",
+    "created_at": "2023-07-15T10:35:00Z"
+  },
+  "created_at": "2023-07-15T10:40:00Z",
+  "updated_at": "2023-07-15T10:45:00Z",
+  "media": [
+    {
+      "id": 1,
+      "url": "https://res.cloudinary.com/example/image1.jpg",
+      "thumbnail": "https://res.cloudinary.com/example/c_fill,h_150,w_150/image1.jpg",
+      "media_type": "image"
+    }
+  ]
+}
+```
+
+**Response (403 Forbidden)** - When trying to update someone else's message:
+
+```json
+{
+  "error": "Bạn chỉ có thể cập nhật tin nhắn của mình"
+}
+```
+
+**Response (400 Bad Request)** - When trying to update a deleted message:
+
+```json
+{
+  "error": "Tin nhắn này đã bị xóa"
+}
+```
+
+### Delete Message
+
+```http
+DELETE /api/messages/{id}/
+```
+
+Deletes (soft delete) a message. The message will be marked as removed and its content will be hidden.
+
+**Authentication:** Required
+
+**Response (204 No Content)** - When message is successfully deleted.
+
+**Response (403 Forbidden)** - When trying to delete someone else's message:
+
+```json
+{
+  "error": "Bạn chỉ có thể xóa tin nhắn của mình"
+}
+```
+
+**Response (400 Bad Request)** - When trying to delete a system message:
+
+```json
+{
+  "error": "Không thể xóa tin nhắn hệ thống"
 }
 ```

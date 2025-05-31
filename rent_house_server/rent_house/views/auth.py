@@ -12,9 +12,11 @@ from oauthlib.common import generate_token
 from django.utils import timezone
 from datetime import timedelta
 from oauth2_provider.models import AccessToken, RefreshToken
+import random
+import string
 
 from rent_house.models import User, VerificationCode
-from rent_house.serializers import RegisterSerializer, VerifyEmailSerializer, ResendVerificationSerializer, CheckVerificationStatusSerializer
+from rent_house.serializers import RegisterSerializer, VerifyEmailSerializer, ResendVerificationSerializer, CheckVerificationStatusSerializer, PreRegisterSerializer
 
 class RegisterView(generics.CreateAPIView):
     """
@@ -238,3 +240,103 @@ class CheckVerificationStatusView(generics.GenericAPIView):
             "user_id": user.id,
             "username": user.username
         })
+
+class PreRegisterView(generics.GenericAPIView):
+    """
+    API để gửi mã xác thực trước khi đăng ký.
+    Xác minh email trước khi tạo tài khoản người dùng.
+    """
+    permission_classes = (permissions.AllowAny,)
+    serializer_class = PreRegisterSerializer
+    
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        email = serializer.validated_data['email']
+        
+        # Kiểm tra xem email đã tồn tại chưa
+        if User.objects.filter(email=email).exists():
+            return Response(
+                {"email": ["Email đã được đăng ký."]},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Tạo hoặc lấy một mã xác thực tạm thời cho email này
+        verification_code = self.create_or_get_verification_code(email)
+        
+        # Gửi mã xác thực qua email
+        self.send_verification_email(email, verification_code.code)
+        
+        response_data = {
+            "message": "Mã xác thực đã được gửi đến email của bạn.",
+            "email": email,
+        }
+        
+        # Trả về mã xác thực trong môi trường phát triển
+        if settings.DEBUG:
+            response_data["verification_code"] = verification_code.code
+            
+        return Response(response_data, status=status.HTTP_200_OK)
+    
+    def create_or_get_verification_code(self, email):
+        """
+        Tạo hoặc lấy mã xác thực cho email chưa đăng ký
+        """
+        # Sử dụng một user tạm thời hoặc tạo một cơ chế riêng để lưu mã xác thực
+        # Ở đây, chúng ta sẽ sử dụng một bản ghi VerificationCode với user=None và lưu email
+        existing_code = VerificationCode.objects.filter(
+            user=None,
+            email=email,
+            is_used=False
+        ).order_by('-created_at').first()
+        
+        # Nếu đã có mã và còn hạn, sử dụng lại
+        if existing_code and existing_code.is_valid():
+            return existing_code
+            
+        # Vô hiệu hóa các mã cũ
+        VerificationCode.objects.filter(
+            user=None,
+            email=email,
+            is_used=False
+        ).update(is_used=True)
+        
+        # Tạo mã mới
+        code = ''.join(random.choices(string.digits, k=6))
+        expires_at = timezone.now() + timedelta(minutes=settings.VERIFICATION_CODE_EXPIRY_MINUTES)
+        
+        verification_code = VerificationCode.objects.create(
+            user=None,
+            email=email,
+            code=code,
+            expires_at=expires_at
+        )
+        
+        return verification_code
+    
+    def send_verification_email(self, email, code):
+        """
+        Gửi email xác thực đến địa chỉ email
+        """
+        subject = 'Xác thực email Rent House App'
+        html_message = render_to_string('email/verify_email.html', {
+            'email': email,
+            'code': code,
+            'expiry_minutes': settings.VERIFICATION_CODE_EXPIRY_MINUTES
+        })
+        plain_message = strip_tags(html_message)
+        
+        try:
+            send_mail(
+                subject,
+                plain_message,
+                settings.DEFAULT_FROM_EMAIL,
+                [email],
+                html_message=html_message,
+                fail_silently=False
+            )
+            return True
+        except Exception as e:
+            print(f"Error sending verification email: {str(e)}")
+            return False

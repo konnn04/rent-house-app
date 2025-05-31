@@ -8,8 +8,8 @@ import {
   View
 } from 'react-native';
 import { useTheme } from '../../../contexts/ThemeContext';
+import { getFeedService } from '../../../services/feedService';
 import { homeStyles, styles } from '../../../styles/style';
-import { api } from '../../../utils/Fetch';
 import { NewPostSample } from '../posts/NewPostSample';
 import { PostCard } from '../posts/PostCard';
 
@@ -29,22 +29,14 @@ export const FeedList = () => {
     try {
       if ((loading && !refresh) || loadingMore) return;
 
-      let url = 'api/new-feed/';
+      let newData = {};
 
       if (!refresh && nextPageUrl) {
-        try {
-          const urlObj = new URL(nextPageUrl);
-          const queryParams = urlObj.search.substring(1);
-          if (queryParams) {
-            url = `api/new-feed/?${queryParams}`;
-          }
-        } catch (e) {
-          console.error('Failed to parse next page URL:', e);
-        }
+        newData = await getFeedService(nextPageUrl);
+      }else {
+        setLoading(true);
+        newData = await getFeedService();
       }
-
-      const response = await api.get(url);
-      const newData = response.data || {};
 
       setNextPageUrl(newData.next || null);
 

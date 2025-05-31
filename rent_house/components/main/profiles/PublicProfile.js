@@ -4,8 +4,16 @@ import { ActivityIndicator, Image, RefreshControl, ScrollView, StyleSheet, Text,
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { useUser } from "../../../contexts/UserContext";
+import { } from "../../../services/feedService";
+import { } from "../../../services/houseService";
+import {
+  followUserService,
+  getUserHouseService,
+  getUserPostsService,
+  getUserProfileService,
+  unfollowUserService
+} from '../../../services/profileService';
 import { createDirectChat } from '../../../utils/ChatUtils';
-import { api } from '../../../utils/Fetch';
 import { timeAgo } from '../../../utils/Tools';
 import { HouseCard } from '../houses/components/HouseCard';
 import { PostCard } from '../posts/PostCard';
@@ -34,18 +42,18 @@ export const PublicProfile = () => {
       setError(null);
 
       // Fetch profile data
-      const profileResponse = await api.get(`/api/profiles/${username}/`);
-      setProfileData(profileResponse.data);
-      setIsFollowing(profileResponse.data.is_followed || false);
+      const profileData = await getUserProfileService(username);
+      setProfileData(profileData);
+      setIsFollowing(profileData.is_followed || false);
 
       // Fetch posts
-      const postsResponse = await api.get(`/api/posts/?author_username=${username}`);
-      setPosts(postsResponse.data.results || []);
+      const postsResponse = await getUserPostsService(username);
+      setPosts(postsResponse?.results || []);
 
       // If user is owner, fetch houses
-      if (profileResponse.data.role === 'owner') {
-        const housesResponse = await api.get(`/api/houses/?owner_username=${username}`);
-        setHouses(housesResponse.data.results || []);
+      if (profileData.role === 'owner') {
+        const housesResponse = await getUserHouseService(username);
+        setHouses(housesResponse?.results || []);
       }
 
     } catch (err) {
@@ -71,7 +79,7 @@ export const PublicProfile = () => {
     try {
       if (isFollowing) {
         // Unfollow the user
-        await api.post(`/api/follows/${profileData.id}/unfollow/`);
+        await unfollowUserService(profileData.id);
         setIsFollowing(false);
         setProfileData(prev => ({
           ...prev,
@@ -79,7 +87,7 @@ export const PublicProfile = () => {
         }));
       } else {
         // Follow the user
-        await api.post(`/api/follows/`, { followee: profileData.id });
+        await followUserService(profileData.id);
         setIsFollowing(true);
         setProfileData(prev => ({
           ...prev,

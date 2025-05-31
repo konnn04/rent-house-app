@@ -598,13 +598,16 @@ class Message(BaseModel):
 
 class VerificationCode(BaseModel):
     """Model để lưu trữ mã xác thực email của người dùng"""
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='verification_codes')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='verification_codes', null=True, blank=True)
+    email = models.EmailField(null=True, blank=True)  # Để lưu email khi chưa có user
     code = models.CharField(max_length=10)
     is_used = models.BooleanField(default=False)
     expires_at = models.DateTimeField()
     
     def __str__(self):
-        return f"Verification code for {self.user.username}"
+        if self.user:
+            return f"Verification code for {self.user.username}"
+        return f"Verification code for {self.email}"
     
     @classmethod
     def generate_code(cls, user):
@@ -623,6 +626,7 @@ class VerificationCode(BaseModel):
         # Tạo mã mới
         verification_code = cls.objects.create(
             user=user,
+            email=user.email,
             code=code,
             expires_at=expires_at
         )

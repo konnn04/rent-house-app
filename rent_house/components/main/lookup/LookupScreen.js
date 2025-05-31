@@ -3,7 +3,7 @@ import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'rea
 import { Searchbar } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../../../contexts/ThemeContext';
-import { api } from '../../../utils/Fetch';
+import { getHousesService } from '../../../services/houseService';
 import { ListView } from './components/ListView';
 import { MapViewCustom } from './components/MapViewCustom';
 import { SearchFilters } from './components/SearchFilters';
@@ -21,6 +21,7 @@ export const LookupScreen = () => {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [nextUrl, setNextUrl] = useState(null);
   
   // Filter state
   const [filters, setFilters] = useState({
@@ -32,50 +33,58 @@ export const LookupScreen = () => {
     ordering: '-created_at'
   });
 
-  // Fetch houses with search and filters
-  const fetchHouses = useCallback(async (isRefresh = false, newQuery = null, newFilters = null) => {
+  // Fetch houses with search and filters, hỗ trợ lazy loading
+  const fetchHouses = useCallback(async (isRefresh = false, newQuery = null, newFilters = null, customNextUrl = null) => {
     try {
       const actualQuery = newQuery !== null ? newQuery : searchQuery;
       const actualFilters = newFilters !== null ? newFilters : filters;
-      const actualPage = isRefresh ? 1 : page;
-      
+      let actualPage = isRefresh ? 1 : page;
+      let useNextUrl = customNextUrl || (isRefresh ? null : nextUrl);
+
       if (isRefresh) {
         setRefreshing(true);
-      } else if (!isRefresh && actualPage > 1) {
+      } else if (!isRefresh && useNextUrl) {
         setLoadingMore(true);
       } else {
         setLoading(true);
       }
 
       setError(null);
-      
-      // Build query parameters
-      let queryParams = new URLSearchParams();
-      if (actualQuery) queryParams.append('search', actualQuery);
-      if (actualFilters.type) queryParams.append('type', actualFilters.type);
-      if (actualFilters.min_price) queryParams.append('min_price', actualFilters.min_price);
-      if (actualFilters.max_price) queryParams.append('max_price', actualFilters.max_price);
-      if (actualFilters.area) queryParams.append('area', actualFilters.area);
-      if (actualFilters.has_rooms) queryParams.append('has_rooms', 'true');
-      if (actualFilters.ordering) queryParams.append('ordering', actualFilters.ordering);
-      queryParams.append('page', actualPage);
-      queryParams.append('page_size', 10);
-      
-      const response = await api.get(`/api/houses/?${queryParams.toString()}`);
-      
-      const newHouses = response.data.results || [];
-      
+
+      let data;
+      if (useNextUrl) {
+        // Lazy load: chỉ cần nextUrl
+        data = await getHousesService({ nextUrl: useNextUrl });
+      } else {
+        // Trang đầu: truyền filter
+        data = await getHousesService({
+          search: actualQuery,
+          type: actualFilters.type,
+          min_price: actualFilters.min_price,
+          max_price: actualFilters.max_price,
+          area: actualFilters.area,
+          has_rooms: actualFilters.has_rooms,
+          ordering: actualFilters.ordering,
+          page: actualPage,
+          page_size: 10,
+        });
+      }
+
+      setNextUrl(data.next || null);
+
+      const newHouses = Array.isArray(data.results) ? data.results : [];
+
       if (isRefresh) {
         setHouses(newHouses);
         setFilteredHouses(newHouses);
-        setPage(1);
+        setPage(2); // next page sẽ là 2
       } else {
         setHouses(prev => [...prev, ...newHouses]);
         setFilteredHouses(prev => [...prev, ...newHouses]);
         setPage(prev => prev + 1);
       }
-      
-      setHasMore(!!response.data.next);
+
+      setHasMore(!!data.next);
     } catch (err) {
       console.error('Error fetching houses:', err);
       setError('Không thể tải danh sách nhà. Vui lòng thử lại sau.');
@@ -84,7 +93,7 @@ export const LookupScreen = () => {
       setRefreshing(false);
       setLoadingMore(false);
     }
-  }, [searchQuery, filters, page]);
+  }, [searchQuery, filters, page, nextUrl]);
 
   // Initial fetch
   useEffect(() => {
@@ -93,6 +102,8 @@ export const LookupScreen = () => {
 
   // Handle search submit
   const handleSearch = () => {
+    setPage(1);
+    setNextUrl(null);
     fetchHouses(true, searchQuery);
   };
 
@@ -100,18 +111,22 @@ export const LookupScreen = () => {
   const handleFilterApply = (newFilters) => {
     setFilters(newFilters);
     setShowFilters(false);
+    setPage(1);
+    setNextUrl(null);
     fetchHouses(true, null, newFilters);
   };
 
   // Handle refresh
   const handleRefresh = () => {
+    setPage(1);
+    setNextUrl(null);
     fetchHouses(true);
   };
 
   // Handle pagination (load more)
   const handleLoadMore = () => {
-    if (hasMore && !loadingMore) {
-      fetchHouses(false);
+    if (hasMore && !loadingMore && nextUrl) {
+      fetchHouses(false, null, null, nextUrl);
     }
   };
 

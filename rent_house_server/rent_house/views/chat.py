@@ -1,4 +1,5 @@
 from django.contrib.contenttypes.models import ContentType
+from django.db.models import Q
 from rest_framework import viewsets, permissions, status, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -6,10 +7,11 @@ from rest_framework.response import Response
 from rent_house.models import ChatGroup, ChatMembership, Message, User, Media
 from rent_house.serializers import (
     ChatGroupSerializer, ChatGroupDetailSerializer, 
-    MessageSerializer
+    ChatGroupUpdateSerializer, MessageSerializer
 )
 from rent_house.utils import upload_image_to_cloudinary
 from rent_house.firebase_utils import send_chat_notification
+from rent_house.permissions import IsOwnerOrReadOnly
 
 class ChatGroupViewSet(viewsets.ModelViewSet):
     """ViewSet cho quản lý nhóm chat (ChatGroup)"""
@@ -20,6 +22,8 @@ class ChatGroupViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.action == 'retrieve':
             return ChatGroupDetailSerializer
+        elif self.action in ['update', 'partial_update']:
+            return ChatGroupUpdateSerializer
         return ChatGroupSerializer
     
     def get_queryset(self):
@@ -53,6 +57,48 @@ class ChatGroupViewSet(viewsets.ModelViewSet):
                 
         return chat_group
     
+    def update(self, request, *args, **kwargs):
+        """Cập nhật thông tin nhóm chat"""
+        instance = self.get_object()
+        
+        # Kiểm tra xem user có phải là thành viên và có quyền admin (đối với nhóm chat)
+        membership = instance.chat_memberships.filter(user=request.user).first()
+        if not membership:
+            return Response(
+                {"error": "Bạn không phải là thành viên của nhóm chat này"}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        if instance.is_group and not membership.is_admin:
+            return Response(
+                {"error": "Chỉ có admin mới có thể cập nhật cài đặt nhóm"}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        return super().update(request, *args, **kwargs)
+    
+    def destroy(self, request, *args, **kwargs):
+        """Xóa nhóm chat"""
+        instance = self.get_object()
+        
+        # Không thể xóa chat trực tiếp, chỉ có thể rời khỏi
+        if not instance.is_group:
+            return Response(
+                {"error": "Không thể xóa chat trực tiếp, hãy sử dụng leave_group thay thế"}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Chỉ người tạo hoặc admin mới có thể xóa nhóm
+        membership = instance.chat_memberships.filter(user=request.user).first()
+        if not membership or not membership.is_admin or instance.created_by != request.user:
+            return Response(
+                {"error": "Chỉ người tạo nhóm mới có thể xóa nhóm"}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        self.perform_destroy(instance)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    
     @action(detail=True, methods=['get'], url_path='messages')
     def messages(self, request, pk=None):
         """Lấy danh sách tin nhắn của một nhóm chat (có phân trang)"""
@@ -82,15 +128,18 @@ class ChatGroupViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['post'], url_path='send-message')
     def send_message(self, request, pk=None):
+        """Gửi tin nhắn mới đến nhóm chat"""
         chat_group = self.get_object()
         
         if not chat_group.members.filter(id=request.user.id).exists():
-            return Response({"error": "Bạn không phải là thành viên của nhóm chat này"}, status=status.HTTP_403_FORBIDDEN)
+            return Response(
+                {"error": "Bạn không phải là thành viên của nhóm chat này"}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
         
         # Kiểm tra xem request có media không
-        media_files = request.FILES.getlist('medias')
+        media_files = request.FILES.getlist('medias', [])
         has_media = len(media_files) > 0
-        print(f"Has media: {media_files}")
         
         # Nếu không có cả nội dung và media, trả về lỗi
         if not has_media and (not request.data.get('content') or not request.data.get('content').strip()):
@@ -111,7 +160,6 @@ class ChatGroupViewSet(viewsets.ModelViewSet):
         # Tạo tin nhắn mới với dữ liệu đã điều chỉnh
         serializer = MessageSerializer(data=request_data)
         if not serializer.is_valid():
-            print(f"Message validation errors: {serializer.errors}")
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
             
         # Lưu tin nhắn
@@ -119,15 +167,11 @@ class ChatGroupViewSet(viewsets.ModelViewSet):
         
         media_items = []
         
-        # Debug log
-        print(f"Found {len(media_files)} media files")
-        
+        # Xử lý các tệp media
         if media_files:
             for media_file in media_files:
                 media_type = 'image'
                 content_type = getattr(media_file, 'content_type', '') or getattr(media_file, 'type', '')
-                
-                print(f"Media file content_type: {content_type}")
                 
                 if content_type and 'video' in content_type:
                     media_type = 'video'
@@ -179,7 +223,6 @@ class ChatGroupViewSet(viewsets.ModelViewSet):
         
         return Response(response_data, status=status.HTTP_201_CREATED)
     
-    
     @action(detail=False, methods=['post'])
     def create_direct_chat(self, request):
         """Tạo hoặc lấy chat 1-1 với một user"""
@@ -196,77 +239,6 @@ class ChatGroupViewSet(viewsets.ModelViewSet):
             # Trả về thông tin chat
             serializer = self.get_serializer(chat_group)
             return Response(serializer.data)
-            
-        except User.DoesNotExist:
-            return Response({"error": "User không tồn tại"}, status=status.HTTP_404_NOT_FOUND)
-    
-    @action(detail=True, methods=['post'])
-    def add_member(self, request, pk=None):
-        """Thêm thành viên vào nhóm chat"""
-        chat_group = self.get_object()
-        
-        # Chỉ admin mới có quyền thêm thành viên
-        membership = chat_group.chat_memberships.filter(user=request.user).first()
-        if not membership or not membership.is_admin:
-            return Response({"error": "Không có quyền thêm thành viên"}, status=status.HTTP_403_FORBIDDEN)
-            
-        user_id = request.data.get('user_id')
-        is_admin = request.data.get('is_admin', False)
-        
-        try:
-            user = User.objects.get(id=user_id)
-            
-            # Kiểm tra user đã là thành viên chưa
-            if chat_group.members.filter(id=user.id).exists():
-                return Response({"error": "User đã là thành viên"}, status=status.HTTP_400_BAD_REQUEST)
-                
-            # Thêm thành viên mới
-            chat_group.add_member(user, is_admin=is_admin)
-            
-            # Tạo thông báo hệ thống trong chat
-            Message.objects.create(
-                chat_group=chat_group,
-                sender=request.user,
-                content=f"{user.username} đã được thêm vào nhóm chat.",
-                is_system_message=True
-            )
-            
-            return Response({"status": "success"})
-            
-        except User.DoesNotExist:
-            return Response({"error": "User không tồn tại"}, status=status.HTTP_404_NOT_FOUND)
-    
-    @action(detail=True, methods=['post'])
-    def remove_member(self, request, pk=None):
-        """Xóa thành viên khỏi nhóm chat"""
-        chat_group = self.get_object()
-        
-        # Chỉ admin mới có quyền xóa thành viên
-        membership = chat_group.chat_memberships.filter(user=request.user).first()
-        if not membership or not membership.is_admin:
-            return Response({"error": "Không có quyền xóa thành viên"}, status=status.HTTP_403_FORBIDDEN)
-            
-        user_id = request.data.get('user_id')
-        
-        try:
-            user = User.objects.get(id=user_id)
-            
-            # Kiểm tra user có phải là thành viên không
-            if not chat_group.members.filter(id=user.id).exists():
-                return Response({"error": "User không phải là thành viên"}, status=status.HTTP_400_BAD_REQUEST)
-                
-            # Xóa thành viên
-            chat_group.remove_member(user)
-            
-            # Tạo thông báo hệ thống trong chat
-            Message.objects.create(
-                chat_group=chat_group,
-                sender=request.user,
-                content=f"{user.username} đã bị xóa khỏi nhóm chat.",
-                is_system_message=True
-            )
-            
-            return Response({"status": "success"})
             
         except User.DoesNotExist:
             return Response({"error": "User không tồn tại"}, status=status.HTTP_404_NOT_FOUND)

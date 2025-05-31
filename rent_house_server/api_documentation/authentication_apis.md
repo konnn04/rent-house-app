@@ -1,12 +1,47 @@
 # Authentication APIs
 
+## Gửi mã xác thực trước đăng ký
+
+```
+POST /api/pre-register/
+```
+
+Gửi mã xác thực đến email trước khi đăng ký tài khoản.
+
+**Request Body**:
+
+```json
+{
+  "email": "user@example.com"
+}
+```
+
+**Response (200 OK)**:
+
+```json
+{
+  "message": "Mã xác thực đã được gửi đến email của bạn.",
+  "email": "user@example.com"
+}
+```
+
+**Response (400 Bad Request)**:
+
+```json
+{
+  "email": [
+    "Email đã được đăng ký."
+  ]
+}
+```
+
 ## Đăng ký tài khoản
 
 ```
 POST /api/register/
 ```
 
-Đăng ký tài khoản mới và gửi email xác thực.
+Đăng ký tài khoản mới sau khi đã xác thực email.
 
 **Request Body**:
 
@@ -19,7 +54,8 @@ POST /api/register/
   "first_name": "John",
   "last_name": "Doe",
   "phone_number": "0987654321",
-  "role": "renter"  // Giá trị có thể: "renter", "owner"
+  "role": "renter",  // Giá trị có thể: "renter", "owner"
+  "verification_code": "123456"  // Mã xác thực đã được gửi qua email
 }
 ```
 
@@ -27,7 +63,7 @@ POST /api/register/
 
 ```json
 {
-  "message": "Đăng ký thành công! Vui lòng xác thực tài khoản.",
+  "message": "Đăng ký thành công!",
   "user_id": 123,
   "email": "user@example.com"
 }
@@ -42,6 +78,9 @@ POST /api/register/
   ],
   "email": [
     "Email này đã được sử dụng."
+  ],
+  "verification_code": [
+    "Mã xác thực không hợp lệ hoặc đã hết hạn."
   ]
 }
 ```

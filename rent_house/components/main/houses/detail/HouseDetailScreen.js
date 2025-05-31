@@ -8,8 +8,8 @@ import { IconButton } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../../../../contexts/ThemeContext';
 import { useUser } from '../../../../contexts/UserContext';
+import { getDetailHouseService } from '../../../../services/houseService';
 import { createDirectChat } from "../../../../utils/ChatUtils";
-import { api } from '../../../../utils/Fetch';
 
 // Import components
 import { ContactSection } from './ContactSection';
@@ -47,8 +47,8 @@ export const HouseDetailScreen = () => {
             setError(null);
             if (!refreshing) setLoading(true);
 
-            const response = await api.get(`/api/houses/${houseId}/`);
-            setHouse(response.data);
+            const houseDetails = await getDetailHouseService(houseId);
+            setHouse(houseDetails);
 
         } catch (err) {
             console.error('Error fetching house details:', err);

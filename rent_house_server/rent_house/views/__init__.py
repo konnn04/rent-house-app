@@ -9,7 +9,7 @@ from .notification import NotificationViewSet
 from .follow import FollowViewSet
 from .chat import ChatGroupViewSet
 from .message import MessageViewSet
-from .auth import RegisterView, VerifyEmailView, ResendVerificationView, CheckVerificationStatusView
+from .auth import RegisterView, VerifyEmailView, ResendVerificationView, CheckVerificationStatusView, PreRegisterView
 from .profile import ProfileViewSet
 from .ping import ping_view
 
@@ -29,7 +29,8 @@ __all__ = [
     'RegisterView',
     'VerifyEmailView',
     'ResendVerificationView',
+    'PreRegisterView',
     'CheckVerificationStatusView',
-    'ping',
+    'ping_view',
     'ProfileViewSet',
 ]
