@@ -2,6 +2,7 @@ from rest_framework import serializers
 from rent_house.models import User
 from django.db.models import Avg, Count
 from django.contrib.contenttypes.models import ContentType
+from django.db.models import Q
 from rent_house.serializers.post import PostSerializer
 
 class ProfileSerializer(serializers.ModelSerializer):
@@ -68,21 +69,22 @@ class DetailedProfileSerializer(ProfileSerializer):
         """Trả về đánh giá trung bình nếu người dùng là chủ sở hữu"""
         if obj.role != 'owner':
             return None
-        
-        return None
-    
+        houses = obj.houses.all()
+        if not houses.exists():
+            return None
+        avg = houses.aggregate(total_avg=serializers.Avg('ratings__star'))
+        return avg['total_avg']
+
     def get_house_count(self, obj):
         """Trả về số lượng nhà/căn hộ nếu người dùng là chủ sở hữu"""
         if obj.role != 'owner':
             return None
         return obj.houses.count()
-    
+
     def get_room_count(self, obj):
         """Trả về tổng số phòng từ tất cả các nhà/căn hộ của chủ sở hữu"""
-        if obj.role != 'owner':
-            return None
-        # Tính tổng số phòng từ tất cả nhà/căn hộ
-        return sum(house.rooms.count() for house in obj.houses.all())
+        # Không còn model Room, trả về None hoặc 0
+        return None
     
     def get_posts(self, obj):
         """Trả về danh sách bài đăng của người dùng"""
@@ -140,5 +142,7 @@ class PublicProfileSerializer(ProfileSerializer):
         # Nếu đang xem profile của chính mình
         if request.user.id == obj.id:
             return False
-            
-        return request.user.following.filter(followee=obj).exists()
+        
+        # Có bảng và đang theo dõi
+        is_followed = obj.followers.filter(Q(follower=request.user) & Q(is_following=True)).exists()
+        return is_followed

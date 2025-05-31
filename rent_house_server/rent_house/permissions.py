@@ -38,7 +38,7 @@ class IsOwnerOrAdminOrReadOnly(permissions.BasePermission):
 
 class IsOwnerOfHouseOrReadOnly(permissions.BasePermission):
     """
-    Custom permission để chỉ cho phép chủ nhà quản lý house/room của họ.
+    Custom permission để chỉ cho phép chủ nhà quản lý house của họ.
     Người dùng khác chỉ có quyền xem.
     """
     def has_object_permission(self, request, view, obj):
@@ -58,10 +58,6 @@ class IsOwnerOfHouseOrReadOnly(permissions.BasePermission):
         if hasattr(obj, 'owner'):
             return obj.owner == request.user
             
-        # Đối với room, kiểm tra chủ sở hữu của house chứa room đó
-        if hasattr(obj, 'house'):
-            return obj.house.owner == request.user
-            
         return False
 
 class IsOwnerRoleOrReadOnly(permissions.BasePermission):
@@ -75,3 +71,16 @@ class IsOwnerRoleOrReadOnly(permissions.BasePermission):
 
         # Chỉ user đã đăng nhập và có role OWNER mới có thể tạo
         return request.user.is_authenticated and request.user.role == Role.OWNER.value[0]
+
+class IsOwnerOrReadOnly(permissions.BasePermission):
+    """
+    Custom permission to only allow owners of an object to edit or delete it.
+    """
+    
+    def has_object_permission(self, request, view, obj):
+        # Read permissions are allowed to any request
+        if request.method in permissions.SAFE_METHODS:
+            return True
+            
+        # Write permissions are only allowed to the owner
+        return obj.sender == request.user

@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useContext, useEffect, useState } from 'react';
-import { verifyToken } from '../utils/Authentication';
+import { loginService, preRegisterService, registerService, verifyTokenService } from "../services/authService";
 
 const AuthContext = createContext();
 
@@ -12,10 +12,66 @@ export const AuthProvider = ({ children }) => {
     checkToken();
   }, []);
 
+  const signIn = async (username, password) => {
+    try {
+      const response = await loginService(username, password);
+      const { access_token, refresh_token } = response;
+      if (access_token) {
+        await AsyncStorage.setItem('access_token', access_token);
+        await AsyncStorage.setItem('refresh_token', refresh_token);
+        setUserToken(access_token);
+      } else {
+        throw new Error('Login failed, no token received');
+      }
+    } catch (error) {
+      throw new Error(error.message || 'Login failed, please try again');
+    }
+  };
+
+  const preRegister = async (email) => {
+    try {
+      const result = await preRegisterService(email);
+      return result;
+    } catch (error) {
+      // Trả về lỗi dạng object để UI xử lý field error
+      throw error;
+    }
+  };
+
+  // Đăng ký tài khoản mới
+  const register = async (
+    username,
+    password,
+    confirmPassword,
+    email,
+    firstName,
+    lastName,
+    phone,
+    role,
+    verificationCode
+  ) => {
+    try {
+      const result = await registerService(
+        username,
+        password,
+        confirmPassword,
+        email,
+        firstName,
+        lastName,
+        phone,
+        role,
+        verificationCode
+      );
+      return result;
+    } catch (error) {
+      throw error;
+    }
+  };
+
   const checkToken = async () => {
     setIsLoading(true);
     try {
-      const isValid = await verifyToken();
+      const isValid = await verifyTokenService();
       if (isValid) {
         const token = await AsyncStorage.getItem('access_token');
         setUserToken(token);
@@ -27,15 +83,6 @@ export const AuthProvider = ({ children }) => {
       setUserToken(null);
     }
     setIsLoading(false);
-  };
-
-  const signIn = async (token) => {
-    try {
-      setUserToken(token);
-      await AsyncStorage.setItem('access_token', token);
-    } catch (error) {
-      console.error('Error saving token:', error);
-    }
   };
 
   const signOut = async () => {
@@ -55,6 +102,8 @@ export const AuthProvider = ({ children }) => {
         userToken,
         signIn,
         signOut,
+        preRegister,
+        register,
       }}
     >
       {children}

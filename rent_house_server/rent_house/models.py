@@ -59,6 +59,7 @@ class InteractionType(Enum):
     """Types of interactions with posts"""
     LIKE = 'like', 'Thích'
     DISLIKE = 'dislike', 'Không thích'
+    NONE = 'none', 'Không tương tác'
 
     def __str__(self):
         return self.value[1]
@@ -284,11 +285,7 @@ class User(AbstractUser):
             self.save(update_fields=['avatar'])
             return True
         return False
-    
-    def get_rented_rooms(self):
-        """Get all rooms currently rented by the user"""
-        return Room.objects.filter(rentals__user=self, rentals__is_active=True)
-        
+            
     def get_owned_houses(self):
         """Get all houses owned by the user"""
         return self.houses.all()
@@ -328,10 +325,14 @@ class House(BaseModel):
     trash_price = models.DecimalField(max_digits=20, decimal_places=2, null=True, default=0)
     is_verified = models.BooleanField(default=False)
     media_files = GenericRelation(Media)
+    # Các trường dưới đây chỉ còn dùng cho loại phòng trọ (ROOM), giữ lại để tránh lỗi migration nếu đã có dữ liệu cũ
+    max_rooms = models.IntegerField(null=True, blank=True)
+    current_rooms = models.IntegerField(null=True, blank=True)
+    max_people = models.IntegerField(null=True, blank=True)
 
     def __str__(self):
         return self.title or f"House {self.id}"
-    
+
     def get_avg_rating(self):
         """Get average rating from reviews"""
         cache_key = f'house_rating_{self.id}'
@@ -340,46 +341,7 @@ class House(BaseModel):
             avg_rating = self.ratings.aggregate(avg=Avg('star'))['avg'] or 0
             cache.set(cache_key, avg_rating, 3600)  # Cache for 1 hour
         return avg_rating
-    
-    def get_room_count(self):
-        """Get total number of rooms"""
-        return self.rooms.count()
-    
-    def get_available_rooms(self):
-        """Get rooms with available space"""
-        return self.rooms.filter(cur_people__lt=F('max_people'))
-    
-    def get_thumbnail(self):
-        """Get first image thumbnail"""
-        first_image = self.media_files.filter(media_type='image').first()
-        if first_image:
-            return first_image.get_url('thumbnail')
-        return None
-    
-class Room(BaseModel):
-    """Individual room within a house"""
-    house = models.ForeignKey(House, on_delete=models.CASCADE, related_name='rooms')
-    title = models.CharField(max_length=50, null=True, blank=True)
-    description = models.TextField(null=True, blank=True)
-    price = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True)
-    max_people = models.IntegerField(default=1)
-    cur_people = models.IntegerField(default=0)
-    bedrooms = models.IntegerField(default=1)
-    bathrooms = models.IntegerField(default=1)
-    area = models.FloatField(null=True, blank=True)
-    media_files = GenericRelation(Media)
-    
-    def __str__(self):
-        return self.title or f"Room {self.id} in House {self.house.id}"
-    
-    def is_available(self):
-        """Check if room has available space"""
-        return self.cur_people < self.max_people
-    
-    def get_renters(self):
-        """Get list of current renters"""
-        return User.objects.filter(rentals__room=self, rentals__is_active=True)
-    
+
     def get_thumbnail(self):
         """Get first image thumbnail"""
         first_image = self.media_files.filter(media_type='image').first()
@@ -387,21 +349,10 @@ class Room(BaseModel):
             return first_image.get_url('thumbnail')
         return None
 
-class RoomRental(BaseModel):
-    """Tracks rental agreements between users and rooms"""
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='rentals')
-    room = models.ForeignKey(Room, on_delete=models.CASCADE, related_name='rentals')
-    start_date = models.DateField()
-    end_date = models.DateField(null=True, blank=True)
-    is_active = models.BooleanField(default=True)
-    price_agreed = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True)
-    
-    class Meta:
-        unique_together = ('user', 'room', 'start_date')
-    
-    def __str__(self):
-        return f"{self.user.username} rents {self.room} from {self.start_date}"
-
+    def is_room_type(self):
+        """Check if this house is a boarding house (phòng trọ)"""
+        return self.type == HouseType.ROOM.value[0]
+   
 class Rate(BaseModel):
     """House rating and review model"""
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -440,10 +391,10 @@ class Post(BaseModel):
         return f"{self.type} by {self.author.username}"
     
     def get_interaction_count(self, interaction_type=None):
-        """Get count of interactions (likes, dislikes)"""
         if interaction_type:
-            return self.interaction_set.filter(type=interaction_type, is_interacted=True).count()
-        return self.interaction_set.filter(is_interacted=True).count()
+            return self.interaction_set.filter(type=interaction_type).count()
+        # Mặc định trả về "like"
+        return self.interaction_set.filter(type=InteractionType.LIKE.value[0]).count()
     
     def get_comment_count(self):
         """Get total comment count"""
@@ -479,10 +430,9 @@ class Interaction(BaseModel):
         max_length=20,
         choices=[(interaction_type.value[0], interaction_type.name) for interaction_type in InteractionType]
     )
-    is_interacted = models.BooleanField(default=False)
 
     class Meta:
-        unique_together = ('user', 'post', 'type')
+        unique_together = ('user', 'post')
 
     def __str__(self):
         return f"{self.user.username} {self.type} Post {self.post.id}"
@@ -613,11 +563,16 @@ class ChatMembership(BaseModel):
             return self.chat_group.messages.count()
         return self.chat_group.messages.filter(created_at__gt=self.last_read_at).count()
     
+    def has_any_message(self):
+        """Check if the chat group has any messages"""
+        return self.chat_group.messages.exists()
+
+    
 class Message(BaseModel):
     """Chat message model"""
     chat_group = models.ForeignKey(ChatGroup, on_delete=models.CASCADE, related_name='messages')
     sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_messages')
-    content = models.TextField()
+    content = models.TextField(null=True, blank=True)
     is_system_message = models.BooleanField(default=False)
     is_removed = models.BooleanField(default=False)
     replied_to = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='replies')
@@ -643,13 +598,16 @@ class Message(BaseModel):
 
 class VerificationCode(BaseModel):
     """Model để lưu trữ mã xác thực email của người dùng"""
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='verification_codes')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='verification_codes', null=True, blank=True)
+    email = models.EmailField(null=True, blank=True)  # Để lưu email khi chưa có user
     code = models.CharField(max_length=10)
     is_used = models.BooleanField(default=False)
     expires_at = models.DateTimeField()
     
     def __str__(self):
-        return f"Verification code for {self.user.username}"
+        if self.user:
+            return f"Verification code for {self.user.username}"
+        return f"Verification code for {self.email}"
     
     @classmethod
     def generate_code(cls, user):
@@ -668,6 +626,7 @@ class VerificationCode(BaseModel):
         # Tạo mã mới
         verification_code = cls.objects.create(
             user=user,
+            email=user.email,
             code=code,
             expires_at=expires_at
         )

@@ -15,7 +15,6 @@ class NewFeedViewSet(viewsets.ViewSet):
     # , permission_classes=[permissions.IsAuthenticated]
     @action(detail=False, methods=['get'], url_path='new-feed')
     def new_feed(self, request):
-        user = request.user
         posts = Post.objects.filter(is_active=True).order_by('-created_at')
         
         # Apply pagination
