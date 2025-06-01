@@ -1,6 +1,5 @@
 from rest_framework import generics, status, permissions
 from rest_framework.response import Response
-from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
@@ -12,11 +11,16 @@ from oauthlib.common import generate_token
 from django.utils import timezone
 from datetime import timedelta
 from oauth2_provider.models import AccessToken, RefreshToken
+from django.views import View
+from django.shortcuts import render
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
+from rent_house.models import PasswordResetToken
 import random
 import string
 
 from rent_house.models import User, VerificationCode
-from rent_house.serializers import RegisterSerializer, VerifyEmailSerializer, ResendVerificationSerializer, CheckVerificationStatusSerializer, PreRegisterSerializer
+from rent_house.serializers import RegisterSerializer, VerifyEmailSerializer, ResendVerificationSerializer, CheckVerificationStatusSerializer, PreRegisterSerializer, RequestPasswordResetSerializer, PasswordResetSerializer
 
 class RegisterView(generics.CreateAPIView):
     """
@@ -52,8 +56,8 @@ class RegisterView(generics.CreateAPIView):
         }
          
         # Nếu đang ở môi trường phát triển, trả về mã xác thực để testing
-        if settings.DEBUG:
-            response_data["verification_code"] = verification_code.code
+        # if settings.DEBUG:
+        #     response_data["verification_code"] = verification_code.code
         
         return Response(response_data, status=status.HTTP_201_CREATED)
     
@@ -340,3 +344,171 @@ class PreRegisterView(generics.GenericAPIView):
         except Exception as e:
             print(f"Error sending verification email: {str(e)}")
             return False
+
+class RequestPasswordResetView(generics.GenericAPIView):
+    """
+    API để yêu cầu đặt lại mật khẩu qua email
+    """
+    permission_classes = (permissions.AllowAny,)
+    serializer_class = RequestPasswordResetSerializer
+    
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        email = serializer.validated_data['email']
+        
+        # Tìm user bằng email
+        try:
+            user = User.objects.get(email=email)
+            
+            # Tạo token đặt lại mật khẩu
+            reset_token = PasswordResetToken.generate_token(user)
+            
+            # Gửi email chứa link đặt lại mật khẩu
+            self.send_reset_email(user, reset_token.token)
+            
+        except User.DoesNotExist:
+            # Vì lý do bảo mật, vẫn trả về thành công ngay cả khi email không tồn tại
+            pass
+            
+        return Response({
+            "message": "Hướng dẫn đặt lại mật khẩu đã được gửi đến email của bạn (nếu email đã đăng ký)."
+        }, status=status.HTTP_200_OK)
+    
+    def send_reset_email(self, user, token):
+        # Sử dụng reverse để tạo URL tuyệt đối
+        from django.urls import reverse
+        from django.contrib.sites.shortcuts import get_current_site
+        
+        # Lấy domain hiện tại
+        current_site = get_current_site(self.request)
+        domain = current_site.domain
+        
+        # Tạo URL đầy đủ
+        reset_path = reverse('web-password-reset', kwargs={'token': token})
+        reset_url = f"http://{domain}{reset_path}"
+        
+        subject = 'Đặt lại mật khẩu Rent House App'
+        html_message = render_to_string('email/reset_password.html', {
+            'user': user,
+            'reset_url': reset_url,
+            'expiry_hours': 24  # Token có hiệu lực trong 24 giờ
+        })
+        plain_message = strip_tags(html_message)
+        
+        try:
+            send_mail(
+                subject,
+                plain_message,
+                settings.DEFAULT_FROM_EMAIL,
+                [user.email],
+                html_message=html_message,
+                fail_silently=False
+            )
+            return True
+        except Exception as e:
+            print(f"Error sending password reset email: {str(e)}")
+            return False
+
+class PasswordResetView(generics.GenericAPIView):
+    """
+    API để đặt lại mật khẩu sử dụng token hợp lệ
+    """
+    permission_classes = (permissions.AllowAny,)
+    serializer_class = PasswordResetSerializer
+    
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        reset_token = serializer.validated_data['reset_token']
+        new_password = serializer.validated_data['new_password']
+        
+        # Lấy user từ token
+        user = reset_token.user
+        
+        # Đặt mật khẩu mới
+        user.set_password(new_password)
+        user.save()
+        
+        # Đánh dấu token đã sử dụng
+        reset_token.mark_as_used()
+        
+        return Response({
+            "message": "Mật khẩu đã được đặt lại thành công."
+        }, status=status.HTTP_200_OK)
+    
+
+# Thêm view mới này vào cuối file
+class WebPasswordResetView(View):
+    """
+    View để hiển thị và xử lý form đặt lại mật khẩu trên web
+    """
+    template_name = 'password_reset/reset_password.html'
+    
+    def get(self, request, token=None):
+        if not token:
+            return render(request, self.template_name, {
+                'error': 'Token không hợp lệ'
+            })
+            
+        # Kiểm tra token có hợp lệ không
+        reset_token = PasswordResetToken.objects.filter(token=token, is_used=False).first()
+        
+        if not reset_token or not reset_token.is_valid():
+            return render(request, self.template_name, {
+                'error': 'Token không hợp lệ hoặc đã hết hạn'
+            })
+            
+        return render(request, self.template_name, {})
+    
+    def post(self, request, token=None):
+        if not token:
+            return render(request, self.template_name, {
+                'error': 'Token không hợp lệ'
+            })
+            
+        # Kiểm tra token có hợp lệ không
+        reset_token = PasswordResetToken.objects.filter(token=token, is_used=False).first()
+        
+        if not reset_token or not reset_token.is_valid():
+            return render(request, self.template_name, {
+                'error': 'Token không hợp lệ hoặc đã hết hạn'
+            })
+            
+        # Lấy mật khẩu mới từ form
+        new_password = request.POST.get('new_password')
+        confirm_password = request.POST.get('confirm_password')
+        
+        form_errors = {}
+        
+        # Kiểm tra mật khẩu khớp nhau không
+        if new_password != confirm_password:
+            form_errors['confirm_password'] = ['Mật khẩu không khớp']
+        
+        # Kiểm tra độ mạnh của mật khẩu
+        try:
+            validate_password(new_password)
+        except ValidationError as e:
+            form_errors['new_password'] = list(e)
+        
+        if form_errors:
+            return render(request, self.template_name, {
+                'form_errors': form_errors
+            })
+        
+        # Lấy user từ token
+        user = reset_token.user
+        
+        # Đặt mật khẩu mới
+        user.set_password(new_password)
+        user.save()
+        
+        # Đánh dấu token đã sử dụng
+        reset_token.mark_as_used()
+        
+        return render(request, self.template_name, {
+            'success': True
+        })
+

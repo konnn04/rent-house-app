@@ -172,3 +172,12 @@ class HouseViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(page, many=True) if page is not None else self.get_serializer(houses, many=True)
         return self.get_paginated_response(serializer.data) if page is not None else Response(serializer.data)
 
+    def create(self, request, *args, **kwargs):
+        # Kiểm tra nếu người dùng có quyền tạo nhà mới
+        if not request.user.can_create_house():
+            return Response({
+                "detail": "Bạn cần xác thực danh tính trước khi đăng tin nhà mới"
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        return super().create(request, *args, **kwargs)
+

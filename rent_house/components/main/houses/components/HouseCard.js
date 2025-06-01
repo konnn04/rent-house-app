@@ -37,6 +37,7 @@ export const HouseCard = ({ house, onPress }) => {
             {formatCurrency(house.base_price)}
           </Text>
         </View>
+        
         {house.is_verified && (
           <View style={[styles.verifiedBadge, { backgroundColor: colors.successColor }]}>
             <Icon name="check-circle" size={14} color="white" />

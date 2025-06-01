@@ -10,7 +10,7 @@ export const getCurrentUserService = async () => {
     throw new Error('Không thể lấy thông tin người dùng hiện tại');
   }
 };
-
+ 
 
 // Cập nhật thông tin người dùng
 export const updateUserProfileService = async (formData) => {
@@ -51,5 +51,31 @@ export const changeUserPasswordService = async (currentPassword, newPassword) =>
   } catch (error) {
     console.error('Error changing user password:', error);
     throw new Error('Không thể đổi mật khẩu người dùng');
+  }
+};
+
+// Gửi thông tin xác thực danh tính người dùng
+export const submitIdentityVerificationService = async (formData) => {
+  try {
+    const response = await apiClient.post('/api/identity-verification/', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error submitting identity verification:', error);
+    throw error;
+  }
+};
+
+// Kiểm tra trạng thái xác thực danh tính
+export const checkIdentityVerificationStatusService = async () => {
+  try {
+    const response = await apiClient.get('/api/identity-verification/status/');
+    return response.data;
+  } catch (error) {
+    console.error('Error checking identity verification status:', error);
+    throw error;
   }
 };

@@ -123,7 +123,7 @@ export function Login() {
 
             <Button
                 mode="text"
-                onPress={() => navigation.navigate('CantLogin')}
+                onPress={() => navigation.navigate('ForgetPassword')}
                 style={styles.linkButton}
                 textColor={colors.accentColor}
             >

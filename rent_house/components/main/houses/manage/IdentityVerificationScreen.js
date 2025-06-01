@@ -7,10 +7,15 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 import { useTheme } from '../../../../contexts/ThemeContext';
 import { useUser } from '../../../../contexts/UserContext';
+import { submitIdentityVerificationService } from '../../../../services/userService';
 import { ManageHeader } from './components/ManageHeader';
 
 export const IdentityVerificationScreen = () => {
   const { colors } = useTheme();
+  // Add fallback colors for info styling if not defined in theme
+  const infoLightColor = colors.infoLight || '#e6f7ff';  // Light blue background
+  const infoDarkColor = colors.infoDark || '#0066cc';    // Dark blue text
+  
   const navigation = useNavigation();
   const route = useRoute();
   const { userData } = useUser();
@@ -18,8 +23,6 @@ export const IdentityVerificationScreen = () => {
   const redirectAfter = route.params?.redirectAfter;
   
   const [idNumber, setIdNumber] = useState('');
-  const [fullName, setFullName] = useState(userData?.first_name + ' ' + userData?.last_name || '');
-  const [address, setAddress] = useState(userData?.address || '');
   const [frontIdImage, setFrontIdImage] = useState(null);
   const [backIdImage, setBackIdImage] = useState(null);
   const [selfieImage, setSelfieImage] = useState(null);
@@ -60,14 +63,6 @@ export const IdentityVerificationScreen = () => {
       newErrors.idNumber = 'Số CMND/CCCD phải có 9-12 chữ số';
     }
     
-    if (!fullName.trim()) {
-      newErrors.fullName = 'Vui lòng nhập họ tên đầy đủ';
-    }
-    
-    if (!address.trim()) {
-      newErrors.address = 'Vui lòng nhập địa chỉ';
-    }
-    
     if (!frontIdImage) {
       newErrors.frontIdImage = 'Vui lòng chọn ảnh mặt trước CMND/CCCD';
     }
@@ -93,8 +88,6 @@ export const IdentityVerificationScreen = () => {
       // Create form data
       const formData = new FormData();
       formData.append('id_number', idNumber);
-      formData.append('full_name', fullName);
-      formData.append('address', address);
       
       // Add images to form data
       if (frontIdImage) {
@@ -130,20 +123,19 @@ export const IdentityVerificationScreen = () => {
         });
       }
       
-      // In a real app, we would make an API call to submit the verification
-      // For demo purposes, we'll simulate success
-      // await api.post('/api/identity-verification/', formData);
+      // Call API to submit verification
+      await submitIdentityVerificationService(formData);
+      
+      // Update user data to reflect identity submission
+      await userData.fetchUserData();
       
       Alert.alert(
-        'Xác thực thành công',
-        'Thông tin của bạn đã được gửi đi và đang chờ xác thực. Bạn có thể tiếp tục sử dụng ứng dụng.',
+        'Gửi thông tin thành công',
+        'Thông tin của bạn đã được gửi đi và đang chờ xác thực. Bạn có thể tiếp tục sử dụng ứng dụng trong khi chờ xác thực.',
         [
           {
             text: 'OK',
             onPress: () => {
-              // Simulate that the user is now verified
-              userData.is_verified = true;
-              
               // Navigate to the redirect page if specified
               if (redirectAfter) {
                 navigation.navigate(redirectAfter);
@@ -157,7 +149,26 @@ export const IdentityVerificationScreen = () => {
       
     } catch (error) {
       console.error('Error submitting verification:', error);
-      Alert.alert('Lỗi', 'Không thể gửi thông tin xác thực. Vui lòng thử lại sau.');
+      
+      // Handle field-specific errors
+      if (error.response?.data) {
+        const fieldErrors = {};
+        Object.keys(error.response.data).forEach(key => {
+          if (Array.isArray(error.response.data[key])) {
+            fieldErrors[key] = error.response.data[key][0];
+          } else {
+            fieldErrors[key] = error.response.data[key];
+          }
+        });
+        
+        if (Object.keys(fieldErrors).length > 0) {
+          setErrors(fieldErrors);
+        } else {
+          Alert.alert('Lỗi', 'Không thể gửi thông tin xác thực. Vui lòng thử lại sau.');
+        }
+      } else {
+        Alert.alert('Lỗi', 'Không thể gửi thông tin xác thực. Vui lòng thử lại sau.');
+      }
     } finally {
       setLoading(false);
     }
@@ -207,9 +218,9 @@ export const IdentityVerificationScreen = () => {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <ScrollView contentContainerStyle={styles.content}>
-          <View style={[styles.infoBox, { backgroundColor: colors.infoLight }]}>
-            <Icon name="information" size={20} color={colors.infoDark} />
-            <Text style={[styles.infoText, { color: colors.infoDark }]}>
+          <View style={[styles.infoBox, { backgroundColor: infoLightColor }]}>
+            <Icon name="information" size={20} color={infoDarkColor} />
+            <Text style={[styles.infoText, { color: infoDarkColor }]}>
               Để đảm bảo an toàn cho cả người thuê và chủ nhà, chúng tôi cần xác thực danh tính của bạn trước khi cho phép đăng tin cho thuê nhà.
             </Text>
           </View>
@@ -225,33 +236,6 @@ export const IdentityVerificationScreen = () => {
           {errors.idNumber && (
             <HelperText type="error" visible={true}>
               {errors.idNumber}
-            </HelperText>
-          )}
-          
-          <TextInput
-            label="Họ tên đầy đủ"
-            value={fullName}
-            onChangeText={setFullName}
-            style={styles.input}
-            error={!!errors.fullName}
-          />
-          {errors.fullName && (
-            <HelperText type="error" visible={true}>
-              {errors.fullName}
-            </HelperText>
-          )}
-          
-          <TextInput
-            label="Địa chỉ thường trú"
-            value={address}
-            onChangeText={setAddress}
-            style={styles.input}
-            error={!!errors.address}
-            multiline
-          />
-          {errors.address && (
-            <HelperText type="error" visible={true}>
-              {errors.address}
             </HelperText>
           )}
           
@@ -292,6 +276,7 @@ export const IdentityVerificationScreen = () => {
   );
 };
 
+// Enhance the existing styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -306,11 +291,14 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 16,
     alignItems: 'flex-start',
+    borderLeftWidth: 4,  // Add a left border for emphasis
+    borderLeftColor: '#0066cc',  // Same as the default infoDarkColor
   },
   infoText: {
     marginLeft: 8,
     flex: 1,
     lineHeight: 20,
+    fontSize: 14,
   },
   input: {
     marginBottom: 10,
