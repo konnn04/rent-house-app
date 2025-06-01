@@ -2,13 +2,14 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from '
 import { useColorScheme } from 'react-native';
 import Colors from '../constants/Colors';
 import { paperThemes } from '../styles/paperTheme';
-import { ThemeManager } from '../utils/Theme';
+import { ThemeManager } from '../utils/theme';
 
 const ThemeContext = createContext();
 
 export const ThemeProvider = ({ children }) => {
   const systemTheme = useColorScheme();
   const [theme, setTheme] = useState('light');
+  const [userPreferSystemTheme, setUserPreferSystemTheme] = useState(true); // Mặc định là true
   
   useEffect(() => {
     loadTheme();
