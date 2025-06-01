@@ -35,6 +35,8 @@ export function Register() {
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
   
   // Field-specific errors
   const [fieldErrors, setFieldErrors] = useState({
@@ -234,19 +236,21 @@ export function Register() {
         verificationCode
       );
       
-      // If we got here, registration was successful
-      // Check for success message format from the API
+      // Đăng ký thành công - hiển thị thông báo thành công
       if (result && result.message) {
-        // Navigate to verify screen with all needed user details
-        navigation.navigate('Verify', { 
-          username, 
-          email,
-          firstName,
-          lastName,
-          phone,
-          role,
-          userId: result.user_id
-        });
+        setIsSuccess(true);
+        setSuccessMessage(result.message || 'Đăng ký thành công! Bạn có thể đăng nhập ngay bây giờ.');
+        
+        // Reset form fields
+        setFirstName('');
+        setLastName('');
+        setUsername('');
+        setEmail('');
+        setPhone('');
+        setPassword('');
+        setConfirmPassword('');
+        setVerificationCode('');
+        setTermsAccepted(false);
       }
     } catch (error) {
       console.error('Registration error:', error);
@@ -289,6 +293,41 @@ export function Register() {
       setIsLoading(false);
     }
   };
+
+  // Hiển thị thông báo thành công nếu đăng ký thành công
+  if (isSuccess) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.backgroundPrimary, padding: 20 }]}>
+        <View style={styles.logoContainer}>
+          <Image
+            source={require('@assets/logo.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
+        </View>
+        
+        <Text style={[styles.title, { color: colors.textPrimary }]}>RENT HOUSE</Text>
+        <Text style={[styles.subtitle, { color: colors.successColor, fontWeight: 'bold', marginVertical: 20 }]}>
+          Đăng ký thành công!
+        </Text>
+        
+        <View style={[styles.successContainer, { backgroundColor: colors.successLight, padding: 20, borderRadius: 10 }]}>
+          <Icon name="check-circle" size={60} color={colors.successColor} style={{ alignSelf: 'center', marginBottom: 15 }} />
+          <Text style={{ color: colors.textPrimary, textAlign: 'center', marginBottom: 20 }}>
+            {successMessage}
+          </Text>
+        </View>
+        
+        <Button
+          mode="contained"
+          onPress={() => navigation.navigate('Login')}
+          style={[styles.button, { marginTop: 30 }]}
+        >
+          Đăng nhập ngay
+        </Button>
+      </View>
+    );
+  }
 
   return (
     <ScrollView 
@@ -633,5 +672,10 @@ const styles = StyleSheet.create({
   },
   linkButton: {
     marginTop: 5,
-  }
+  },
+  successContainer: {
+    marginVertical: 20,
+    alignItems: 'center',
+    padding: 15,
+  },
 });

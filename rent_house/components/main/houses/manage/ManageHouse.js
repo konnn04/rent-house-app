@@ -1,6 +1,6 @@
 import { useNavigation } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, FlatList, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Badge, Button, FAB, Searchbar } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
@@ -26,10 +26,14 @@ export const ManageHouse = () => {
     availableRooms: 0,
     pendingVerifications: 0
   });
-  const [isVerified, setIsVerified] = useState(true);
   const [nextPageUrl, setNextPageUrl] = useState(null);
   const [loadingMore, setLoadingMore] = useState(false);
   
+  // Lấy thông tin đã xác thực hay chưa từ userData
+  const isVerified = userData?.is_verified || false;
+  const hasIdentity = userData?.has_identity || false;
+
+  // Lấy danh sách nhà
   const fetchHouses = async (refresh = false) => {
     try {
       setError(null);
@@ -84,6 +88,16 @@ export const ManageHouse = () => {
   useEffect(() => {
     fetchHouses(true);
   }, []);
+  
+  // Focus listener để cập nhật lại dữ liệu khi quay lại màn hình này
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      // Tải lại thông tin người dùng để cập nhật trạng thái xác thực
+      userData.fetchUserData && userData.fetchUserData();
+      fetchHouses(true);
+    });
+    return unsubscribe;
+  }, [navigation, fetchHouses, userData]);
 
   const handleRefresh = () => {
     setRefreshing(true);
@@ -118,7 +132,25 @@ export const ManageHouse = () => {
   };
   
   const handleAddHouse = () => {
-    navigation.navigate('AddHouse');
+    // Kiểm tra xem người dùng đã gửi thông tin xác thực chưa
+    if (!hasIdentity && userData?.role === 'owner') {
+      Alert.alert(
+        'Xác thực danh tính',
+        'Bạn cần xác thực danh tính trước khi thêm nhà mới.',
+        [
+          {
+            text: 'Hủy',
+            style: 'cancel'
+          },
+          {
+            text: 'Xác thực ngay',
+            onPress: () => navigation.navigate('IdentityVerification', { redirectAfter: 'AddHouse' })
+          }
+        ]
+      );
+    } else {
+      navigation.navigate('AddHouse');
+    }
   };
   
   const handleEditHouse = (house) => {
@@ -145,25 +177,32 @@ export const ManageHouse = () => {
     </View>
   );
   
-  const renderVerificationBanner = () => (
-    !isVerified && (
+  const renderVerificationBanner = () => {
+    // Chỉ hiển thị banner cho người dùng là chủ nhà và chưa gửi thông tin xác thực
+    if (userData?.role !== 'owner' || hasIdentity) return null;
+    
+    return (
       <TouchableOpacity 
-        style={[styles.verificationBanner, { backgroundColor: colors.warningLight }]}
+        style={[styles.verificationBanner, { 
+          backgroundColor: colors.backgroundSecondary,
+          borderLeftWidth: 4,
+          borderLeftColor: colors.accentColor
+        }]}
         onPress={handleVerifyIdentity}
       >
-        <Icon name="shield-alert" size={24} color={colors.warningDark} />
+        <Icon name="shield-alert" size={24} color={colors.accentColor} />
         <View style={styles.verificationBannerText}>
-          <Text style={[styles.verificationTitle, { color: colors.warningDark }]}>
+          <Text style={[styles.verificationTitle, { color: colors.textPrimary }]}>
             Xác thực danh tính
           </Text>
-          <Text style={[styles.verificationSubtitle, { color: colors.warningDark }]}>
+          <Text style={[styles.verificationSubtitle, { color: colors.textSecondary }]}>
             Bạn cần xác thực danh tính để đăng tin cho thuê nhà
           </Text>
         </View>
-        <Icon name="chevron-right" size={24} color={colors.warningDark} />
+        <Icon name="chevron-right" size={24} color={colors.accentColor} />
       </TouchableOpacity>
-    )
-  );
+    );
+  };
   
   const renderStatistics = () => (
     <View style={[styles.statsContainer, { backgroundColor: colors.backgroundSecondary }]}>
@@ -196,6 +235,9 @@ export const ManageHouse = () => {
         value={searchQuery}
         onSubmitEditing={handleSearch}
         style={styles.searchBar}
+        inputStyle={{ color: colors.textPrimary }}
+        iconColor={colors.accentColor}
+        placeholderTextColor={colors.textSecondary}
       />
       
       {!loading && houses.length > 0 && renderStatistics()}
@@ -227,6 +269,7 @@ export const ManageHouse = () => {
             <TouchableOpacity 
               style={styles.houseCardContainer}
               onPress={() => handleViewHouse(item)}
+              activeOpacity={0.8}
             >
               <HouseCard 
                 house={item} 
@@ -249,9 +292,28 @@ export const ManageHouse = () => {
                   Chưa xác thực
                 </Badge>
               )}
+              
+              {item.is_active === false && (
+                <Badge
+                  style={[styles.statusBadge, { backgroundColor: colors.dangerColor }]}
+                >
+                  Ngừng hoạt động
+                </Badge>
+              )}
+              
+              {item.available_rooms === 0 && item.max_rooms > 0 && (
+                <Badge
+                  style={[styles.fullBadge, { backgroundColor: colors.infoColor }]}
+                >
+                  Đã cho thuê hết
+                </Badge>
+              )}
             </TouchableOpacity>
           )}
-          contentContainerStyle={houses.length === 0 && styles.emptyList}
+          contentContainerStyle={[
+            styles.listContentContainer,
+            houses.length === 0 && styles.emptyList
+          ]}
           ListEmptyComponent={renderEmptyState}
           refreshControl={
             <RefreshControl
@@ -265,12 +327,13 @@ export const ManageHouse = () => {
           onEndReachedThreshold={0.5}
           ListFooterComponent={
             loadingMore ? (
-              <View style={{ padding: 16, alignItems: 'center' }}>
+              <View style={styles.loadMoreIndicator}>
                 <ActivityIndicator size="small" color={colors.accentColor} />
                 <Text style={{ color: colors.textSecondary, marginTop: 5 }}>Đang tải thêm...</Text>
               </View>
             ) : null
           }
+          showsVerticalScrollIndicator={false}
         />
       )}
       
@@ -278,7 +341,8 @@ export const ManageHouse = () => {
         style={[styles.fab, { backgroundColor: colors.accentColor }]}
         icon="plus"
         onPress={handleAddHouse}
-        disabled={loading}
+        disabled={loading || (userData?.role === 'owner' && !hasIdentity)}
+        color="#FFFFFF"
       />
     </View>
   );
@@ -291,11 +355,17 @@ const styles = StyleSheet.create({
   searchBar: {
     margin: 10,
     borderRadius: 10,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    padding: 20,
   },
   errorContainer: {
     flex: 1,
@@ -307,6 +377,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
     marginTop: 10,
+    marginBottom: 10,
   },
   emptyContainer: {
     flex: 1,
@@ -324,10 +395,24 @@ const styles = StyleSheet.create({
   },
   addButton: {
     marginTop: 20,
+    borderRadius: 8,
+    paddingVertical: 8,
+  },
+  listContentContainer: {
+    paddingBottom: 80,
+    paddingHorizontal: 10,
   },
   houseCardContainer: {
     position: 'relative',
-    marginHorizontal: 10,
+    marginHorizontal: 5,
+    marginBottom: 15,
+    borderRadius: 10,
+    overflow: 'hidden',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
   },
   actionButtonsContainer: {
     position: 'absolute',
@@ -352,7 +437,17 @@ const styles = StyleSheet.create({
     position: 'absolute',
     margin: 16,
     right: 0,
-    bottom: 50,
+    bottom: 70,
+    borderRadius: 30,
+    width: 60,
+    height: 60,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
   },
   verificationBanner: {
     flexDirection: 'row',
@@ -362,6 +457,11 @@ const styles = StyleSheet.create({
     marginHorizontal: 10,
     marginTop: 10,
     borderRadius: 10,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
   },
   verificationBannerText: {
     flex: 1,
@@ -379,6 +479,27 @@ const styles = StyleSheet.create({
     top: 10,
     left: 10,
     paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    zIndex: 5,
+  },
+  statusBadge: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    zIndex: 5,
+  },
+  fullBadge: {
+    position: 'absolute',
+    top: 40,
+    left: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    zIndex: 5,
   },
   statsContainer: {
     flexDirection: 'row',
@@ -388,9 +509,15 @@ const styles = StyleSheet.create({
     marginHorizontal: 10,
     marginBottom: 10,
     borderRadius: 10,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
   },
   statItem: {
     alignItems: 'center',
+    paddingHorizontal: 8,
   },
   statValue: {
     fontSize: 24,
@@ -398,5 +525,17 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     fontSize: 14,
-  }
+    marginTop: 4,
+  },
+  retryButton: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 5,
+    elevation: 2,
+  },
+  loadMoreIndicator: {
+    padding: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });

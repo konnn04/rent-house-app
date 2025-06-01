@@ -102,6 +102,9 @@ class Media(BaseModel):
         ('cover', 'Cover Photo'),
         ('gallery', 'Gallery Image'),
         ('attachment', 'Attachment'),
+        ('id_front', 'ID Card Front'),
+        ('id_back', 'ID Card Back'),
+        ('id_selfie', 'ID Verification Selfie'),
     )
     
     url = models.URLField()
@@ -289,6 +292,48 @@ class User(AbstractUser):
     def get_owned_houses(self):
         """Get all houses owned by the user"""
         return self.houses.all()
+
+    def has_submitted_identity(self):
+        """Kiểm tra xem user đã nộp giấy tờ tuỳ thân chưa"""
+        return hasattr(self, 'identity_verification')
+    
+    def is_identity_verified(self):
+        """Kiểm tra xem user đã được xác thực danh tính chưa"""
+        if not self.has_submitted_identity():
+            return False
+        return self.identity_verification.is_verified
+    
+    def can_create_house(self):
+        """Kiểm tra xem user có thể tạo nhà mới không"""
+        # Chỉ owner mới được tạo nhà và phải được xác thực danh tính
+        return self.role == Role.OWNER.value[0] and self.is_identity_verified()
+
+# Thêm mã sau vào cuối file models.py
+class IdentityVerification(BaseModel):
+    """Lưu trữ thông tin xác thực danh tính của chủ nhà (owner)"""
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='identity_verification')
+    id_number = models.CharField(max_length=20, verbose_name="Số CCCD/CMND")
+    is_verified = models.BooleanField(default=False, verbose_name="Đã được xác thực")
+    admin_notes = models.TextField(null=True, blank=True, verbose_name="Ghi chú của admin")
+    rejection_reason = models.TextField(null=True, blank=True, verbose_name="Lý do từ chối")
+    
+    # Sử dụng GenericRelation để liên kết với Media
+    media_files = GenericRelation(Media)
+    
+    def __str__(self):
+        return f"Xác thực danh tính: {self.user.username}"
+    
+    def get_front_id_image(self):
+        """Lấy ảnh mặt trước CCCD/CMND"""
+        return self.media_files.filter(purpose='id_front').first()
+    
+    def get_back_id_image(self):
+        """Lấy ảnh mặt sau CCCD/CMND"""
+        return self.media_files.filter(purpose='id_back').first()
+    
+    def get_selfie_image(self):
+        """Lấy ảnh chân dung (nếu có)"""
+        return self.media_files.filter(purpose='id_selfie').first()
 
 class Follow(BaseModel):
     """Tracks user follow relationships"""
@@ -643,5 +688,45 @@ class VerificationCode(BaseModel):
         """
         Đánh dấu mã xác thực đã được sử dụng
         """
+        self.is_used = True
+        self.save(update_fields=['is_used'])
+
+class PasswordResetToken(BaseModel):
+    """Model để lưu trữ token đặt lại mật khẩu"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='password_reset_tokens')
+    token = models.CharField(max_length=100, unique=True)
+    is_used = models.BooleanField(default=False)
+    expires_at = models.DateTimeField()
+    
+    def __str__(self):
+        return f"Password reset token for {self.user.username}"
+    
+    @classmethod
+    def generate_token(cls, user):
+        """Tạo token đặt lại mật khẩu mới cho user"""
+        # Tạo token ngẫu nhiên
+        token = ''.join(random.choices(string.ascii_letters + string.digits, k=50))
+        
+        # Tính thời gian hết hạn (24 giờ)
+        expires_at = timezone.now() + timedelta(hours=24)
+        
+        # Vô hiệu hóa các token cũ chưa sử dụng
+        cls.objects.filter(user=user, is_used=False).update(is_used=True)
+        
+        # Tạo token mới
+        reset_token = cls.objects.create(
+            user=user,
+            token=token,
+            expires_at=expires_at
+        )
+        
+        return reset_token
+    
+    def is_valid(self):
+        """Kiểm tra token còn hạn không"""
+        return not self.is_used and self.expires_at > timezone.now()
+    
+    def mark_as_used(self):
+        """Đánh dấu token đã được sử dụng"""
         self.is_used = True
         self.save(update_fields=['is_used'])

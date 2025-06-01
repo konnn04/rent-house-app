@@ -28,15 +28,27 @@ Authorization: Bearer {access_token}
 
 ```json
 {
-  "id": 123,
-  "username": "example_user",
-  "email": "user@example.com",
-  "first_name": "John",
-  "last_name": "Doe",
-  "phone_number": "0987654321",
-  "role": "renter",
-  "address": "123 Example St",
-  "avatar": "https://example.com/avatars/user123.jpg"
+    "id": 1,
+    "username": "admin",
+    "email": "admin@example.com",
+    "first_name": "John",
+    "last_name": "Doe",
+    "phone_number": "0987654321",
+    "role": "admin",
+    "address": null,
+    "avatar": null,
+    "is_active": true,
+    "is_staff": true,
+    "is_superuser": true,
+    "post_count": 0,
+    "joined_date": "2025-05-31T14:12:36.794325Z",
+    "follower_count": 6,
+    "following_count": 5,
+    "avg_rating": null,
+    "house_count": null,
+    "room_count": null,
+    "is_verified": false,
+    "has_identity": false
 }
 ```
 
@@ -236,5 +248,94 @@ Tìm kiếm người dùng theo tên đăng nhập hoặc tên đầy đủ.
       "role": "renter"
     }
   ]
+}
+```
+
+## Xác thực danh tính (cho người dùng vai trò owner)
+
+```
+POST /api/identity-verification/
+```
+
+Xác thực danh tính cho người dùng có vai trò owner.
+
+**Headers**:
+```
+Authorization: Bearer {access_token}
+Content-Type: multipart/form-data
+```
+
+**Request Body**:
+
+```
+id_number: "123456789"  # Số CCCD/CMND
+front_id_image: [file]  # Ảnh mặt trước CCCD/CMND
+back_id_image: [file]   # Ảnh mặt sau CCCD/CMND
+selfie_image: [file]    # Ảnh chân dung cầm CCCD/CMND (nếu yêu cầu)
+```
+
+**Response (201 Created)**:
+
+```json
+{
+  "id": 1,
+  "user": {
+    "id": 123,
+    "username": "owner_user"
+  },
+  "id_number": "123456789",
+  "is_verified": false,
+  "created_at": "2023-10-25T08:30:00Z",
+  "media": [
+    {
+      "id": 1,
+      "url": "https://example.com/media/id_front_123.jpg",
+      "purpose": "id_front"
+    },
+    {
+      "id": 2,
+      "url": "https://example.com/media/id_back_123.jpg",
+      "purpose": "id_back"
+    },
+    {
+      "id": 3,
+      "url": "https://example.com/media/selfie_123.jpg",
+      "purpose": "id_selfie"
+    }
+  ]
+}
+```
+
+**Response (400 Bad Request)**:
+
+```json
+{
+  "id_number": ["Số CCCD/CMND không hợp lệ"],
+  "front_id_image": ["Vui lòng tải lên ảnh mặt trước CCCD/CMND"],
+  "back_id_image": ["Vui lòng tải lên ảnh mặt sau CCCD/CMND"]
+}
+```
+
+## Kiểm tra trạng thái xác thực danh tính
+
+```
+GET /api/identity-verification/status/
+```
+
+Kiểm tra trạng thái xác thực danh tính của người dùng hiện tại.
+
+**Headers**:
+```
+Authorization: Bearer {access_token}
+```
+
+**Response (200 OK)**:
+
+```json
+{
+  "has_submitted": true,
+  "is_verified": false,
+  "submission_date": "2023-10-25T08:30:00Z",
+  "rejection_reason": null
 }
 ```

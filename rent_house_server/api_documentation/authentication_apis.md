@@ -307,3 +307,69 @@ Authorization: Bearer {access_token}
   "message": "Đăng xuất thành công."
 }
 ```
+
+## Yêu cầu đặt lại mật khẩu
+
+```
+POST /api/request-password-reset/
+```
+
+Gửi yêu cầu đặt lại mật khẩu tới email đã đăng ký.
+
+**Request Body**:
+
+```json
+{
+  "email": "user@example.com"
+}
+```
+
+**Response (200 OK)**:
+
+```json
+{
+  "message": "Hướng dẫn đặt lại mật khẩu đã được gửi đến email của bạn (nếu email đã đăng ký)."
+}
+```
+
+## Đặt lại mật khẩu
+
+```
+POST /api/reset-password/
+```
+
+Đặt lại mật khẩu bằng token đã được gửi qua email.
+
+**Request Body**:
+
+```json
+{
+  "token": "abc123def456...",
+  "new_password": "new_secure_password",
+  "confirm_password": "new_secure_password"
+}
+```
+
+**Response (200 OK)**:
+
+```json
+{
+  "message": "Mật khẩu đã được đặt lại thành công."
+}
+```
+
+**Response (400 Bad Request)**:
+
+```json
+{
+  "token": [
+    "Token không hợp lệ hoặc đã hết hạn"
+  ],
+  "new_password": [
+    "Mật khẩu quá đơn giản"
+  ],
+  "confirm_password": [
+    "Mật khẩu không khớp"
+  ]
+}
+```

@@ -114,7 +114,13 @@ export const verifyEmail = async (email, verificationCode) => {
 }
 
 export const resetPasswordRequest = async (email) => {
-  return;
+  try {
+    const response = await apiClient.post('/api/request-password-reset/', { email });
+    return response.data;
+  } catch (error) {
+    console.error("Reset password request error:", error.response?.data || error.message);
+    throw error;
+  }
 }
 
 export const resendActivation = async (email) => {
