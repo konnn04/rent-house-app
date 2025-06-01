@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from django.db.models import Avg
 from rent_house.models import User
 
 class UserSummarySerializer(serializers.ModelSerializer):
@@ -84,18 +85,20 @@ class UserSerializer(serializers.ModelSerializer):
         """Trả về đánh giá trung bình nếu người dùng là chủ sở hữu"""
         if obj.role != 'owner':
             return None
-        
-        return None
-    
+        # Tính trung bình đánh giá của tất cả các house mà user sở hữu
+        houses = obj.houses.all()
+        if not houses.exists():
+            return None
+        avg = houses.aggregate(total_avg=Avg('ratings__star'))
+        return avg['total_avg']
+
     def get_house_count(self, obj):
         """Trả về số lượng nhà/căn hộ nếu người dùng là chủ sở hữu"""
         if obj.role != 'owner':
             return None
         return obj.houses.count()
-    
+
     def get_room_count(self, obj):
         """Trả về tổng số phòng từ tất cả các nhà/căn hộ của chủ sở hữu"""
-        if obj.role != 'owner':
-            return None
-        # Tính tổng số phòng từ tất cả nhà/căn hộ
-        return sum(house.rooms.count() for house in obj.houses.all())
+        # Không còn model Room, trả về None hoặc 0
+        return None

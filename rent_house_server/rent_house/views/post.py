@@ -14,7 +14,6 @@ class PostViewSet(viewsets.ModelViewSet):
     """ViewSet for managing posts with pagination and filtering"""
     queryset = Post.objects.filter(is_active=True)
     parser_classes = [parsers.MultiPartParser, parsers.JSONParser]
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrAdminOrReadOnly]
     pagination_class = PageNumberPagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['title', 'content', 'address']
@@ -43,7 +42,7 @@ class PostViewSet(viewsets.ModelViewSet):
     
     def perform_create(self, serializer):
         # Create the post first without images
-        post = serializer.save(author=self.request.user)
+        post = serializer.save(author=self.request.user, is_active=True)
         
         # Process images if any are uploaded
         self.handle_images(post)
@@ -101,28 +100,43 @@ class PostViewSet(viewsets.ModelViewSet):
                     print(f"Error processing base64 image: {e}")
                     
     @action(detail=True, methods=['post'])
-    def toggle_interaction(self, request, pk=None):
-        """Toggle like/dislike on a post"""
-        post = self.get_object()
-        interaction_type = request.data.get('type', 'like')
-        
-        interaction, created = Interaction.objects.get_or_create(
-            user=request.user,
-            post=post,
-            type=interaction_type,
-            defaults={'is_interacted': True}
-        )
-        
-        if not created:
-            # Toggle the interaction
-            interaction.is_interacted = not interaction.is_interacted
-            interaction.save()
-        
-        return Response({
-            'status': 'success',
-            'is_interacted': interaction.is_interacted,
-            'type': interaction_type
-        })
+    def interact(self, request, pk=None):
+        try:
+            interaction_type = request.data.get('type')
+            
+            if interaction_type not in ['like', 'dislike', 'none']:
+                return Response({
+                    'status': 'error',
+                    'message': 'Loại tương tác không hợp lệ. Chỉ hỗ trợ "like", "dislike" hoặc "none".'
+                }, status=400)
+            
+            post = self.get_object()
+            
+            # Sử dụng get_or_create thay vì filter + create/update riêng biệt
+            interaction, created = Interaction.objects.get_or_create(
+                user=request.user,
+                post=post,
+                defaults={'type': interaction_type}
+            )
+            
+            if not created:
+                if interaction.type == interaction_type:    
+                    interaction.type = 'none'
+                else:
+                    interaction.type = interaction_type
+                interaction.save()
+            
+            return Response({
+                'like_count': post.get_interaction_count('like'),
+                'status': 'success',
+                'type': interaction.type,
+                'post_id': post.id,
+            })
+        except Exception as e:
+            return Response({
+                'status': 'error',
+                'message': str(e)
+            }, status=500)
     
     @action(detail=True, methods=['post'])
     def add_image(self, request, pk=None):

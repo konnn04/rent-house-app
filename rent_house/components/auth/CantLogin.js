@@ -10,7 +10,6 @@ import {
   useTheme as usePaperTheme
 } from 'react-native-paper';
 import { useTheme } from '../../contexts/ThemeContext';
-import { resendActivation, resetPasswordRequest } from '../../utils/Authentication';
 
 export  function CantLogin() {
   const [email, setEmail] = useState('');

@@ -4,26 +4,28 @@ from .user import UserSummarySerializer
 from .comment import CommentSerializer
 
 class PostSerializer(serializers.ModelSerializer):
-    interaction_count = serializers.SerializerMethodField()
     interaction = serializers.SerializerMethodField()
     is_followed_owner = serializers.SerializerMethodField()
     author = UserSummarySerializer(read_only=True)
     comment_count = serializers.SerializerMethodField()
     media = serializers.SerializerMethodField()
+    like_count = serializers.SerializerMethodField()
+    dislike_count = serializers.SerializerMethodField()
     
     class Meta:
         model = Post
         fields = ('id', 'author', 'type', 'title', 'content', 'address', 'latitude', 'longitude', 
-                 'created_at', 'updated_at', 'house_link', 'interaction_count', 'interaction', 
-                 'is_followed_owner', 'comment_count', 'media', 'is_active')
+        'created_at', 'updated_at', 'house_link', 'interaction', 
+        'is_followed_owner', 'comment_count', 'media', 'is_active', 'like_count', 'dislike_count')
         read_only_fields = ('id', 'created_at', 'updated_at')
 
-    def get_interaction_count(self, obj):
-        """Count interactions (likes, dislikes) for this post"""
-        return obj.interaction_set.filter(is_interacted=True).count()
+    def get_like_count(self, obj):
+        return obj.interaction_set.filter(type='like').count()
     
+    def get_dislike_count(self, obj):
+        return obj.interaction_set.filter(type='dislike').count()
+
     def get_comment_count(self, obj):
-        """Count comments for this post"""
         return obj.comments.count()
     
     def get_interaction(self, obj):
@@ -32,7 +34,7 @@ class PostSerializer(serializers.ModelSerializer):
         if not request or not request.user.is_authenticated:
             return None
             
-        interaction = obj.interaction_set.filter(user=request.user, is_interacted=True).first()
+        interaction = obj.interaction_set.filter(user=request.user).first()
         if interaction:
             return {
                 'id': interaction.id,
@@ -69,8 +71,9 @@ class PostSerializer(serializers.ModelSerializer):
 
 class PostDetailSerializer(serializers.ModelSerializer):
     comments = serializers.SerializerMethodField()
-    interaction_count = serializers.SerializerMethodField()
     interaction = serializers.SerializerMethodField()
+    like_count = serializers.SerializerMethodField()
+    dislike_count = serializers.SerializerMethodField()
     is_followed_owner = serializers.SerializerMethodField()
     author = UserSummarySerializer(read_only=True)
     house_details = serializers.SerializerMethodField()
@@ -81,7 +84,7 @@ class PostDetailSerializer(serializers.ModelSerializer):
         model = Post
         fields = ('id', 'author', 'type', 'title', 'content', 'address', 'latitude', 'longitude', 
                  'created_at', 'updated_at', 'house_link', 'house_details', 'comments', 
-                 'interaction_count', 'interaction', 'is_followed_owner', 'comment_count', 
+                 'like_count', 'dislike_count', 'interaction', 'is_followed_owner', 'comment_count', 
                  'media', 'is_active')
         read_only_fields = ('id', 'created_at', 'updated_at')
     
@@ -105,8 +108,11 @@ class PostDetailSerializer(serializers.ModelSerializer):
             'base_price': obj.house_link.base_price
         }
     
-    def get_interaction_count(self, obj):
-        return obj.interaction_set.filter(is_interacted=True).count()
+    def get_like_count(self, obj):
+        return obj.interaction_set.filter(type='like').count()
+    
+    def get_dislike_count(self, obj):
+        return obj.interaction_set.filter(type='dislike').count()
     
     def get_comment_count(self, obj):
         return obj.comments.count()
@@ -116,7 +122,7 @@ class PostDetailSerializer(serializers.ModelSerializer):
         if not request or not request.user.is_authenticated:
             return None
             
-        interaction = obj.interaction_set.filter(user=request.user, is_interacted=True).first()
+        interaction = obj.interaction_set.filter(user=request.user).first()
         if interaction:
             return {
                 'id': interaction.id,

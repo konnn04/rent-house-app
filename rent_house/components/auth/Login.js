@@ -8,7 +8,6 @@ import {
 } from 'react-native-paper';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
-import { login } from '../../utils/Authentication';
 
 export function Login() {
     const [username, setUsername] = useState('');
@@ -26,7 +25,6 @@ export function Login() {
         if (isLoading) return;
         setMessage('');
 
-        // Input validation
         if (!username || username.trim() === '') {
             setMessage('Vui lòng nhập tên đăng nhập');
             return;
@@ -40,10 +38,8 @@ export function Login() {
         setIsLoading(true);
 
         try {
-            const result = await login(username, password);
-            await signIn(result.access_token);
+            await signIn(username, password);
         } catch (error) {
-            console.error('Login error:', error);
             setMessage(error.message || 'Đăng nhập thất bại, vui lòng thử lại sau');
         } finally {
             setTimeout(() => {

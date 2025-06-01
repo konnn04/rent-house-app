@@ -1,15 +1,16 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { api } from '../utils/Fetch';
+import {
+  changeUserPasswordService,
+  getCurrentUserService,
+  updateUserAvatarService,
+  updateUserProfileService
+} from "../services/userService";
 import { useAuth } from './AuthContext';
 
-// Tạo context
 const UserContext = createContext();
-
-// Hook để sử dụng context
 export const useUser = () => useContext(UserContext);
 
-// Provider component
 export const UserProvider = ({ children }) => {
   const { userToken } = useAuth();  // Lấy trạng thái token từ AuthContext
   const [userData, setUserData] = useState(null);
@@ -30,13 +31,13 @@ export const UserProvider = ({ children }) => {
   const loadUserData = async () => {
     try {
       setLoading(true);
-      
+
       // Thử lấy dữ liệu từ AsyncStorage trước
       const cachedUserData = await AsyncStorage.getItem('user_data');
       if (cachedUserData) {
         setUserData(JSON.parse(cachedUserData));
       }
-      
+
       // Sau đó vẫn gọi API để lấy dữ liệu mới nhất
       await fetchUserData();
     } catch (error) {
@@ -51,12 +52,10 @@ export const UserProvider = ({ children }) => {
     try {
       setLoading(true);
       setError(null);
-      
-      const response = await api.get('/api/users/current-user/');
-      setUserData(response.data);
-      
-      // Lưu vào cache
-      await AsyncStorage.setItem('user_data', JSON.stringify(response.data));
+      const data = await getCurrentUserService();
+      setUserData(data);
+      // Lưu cache
+      await AsyncStorage.setItem('user_data', JSON.stringify(data));
     } catch (err) {
       console.error('Error fetching user data:', err);
       setError('Không thể tải thông tin người dùng');
@@ -69,20 +68,19 @@ export const UserProvider = ({ children }) => {
   const updateUserProfile = async (formData) => {
     try {
       setLoading(true);
-      
-      const response = await api.patch('/api/users/current-user/', formData);
-      
+      const data = await updateUserProfileService(formData);
+
       // Cập nhật state và cache
-      const updatedUserData = { ...userData, ...response.data };
+      const updatedUserData = { ...userData, ...data };
       setUserData(updatedUserData);
       await AsyncStorage.setItem('user_data', JSON.stringify(updatedUserData));
-      
+
       return { success: true };
     } catch (error) {
       console.error('Error updating profile:', error);
-      return { 
-        success: false, 
-        error: error.response?.data || { message: 'Không thể cập nhật thông tin' } 
+      return {
+        success: false,
+        error: error.response?.data || { message: 'Không thể cập nhật thông tin' }
       };
     } finally {
       setLoading(false);
@@ -93,21 +91,19 @@ export const UserProvider = ({ children }) => {
   const updateAvatar = async (avatarFormData) => {
     try {
       setLoading(true);
-      
-      const response = await api.patch('/api/users/update-avatar/', avatarFormData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
-      
+
+      const data = await updateUserAvatarService(avatarFormData);
+
       // Cập nhật avatar trong state và cache
-      const updatedUserData = { 
-        ...userData, 
-        avatar: response.data.avatar,
-        avatar_thumbnail: response.data.avatar_thumbnail
+      const updatedUserData = {
+        ...userData,
+        avatar: data.avatar,
+        avatar_thumbnail: data.avatar_thumbnail
       };
-      
+
       setUserData(updatedUserData);
       await AsyncStorage.setItem('user_data', JSON.stringify(updatedUserData));
-      
+
       return { success: true, data: response.data };
     } catch (error) {
       console.error('Error updating avatar:', error);
@@ -118,22 +114,19 @@ export const UserProvider = ({ children }) => {
   };
 
   // Hàm đổi mật khẩu
-  const changeUserPassword = async (passwordData) => {
+  const changeUserPassword = async (currentPassword, newPassword) => {
+    if (!currentPassword || !newPassword) {
+      return { success: false, error: { message: 'Vui lòng nhập đầy đủ thông tin' } };
+    }
     try {
       setLoading(true);
-      
-      await api.post('/api/auth/change-password/', {
-        old_password: passwordData.current_password,
-        new_password: passwordData.new_password,
-        new_password2: passwordData.confirm_password,
-      });
-      
+      const data = await changeUserPasswordService(currentPassword, newPassword);
       return { success: true };
     } catch (error) {
       console.error('Error changing password:', error);
-      return { 
-        success: false, 
-        error: error.response?.data 
+      return {
+        success: false,
+        error: error.response?.data
       };
     } finally {
       setLoading(false);
