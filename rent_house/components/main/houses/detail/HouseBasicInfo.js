@@ -12,26 +12,61 @@ import { formatCurrency } from '../../../../utils/Tools';
 
 export const HouseBasicInfo = ({ house }) => {
   const { colors } = useTheme();
-  
+
   // Handle open maps
   const handleOpenMaps = () => {
     const url = `https://www.google.com/maps/search/?api=1&query=${house.latitude},${house.longitude}`;
     Linking.openURL(url);
   };
-  
+
   // Map house type to readable text
   const getHouseTypeText = (type) => {
     const types = {
       'house': 'Nhà riêng',
       'apartment': 'Căn hộ',
-      'villa': 'Biệt thự',
       'dormitory': 'Ký túc xá',
-      'studio': 'Studio',
       'room': 'Phòng trọ',
     };
     return types[type] || 'Nhà';
   };
-  
+
+  const format_houses_Type = (house) => {
+    const icons = {
+      'house': 'home',
+      'apartment': 'home-city',
+      'dormitory': 'school',
+      'room': 'bed',
+    };
+    if (house.type === 'house' || house.type === 'apartment') {
+      return (
+        <View style={styles.stat}>
+          <Icon name={icons[house.type]} size={16} color={colors.accentColor} />
+          <Text style={[styles.statText, { color: colors.dangerColor }]}>
+            {house.available_rooms > 0 ? "Còn trống" : "Đã thuê"}
+          </Text>
+        </View>
+      );
+    }
+    if (house.type === 'dormitory' || house.type === 'room') {
+      return (
+        <View style={styles.statsContainer}>
+          <View style={styles.stat}>
+            <Icon name={icons[house.type]} size={16} color={colors.accentColor} />
+            <Text style={[styles.statText, { color: colors.successColor }]}>
+              {house.current_rooms || 0} phòng
+            </Text>
+          </View>
+          <View style={styles.stat}>
+            <Icon name="door-open" size={16} color={colors.successColor} />
+            <Text style={[styles.statText, { color: colors.textSecondary }]}>
+              {house.available_rooms || 0} phòng trống
+            </Text>
+          </View>
+        </View>
+      );
+    }
+  }
+
   return (
     <View style={[styles.container, { backgroundColor: colors.backgroundSecondary }]}>
       {/* Title and verified badge */}
@@ -50,7 +85,7 @@ export const HouseBasicInfo = ({ house }) => {
           </Chip>
         )}
       </View>
-      
+
       {/* Type and price */}
       <View style={styles.typeAndPriceContainer}>
         <Chip
@@ -60,14 +95,14 @@ export const HouseBasicInfo = ({ house }) => {
         >
           {getHouseTypeText(house.type)}
         </Chip>
-        
+
         <Text style={[styles.price, { color: colors.accentColor }]}>
           {formatCurrency(house.base_price)}/tháng
         </Text>
       </View>
-      
+
       <Divider style={[styles.divider, { backgroundColor: colors.borderColor }]} />
-      
+
       {/* Address */}
       <TouchableOpacity
         style={styles.addressContainer}
@@ -79,23 +114,11 @@ export const HouseBasicInfo = ({ house }) => {
         </Text>
         <Icon name="directions" size={18} color={colors.accentColor} style={styles.directionsIcon} />
       </TouchableOpacity>
-      
+
       {/* Quick stats */}
       <View style={styles.statsContainer}>
-        <View style={styles.statItem}>
-          <Icon name="door" size={18} color={colors.accentColor} />
-          <Text style={[styles.statText, { color: colors.textSecondary }]}>
-            {house.max_rooms || 0} phòng
-          </Text>
-        </View>
-        
-        <View style={styles.statItem}>
-          <Icon name="door-open" size={18} color={colors.accentColor} />
-          <Text style={[styles.statText, { color: colors.textSecondary }]}>
-            {house.current_rooms || 0} phòng đã dùng
-          </Text>
-        </View>
-        
+        {format_houses_Type(house)}
+
         <View style={styles.statItem}>
           <Icon name="star" size={18} color="#FFD700" />
           <Text style={[styles.statText, { color: colors.textSecondary }]}>
