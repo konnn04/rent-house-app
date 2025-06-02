@@ -1,5 +1,24 @@
+import messaging from '@react-native-firebase/messaging';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { apiClient } from './Api';
 
+// Firebase
+
+export const registerFcmToken = async () => {
+  const authStatus = await messaging().requestPermission();
+  if (
+    authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
+    authStatus === messaging.AuthorizationStatus.PROVISIONAL
+  ) {
+    const fcmToken = await messaging().getToken();
+    if (fcmToken) {
+      await AsyncStorage.setItem('fcm_token', fcmToken);
+      // Gửi token lên server
+      await apiClient.post('/api/users/register_fcm_token/', { token: fcmToken });
+    }
+  }
+};
+// API
 export const getNotificationsService = async (nextUrl = null) => {
   try {
     if (!nextUrl) {
@@ -42,3 +61,4 @@ export const deleteNotificationService = async (notificationId) => {
     throw error;
   }
 }
+
