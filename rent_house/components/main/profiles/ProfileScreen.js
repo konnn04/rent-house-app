@@ -197,6 +197,7 @@ const profileStyles = StyleSheet.create({
   },
   profileContainer: {
     padding: 20,
+    paddingBottom: 10,
   },
   infoSection: {
     marginVertical: 10,
@@ -213,5 +214,6 @@ const profileStyles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
     margin: 20,
+    marginBottom: 70,
   }
 });

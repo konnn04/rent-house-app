@@ -29,7 +29,7 @@ export const SettingsScreen = () => {
           
           <List.Item
             title="Chế độ tối"
-            left={props => <List.Icon {...props} icon={theme === 'dark' ? 'moon' : 'white-balance-sunny'} color={colors.accentColor} />}
+            left={props => <List.Icon {...props} icon={theme === 'dark' ? 'moon-waning-crescent' : 'white-balance-sunny'} color={colors.accentColor} />}
             right={() => (
               <Switch
                 value={theme === 'dark'}
