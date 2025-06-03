@@ -9,7 +9,6 @@ from .follow import FollowSerializer
 from .auth import PreRegisterSerializer, RegisterSerializer, VerifyEmailSerializer, ResendVerificationSerializer, CheckVerificationStatusSerializer, PasswordResetSerializer, RequestPasswordResetSerializer
 from .profile import ProfileSerializer, PublicProfileSerializer
 
-# Export all serializers to maintain backward compatibility
 __all__ = [
     'UserSerializer', 'UserSummarySerializer', 'IdentityVerificationSerializer',
     'HouseListSerializer', 'HouseDetailSerializer',

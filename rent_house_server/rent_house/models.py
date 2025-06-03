@@ -13,12 +13,13 @@ from datetime import timedelta
 from django.utils import timezone
 from django.conf import settings
 
+from rent_house.utils import upload_image_to_cloudinary, delete_cloudinary_image
+
 ###################
-# ENUM DEFINITIONS
+# ENUM 
 ###################
 
 class Role(Enum):
-    """User roles in the system"""
     ADMIN = 'admin', 'Quản trị viên'
     MODERATOR = 'moderator', 'Người quản lý'
     OWNER = 'owner', 'Chủ nhà'
@@ -29,7 +30,6 @@ class Role(Enum):
         return self.value[1]
 
 class HouseType(Enum):
-    """Types of housing properties"""
     HOUSE = 'house', 'Nhà riêng'
     APARTMENT = 'apartment', 'Chung cư'
     DORMITORY = 'dormitory', 'Ký túc xá'
@@ -39,7 +39,6 @@ class HouseType(Enum):
         return self.value[1]
     
 class PostType(Enum):
-    """Types of posts in the system"""
     RENTAL_LISTING = 'rental_listing', 'Cho thuê phòng trọ'
     SEARCH_LISTING = 'search_listing', 'Tìm phòng trọ'
     ROOMMATE = 'roommate', 'Tìm bạn ở ghép'
@@ -48,7 +47,6 @@ class PostType(Enum):
         return self.value[1]
     
 class NotificationType(Enum):
-    """Types of notifications"""
     NEW_POST = 'new_post', 'Bài viết mới'
     COMMENT = 'comment', 'Bình luận'
     FOLLOW = 'follow', 'Theo dõi'
@@ -56,7 +54,6 @@ class NotificationType(Enum):
     MESSAGE = 'message', 'Tin nhắn'
 
 class InteractionType(Enum):
-    """Types of interactions with posts"""
     LIKE = 'like', 'Thích'
     DISLIKE = 'dislike', 'Không thích'
     NONE = 'none', 'Không tương tác'
@@ -64,19 +61,11 @@ class InteractionType(Enum):
     def __str__(self):
         return self.value[1]
     
-class AppointmentStatus(Enum):
-    """Possible statuses for appointments"""
-    PENDING = 'pending', 'Chờ xác nhận'
-    CONFIRMED = 'confirmed', 'Đã xác nhận'
-    COMPLETED = 'completed', 'Đã hoàn thành'
-    CANCELLED = 'cancelled', 'Đã hủy'
-
 ###################
-# BASE MODELS
+# Thiết lập các trường cơ bản cho mô hình
 ###################
     
 class BaseModel(models.Model):
-    """Base model with timestamp fields for inheritance"""
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -84,14 +73,10 @@ class BaseModel(models.Model):
         abstract = True
 
 ###################
-# MEDIA MODELS
+# Phương tiện (ảnh, video)
 ###################
 
 class Media(BaseModel):
-    """
-    Media model for storing images and videos
-    Can be attached to any model via GenericForeignKey
-    """
     MEDIA_TYPES = (
         ('image', 'Image'),
         ('video', 'Video'),
@@ -112,11 +97,9 @@ class Media(BaseModel):
     public_id = models.CharField(max_length=255, blank=True, null=True)
     purpose = models.CharField(max_length=20, choices=PURPOSE_TYPES, null=True, blank=True)
     
-    # Thumbnail and resized versions
     thumbnail_url = models.URLField(null=True, blank=True)
     medium_url = models.URLField(null=True, blank=True)
     
-    # Generic relation fields
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.PositiveIntegerField()
     content_object = GenericForeignKey('content_type', 'object_id')
@@ -124,14 +107,8 @@ class Media(BaseModel):
     def __str__(self):
         return f"{self.get_media_type_display()} for {self.content_object}"
     
+    # Các dạng size: 'thumbnail', 'medium', 'large', or tuple (width, height)
     def get_url(self, size=None):
-        """
-        Get URL with custom size
-        Args:
-            size: 'thumbnail', 'medium', 'large', or tuple (width, height)
-        Returns:
-            Formatted URL string
-        """
         if self.media_type != 'image' or not size:
             return self.url
         
@@ -158,16 +135,6 @@ class Media(BaseModel):
     
     @classmethod
     def create_for_object(cls, obj, url, media_type='image', public_id=None):
-        """
-        Utility method to create new media for an object
-        Args:
-            obj: The model instance to attach media to
-            url: Media URL
-            media_type: Type of media ('image' or 'video')
-            public_id: Cloudinary public ID (optional)
-        Returns:
-            New Media instance
-        """
         content_type = ContentType.objects.get_for_model(obj)
         return cls.objects.create(
             content_type=content_type,
@@ -179,14 +146,6 @@ class Media(BaseModel):
     
     @classmethod
     def get_for_object(cls, obj, media_type=None):
-        """
-        Get all media for a specific object
-        Args:
-            obj: The model instance
-            media_type: Optional filter by media type
-        Returns:
-            QuerySet of Media objects
-        """
         content_type = ContentType.objects.get_for_model(obj)
         queryset = cls.objects.filter(content_type=content_type, object_id=obj.id)
         if media_type:
@@ -194,11 +153,10 @@ class Media(BaseModel):
         return queryset
 
 ###################
-# USER MODELS
+# USER 
 ###################
 
 class User(AbstractUser):
-    """Extended User model with additional fields"""
     phone_number = models.CharField(max_length=20, blank=True, null=True)
     role = models.CharField(
         max_length=20, 
@@ -207,26 +165,17 @@ class User(AbstractUser):
     )
     address = models.TextField(blank=True, null=True)
     avatar = models.URLField(blank=True, null=True)
-    media_files = GenericRelation(Media)  # Direct GenericRelation
+    media_files = GenericRelation(Media)  
 
     def __str__(self):
         return self.username
     
     def set_password(self, new_password):
-        """Override to save the model after setting password"""
         super().set_password(new_password)
         self.save()
 
     @classmethod
     def check_login(cls, username_or_email, password):
-        """
-        Validate login credentials
-        Args:
-            username_or_email: Username or email
-            password: User password
-        Returns:
-            User instance if valid, None otherwise
-        """
         try:
             user = cls.objects.get(
                 Q(username=username_or_email) | Q(email=username_or_email)
@@ -238,13 +187,6 @@ class User(AbstractUser):
             return None
     
     def get_avatar_url(self, size=None):
-        """
-        Get avatar URL with custom size
-        Args:
-            size: Size specification ('thumbnail', 'medium', 'large', or tuple)
-        Returns:
-            Formatted URL string or None
-        """
         if not self.avatar:
             return None
             
@@ -270,14 +212,7 @@ class User(AbstractUser):
         return f"{base_url}/upload/{transform}/{image_part}"
     
     def set_avatar(self, image_file):
-        """
-        Set new avatar from uploaded file
-        Args:
-            image_file: Uploaded image file
-        Returns:
-            Boolean indicating success
-        """
-        from rent_house.utils import upload_image_to_cloudinary, delete_cloudinary_image
+        
         
         if self.avatar and 'res.cloudinary.com' in self.avatar:
             delete_cloudinary_image(self.avatar)
@@ -290,53 +225,45 @@ class User(AbstractUser):
         return False
             
     def get_owned_houses(self):
-        """Get all houses owned by the user"""
         return self.houses.all()
 
     def has_submitted_identity(self):
-        """Kiểm tra xem user đã nộp giấy tờ tuỳ thân chưa"""
         return hasattr(self, 'identity_verification')
     
     def is_identity_verified(self):
-        """Kiểm tra xem user đã được xác thực danh tính chưa"""
         if not self.has_submitted_identity():
             return False
         return self.identity_verification.is_verified
     
     def can_create_house(self):
-        """Kiểm tra xem user có thể tạo nhà mới không"""
-        # Chỉ owner mới được tạo nhà và phải được xác thực danh tính
         return self.role == Role.OWNER.value[0] and self.is_identity_verified()
 
-# Thêm mã sau vào cuối file models.py
+###############
+# Xác thực danh tính
+###############
+
 class IdentityVerification(BaseModel):
-    """Lưu trữ thông tin xác thực danh tính của chủ nhà (owner)"""
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='identity_verification')
     id_number = models.CharField(max_length=20, verbose_name="Số CCCD/CMND")
     is_verified = models.BooleanField(default=False, verbose_name="Đã được xác thực")
     admin_notes = models.TextField(null=True, blank=True, verbose_name="Ghi chú của admin")
     rejection_reason = models.TextField(null=True, blank=True, verbose_name="Lý do từ chối")
     
-    # Sử dụng GenericRelation để liên kết với Media
     media_files = GenericRelation(Media)
     
     def __str__(self):
         return f"Xác thực danh tính: {self.user.username}"
     
     def get_front_id_image(self):
-        """Lấy ảnh mặt trước CCCD/CMND"""
         return self.media_files.filter(purpose='id_front').first()
     
     def get_back_id_image(self):
-        """Lấy ảnh mặt sau CCCD/CMND"""
         return self.media_files.filter(purpose='id_back').first()
     
     def get_selfie_image(self):
-        """Lấy ảnh chân dung (nếu có)"""
         return self.media_files.filter(purpose='id_selfie').first()
 
 class Follow(BaseModel):
-    """Tracks user follow relationships"""
     follower = models.ForeignKey(User, on_delete=models.CASCADE, related_name='following')
     followee = models.ForeignKey(User, on_delete=models.CASCADE, related_name='followers')
     is_following = models.BooleanField(default=True)
@@ -348,11 +275,10 @@ class Follow(BaseModel):
         return f"{self.follower.username} follows {self.followee.username}"
 
 ###################
-# PROPERTY MODELS
+# Nhà/Trọ
 ###################
 
 class House(BaseModel):
-    """Property model representing a house or apartment building"""
     title = models.CharField(max_length=50, null=True, blank=True)
     description = models.TextField(null=True, blank=True)
     address = models.TextField()
@@ -370,7 +296,6 @@ class House(BaseModel):
     trash_price = models.DecimalField(max_digits=20, decimal_places=2, null=True, default=0)
     is_verified = models.BooleanField(default=False)
     media_files = GenericRelation(Media)
-    # Các trường dưới đây chỉ còn dùng cho loại phòng trọ (ROOM), giữ lại để tránh lỗi migration nếu đã có dữ liệu cũ
     max_rooms = models.IntegerField(null=True, blank=True)
     current_rooms = models.IntegerField(null=True, blank=True)
     max_people = models.IntegerField(null=True, blank=True)
@@ -379,7 +304,6 @@ class House(BaseModel):
         return self.title or f"House {self.id}"
 
     def get_avg_rating(self):
-        """Get average rating from reviews"""
         cache_key = f'house_rating_{self.id}'
         avg_rating = cache.get(cache_key)
         if avg_rating is None:
@@ -388,18 +312,15 @@ class House(BaseModel):
         return avg_rating
 
     def get_thumbnail(self):
-        """Get first image thumbnail"""
         first_image = self.media_files.filter(media_type='image').first()
         if first_image:
             return first_image.get_url('thumbnail')
         return None
 
     def is_room_type(self):
-        """Check if this house is a boarding house (phòng trọ)"""
-        return self.type == HouseType.ROOM.value[0]
+        return self.type == HouseType.ROOM.value[0] or self.type == HouseType.DORMITORY.value[0]
    
 class Rate(BaseModel):
-    """House rating and review model"""
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     house = models.ForeignKey(House, on_delete=models.CASCADE, related_name='ratings')
     star = models.IntegerField(choices=[(i, i) for i in range(1, 6)])
@@ -417,7 +338,6 @@ class Rate(BaseModel):
 ###################
 
 class Post(BaseModel):
-    """User post model for rental listings and other content"""
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='posts')
     type = models.CharField(
         max_length=20, 
@@ -438,22 +358,18 @@ class Post(BaseModel):
     def get_interaction_count(self, interaction_type=None):
         if interaction_type:
             return self.interaction_set.filter(type=interaction_type).count()
-        # Mặc định trả về "like"
         return self.interaction_set.filter(type=InteractionType.LIKE.value[0]).count()
     
     def get_comment_count(self):
-        """Get total comment count"""
         return self.comments.count()
     
     def get_thumbnail(self):
-        """Get first image thumbnail"""
         first_image = self.media_files.filter(media_type='image').first()
         if first_image:
             return first_image.get_url('thumbnail')
         return None
     
 class Comment(BaseModel):
-    """Comment on a post with optional parent for replies"""
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='comments')
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='comments')
     parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='replies')
@@ -464,11 +380,9 @@ class Comment(BaseModel):
         return f"Comment by {self.author.username} on Post {self.post.id}"
     
     def get_reply_count(self):
-        """Get number of replies"""
         return self.replies.count()
         
 class Interaction(BaseModel):
-    """User interactions with posts (likes, dislikes)"""
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     post = models.ForeignKey(Post, on_delete=models.CASCADE)
     type = models.CharField(
@@ -487,7 +401,6 @@ class Interaction(BaseModel):
 ###################
     
 class Notification(BaseModel):
-    """User notification model with generic relation to related objects"""
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
     content = models.TextField()
     url = models.URLField(null=True, blank=True)
@@ -509,7 +422,7 @@ class Notification(BaseModel):
 ###################
 
 class ChatGroup(BaseModel):
-    """Group chat model supporting both 1-1 and group conversations"""
+    # Vừa chát 1-1 và nhóm
     name = models.CharField(max_length=100, null=True, blank=True)
     description = models.TextField(null=True, blank=True)
     is_group = models.BooleanField(default=False)  # False = 1-1 chat, True = group chat
@@ -527,14 +440,6 @@ class ChatGroup(BaseModel):
     
     @classmethod
     def get_or_create_direct_chat(cls, user1, user2):
-        """
-        Get or create a direct chat between two users
-        Args:
-            user1: First user
-            user2: Second user
-        Returns:
-            ChatGroup instance
-        """
         existing_chat = cls.objects.filter(
             is_group=False,
             members=user1
@@ -565,7 +470,6 @@ class ChatGroup(BaseModel):
         return chat
         
     def add_member(self, user, is_admin=False):
-        """Add a member to the chat group"""
         if not self.members.filter(id=user.id).exists():
             ChatMembership.objects.create(
                 chat_group=self,
@@ -576,7 +480,6 @@ class ChatGroup(BaseModel):
         return False
         
     def remove_member(self, user):
-        """Remove a member from the chat group"""
         membership = self.chat_memberships.filter(user=user).first()
         if membership:
             membership.delete()
@@ -584,7 +487,6 @@ class ChatGroup(BaseModel):
         return False
 
 class ChatMembership(BaseModel):
-    """Intermediate model for ManyToMany between ChatGroup and User"""
     chat_group = models.ForeignKey(ChatGroup, on_delete=models.CASCADE, related_name='chat_memberships')
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='chat_memberships')
     is_admin = models.BooleanField(default=False)
@@ -598,23 +500,19 @@ class ChatMembership(BaseModel):
         return f"{self.user.username} in {self.chat_group}"
     
     def mark_as_read(self):
-        """Mark messages as read up to current time"""
         self.last_read_at = timezone.now()
         self.save(update_fields=['last_read_at'])
         
     def get_unread_count(self):
-        """Get number of unread messages"""
         if not self.last_read_at:
             return self.chat_group.messages.count()
         return self.chat_group.messages.filter(created_at__gt=self.last_read_at).count()
     
     def has_any_message(self):
-        """Check if the chat group has any messages"""
         return self.chat_group.messages.exists()
 
     
 class Message(BaseModel):
-    """Chat message model"""
     chat_group = models.ForeignKey(ChatGroup, on_delete=models.CASCADE, related_name='messages')
     sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_messages')
     content = models.TextField(null=True, blank=True)
@@ -630,21 +528,18 @@ class Message(BaseModel):
         return f"Message from {self.sender.username} in {self.chat_group}"
     
     def get_formatted_content(self):
-        """Get formatted message content"""
         if self.is_removed:
             return "Tin nhắn đã bị xóa"
         return self.content
     
     def soft_delete(self):
-        """Soft delete the message (mark as removed)"""
         self.is_removed = True
         self.content = ""
         self.save(update_fields=['is_removed', 'content'])
 
 class VerificationCode(BaseModel):
-    """Model để lưu trữ mã xác thực email của người dùng"""
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='verification_codes', null=True, blank=True)
-    email = models.EmailField(null=True, blank=True)  # Để lưu email khi chưa có user
+    email = models.EmailField(null=True, blank=True) 
     code = models.CharField(max_length=10)
     is_used = models.BooleanField(default=False)
     expires_at = models.DateTimeField()
@@ -656,19 +551,10 @@ class VerificationCode(BaseModel):
     
     @classmethod
     def generate_code(cls, user):
-        """
-        Tạo mã xác thực mới cho user
-        """
-        # Tạo mã ngẫu nhiên gồm 6 chữ số
         code = ''.join(random.choices(string.digits, k=6))
-        
-        # Tính thời gian hết hạn
         expires_at = timezone.now() + timedelta(minutes=settings.VERIFICATION_CODE_EXPIRY_MINUTES)
-        
-        # Vô hiệu hóa các mã cũ
         cls.objects.filter(user=user, is_used=False).update(is_used=True)
-        
-        # Tạo mã mới
+
         verification_code = cls.objects.create(
             user=user,
             email=user.email,
@@ -679,20 +565,13 @@ class VerificationCode(BaseModel):
         return verification_code
     
     def is_valid(self):
-        """
-        Kiểm tra mã xác thực còn hạn không
-        """
         return not self.is_used and self.expires_at > timezone.now()
     
     def mark_as_used(self):
-        """
-        Đánh dấu mã xác thực đã được sử dụng
-        """
         self.is_used = True
         self.save(update_fields=['is_used'])
 
 class PasswordResetToken(BaseModel):
-    """Model để lưu trữ token đặt lại mật khẩu"""
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='password_reset_tokens')
     token = models.CharField(max_length=100, unique=True)
     is_used = models.BooleanField(default=False)
@@ -703,17 +582,12 @@ class PasswordResetToken(BaseModel):
     
     @classmethod
     def generate_token(cls, user):
-        """Tạo token đặt lại mật khẩu mới cho user"""
-        # Tạo token ngẫu nhiên
         token = ''.join(random.choices(string.ascii_letters + string.digits, k=50))
         
-        # Tính thời gian hết hạn (24 giờ)
         expires_at = timezone.now() + timedelta(hours=24)
         
-        # Vô hiệu hóa các token cũ chưa sử dụng
         cls.objects.filter(user=user, is_used=False).update(is_used=True)
         
-        # Tạo token mới
         reset_token = cls.objects.create(
             user=user,
             token=token,
@@ -723,10 +597,8 @@ class PasswordResetToken(BaseModel):
         return reset_token
     
     def is_valid(self):
-        """Kiểm tra token còn hạn không"""
         return not self.is_used and self.expires_at > timezone.now()
     
     def mark_as_used(self):
-        """Đánh dấu token đã được sử dụng"""
         self.is_used = True
         self.save(update_fields=['is_used'])

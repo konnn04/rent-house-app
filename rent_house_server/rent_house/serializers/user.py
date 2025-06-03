@@ -4,7 +4,6 @@ from rent_house.models import User, IdentityVerification, Media
 from django.contrib.contenttypes.models import ContentType
 
 class UserSummarySerializer(serializers.ModelSerializer):
-    """Serializer for displaying basic user information in nested representations"""
     full_name = serializers.SerializerMethodField()
     avatar_thumbnail = serializers.SerializerMethodField()
     
@@ -16,7 +15,6 @@ class UserSummarySerializer(serializers.ModelSerializer):
         return f"{obj.first_name} {obj.last_name}".strip()
     
     def get_avatar_thumbnail(self, obj):
-        """Return a thumbnail version of the user's avatar"""
         if not obj.avatar:
             return None
         
@@ -60,12 +58,10 @@ class UserSerializer(serializers.ModelSerializer):
         return u
     
     def update(self, instance, validated_data):
-        # Handle password specially if provided
         password = validated_data.pop('password', None)
         if password:
             instance.set_password(password)
         
-        # Update other fields
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         
@@ -73,22 +69,17 @@ class UserSerializer(serializers.ModelSerializer):
         return instance
     
     def get_post_count(self, obj):
-        """Trả về số lượng bài đăng của người dùng"""
         return obj.posts.count()
     
     def get_follower_count(self, obj):
-        """Trả về số lượng người theo dõi"""
         return obj.followers.count()
     
     def get_following_count(self, obj):
-        """Trả về số lượng người đang theo dõi"""
         return obj.following.count()
     
     def get_avg_rating(self, obj):
-        """Trả về đánh giá trung bình nếu người dùng là chủ sở hữu"""
         if obj.role != 'owner':
             return None
-        # Tính trung bình đánh giá của tất cả các house mà user sở hữu
         houses = obj.houses.all()
         if not houses.exists():
             return None
@@ -96,22 +87,17 @@ class UserSerializer(serializers.ModelSerializer):
         return avg['total_avg']
 
     def get_house_count(self, obj):
-        """Trả về số lượng nhà/căn hộ nếu người dùng là chủ sở hữu"""
         if obj.role != 'owner':
             return None
         return obj.houses.count()
 
     def get_room_count(self, obj):
-        """Trả về tổng số phòng từ tất cả các nhà/căn hộ của chủ sở hữu"""
-        # Không còn model Room, trả về None hoặc 0
         return None
     
     def get_is_verified(self, obj):
-        """Kiểm tra xem user có được xác thực bởi admin không"""
         return obj.is_identity_verified()
     
     def get_has_identity(self, obj):
-        """Kiểm tra xem user đã nộp giấy tờ chưa"""
         return obj.has_submitted_identity()
 
 class IdentityVerificationSerializer(serializers.ModelSerializer):
@@ -155,20 +141,16 @@ class IdentityVerificationSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         user = self.context['request'].user
         
-        # Kiểm tra nếu user đã có hồ sơ xác thực
         if hasattr(user, 'identity_verification'):
             raise serializers.ValidationError({"detail": "Bạn đã nộp hồ sơ xác thực rồi"})
         
-        # Tạo hồ sơ xác thực mới
         identity = IdentityVerification.objects.create(
             user=user,
             id_number=validated_data.get('id_number')
         )
         
-        # Xử lý upload ảnh
         request = self.context.get('request')
         
-        # Lưu ảnh mặt trước CCCD/CMND
         front_image = request.FILES.get('front_id_image')
         if front_image:
             from rent_house.utils import upload_image_to_cloudinary
@@ -182,7 +164,6 @@ class IdentityVerificationSerializer(serializers.ModelSerializer):
                     purpose='id_front'
                 )
         
-        # Lưu ảnh mặt sau CCCD/CMND
         back_image = request.FILES.get('back_id_image')
         if back_image:
             from rent_house.utils import upload_image_to_cloudinary
@@ -196,7 +177,6 @@ class IdentityVerificationSerializer(serializers.ModelSerializer):
                     purpose='id_back'
                 )
         
-        # Lưu ảnh chân dung (nếu có)
         selfie_image = request.FILES.get('selfie_image')
         if selfie_image:
             from rent_house.utils import upload_image_to_cloudinary

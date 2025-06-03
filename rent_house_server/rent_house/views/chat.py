@@ -10,7 +10,6 @@ from rent_house.serializers import (
     ChatGroupUpdateSerializer, MessageSerializer
 )
 from rent_house.utils import upload_image_to_cloudinary
-from rent_house.firebase_utils import send_chat_notification
 from rent_house.permissions import IsOwnerOrReadOnly
 
 class ChatGroupViewSet(viewsets.ModelViewSet):
@@ -203,19 +202,6 @@ class ChatGroupViewSet(viewsets.ModelViewSet):
         
         # Cập nhật thời gian cập nhật của nhóm chat
         chat_group.save(update_fields=['updated_at'])
-        
-        # Gửi thông báo đến các thành viên khác trong nhóm
-        recipients = chat_group.members.exclude(id=request.user.id)
-        content_preview = message.content if message.content else "Đã gửi media"
-        
-        for recipient in recipients:
-            send_chat_notification(
-                recipient=recipient,
-                sender=request.user,
-                chat_group=chat_group,
-                message_content=content_preview,
-                message_id=message.id
-            )
         
         # Cập nhật response với thông tin media
         response_data = serializer.data

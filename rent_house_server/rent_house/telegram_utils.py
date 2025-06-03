@@ -7,9 +7,6 @@ from functools import wraps
 logger = logging.getLogger(__name__)
 
 def send_telegram_message(message, parse_mode='HTML'):
-    """
-    Send message to Telegram chat
-    """
     try:
         bot_token = settings.TELEGRAM_BOT_TOKEN
         chat_id = settings.TELEGRAM_CHAT_ID
@@ -18,8 +15,8 @@ def send_telegram_message(message, parse_mode='HTML'):
             logger.warning("Telegram credentials not configured properly")
             return False
         
-        # Verify message is not too long
-        if len(message) > 4096:
+        # Telegram giới hạn độ dài tin nhắn là 4096 ký tự
+        if len(message) > 4096: 
             logger.warning(f"Message too long ({len(message)} chars), truncating to 4096 chars")
             message = message[:4093] + "..."
             
@@ -34,7 +31,6 @@ def send_telegram_message(message, parse_mode='HTML'):
         logger.info(f"Sending Telegram message to chat {chat_id}")
         response = requests.post(url, data=data)
         
-        # Handle error responses with more detail
         if response.status_code != 200:
             error_detail = f"Status: {response.status_code}"
             try:
@@ -46,7 +42,6 @@ def send_telegram_message(message, parse_mode='HTML'):
                 
             logger.error(f"Telegram API error: {error_detail}")
             
-            # If it's an HTML parse error, try sending without parse_mode
             if parse_mode == 'HTML' and 'can\'t parse entities' in response.text:
                 logger.info("Attempting to send message without HTML parsing")
                 return send_telegram_message(f"⚠️ Original message had invalid HTML. Raw message:\n\n{message}", parse_mode=None)
@@ -60,9 +55,6 @@ def send_telegram_message(message, parse_mode='HTML'):
         return False
 
 def send_error_to_telegram(e, additional_info=None):
-    """
-    Send exception details to Telegram
-    """
     try:
         error_message = f"⚠️ <b>ERROR</b>\n\n"
         error_message += f"<b>Type:</b> {type(e).__name__}\n"
@@ -71,10 +63,9 @@ def send_error_to_telegram(e, additional_info=None):
         if additional_info:
             error_message += f"\n<b>Additional Info:</b>\n{additional_info}\n"
         
-        # Get traceback
         tb = traceback.format_exc()
         if tb and tb != "NoneType: None\n":
-            error_message += f"\n<b>Traceback:</b>\n<pre>{tb[:3000]}</pre>"  # Limit traceback length
+            error_message += f"\n<b>Traceback:</b>\n<pre>{tb[:3000]}</pre>" 
             
         return send_telegram_message(error_message)
     except Exception as ex:
@@ -82,10 +73,6 @@ def send_error_to_telegram(e, additional_info=None):
         return False
 
 def notify_telegram(func=None, message=None):
-    """
-    Decorator to notify Telegram about function execution.
-    Can be used as @notify_telegram or @notify_telegram(message="Custom message")
-    """
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -108,9 +95,6 @@ def notify_telegram(func=None, message=None):
     return decorator
 
 def debug_message(message, level="INFO"):
-    """
-    Send debug message to Telegram with appropriate emoji based on level
-    """
     level = level.upper()
     emoji_map = {
         "INFO": "ℹ️",
@@ -126,7 +110,6 @@ def debug_message(message, level="INFO"):
     return send_telegram_message(formatted_message)
 
 def escape_html(text):
-    """Escape HTML special characters"""
     if text is None:
         return ""
     return text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')

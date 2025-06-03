@@ -19,16 +19,12 @@ class CustomUserChangeForm(UserChangeForm):
     def save(self, commit=True):
         user = super().save(commit=False)
         
-        # Handle avatar upload if provided
         avatar_file = self.cleaned_data.get('avatar_upload')
         if avatar_file:
-            # Upload to Cloudinary
             image_url = upload_image_to_cloudinary(avatar_file, folder="user_avatars")
             if image_url:
-                # Update user avatar
                 user.avatar = image_url
                 
-                # Create or update Media object
                 content_type = ContentType.objects.get_for_model(User)
                 media, created = Media.objects.get_or_create(
                     content_type=content_type,
@@ -42,12 +38,10 @@ class CustomUserChangeForm(UserChangeForm):
                 )
                 
                 if not created:
-                    # Update existing avatar
                     media.url = image_url
                     media.public_id = image_url.split('/')[-1].split('.')[0]
                     media.save()
                     
-                # Generate thumbnail versions
                 media.generate_all_sizes()
         
         if commit:
@@ -85,7 +79,6 @@ class CustomUserAdmin(UserAdmin):
     avatar_thumbnail.short_description = 'Avatar'
     
     def get_readonly_fields(self, request, obj=None):
-        # Make avatar field read-only (it's updated through avatar_upload)
         readonly_fields = list(super().get_readonly_fields(request, obj))
         if 'avatar' not in readonly_fields:
             readonly_fields.append('avatar')
@@ -97,13 +90,8 @@ class RentHouseAdminSite(admin.AdminSite):
     index_title = 'Dashboard'
     
     def get_app_list(self, request):
-        """
-        Return a sorted list of all the installed apps that have been
-        registered in this site.
-        """
         app_list = super().get_app_list(request)
 
-        # Add statistics counts to the context
         from rent_house.models import User, House, Post
         for app in app_list:
             if app['app_label'] == 'rent_house':
@@ -118,7 +106,6 @@ class RentHouseAdminSite(admin.AdminSite):
         return app_list
     
     def index(self, request, extra_context=None):
-        # Add statistics to the admin index page
         from rent_house.models import User, House, Post
         
         context = {
@@ -141,22 +128,3 @@ admin_site.register(House)
 admin_site.register(Post)
 admin_site.register(Comment)
 admin_site.register(User, CustomUserAdmin)
-admin_site.register(LogEntry)  # Register LogEntry to view all actions in admin
-
-class LogEntryAdmin(admin.ModelAdmin):
-    list_display = ['action_time', 'user', 'content_type', 'object_repr', 'action_flag', 'change_message']
-    list_filter = ['action_time', 'user', 'content_type', 'action_flag']
-    search_fields = ['object_repr', 'change_message']
-    date_hierarchy = 'action_time'
-    readonly_fields = ['action_time', 'user', 'content_type', 'object_id', 'object_repr', 'action_flag', 'change_message']
-    
-    def has_add_permission(self, request):
-        return False
-    
-    def has_change_permission(self, request, obj=None):
-        return False
-    
-    def has_delete_permission(self, request, obj=None):
-        return False
-
-admin.site.register(LogEntry, LogEntryAdmin)

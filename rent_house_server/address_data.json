@@ -1,0 +1,302 @@
+[
+  {
+    "lat": 10.742212045188783,
+    "lon": 106.62819707965113,
+    "address": "252, Trần Văn Kiểu, Phường 11, Quận 6, Thành phố Hồ Chí Minh, 73118, Việt Nam"
+  },
+  {
+    "lat": 10.726594475947387,
+    "lon": 106.67450045386911,
+    "address": "Xã Bình Hưng, Huyện Bình Chánh, Thành phố Hồ Chí Minh, 72400, Việt Nam"
+  },
+  {
+    "lat": 10.877169829879264,
+    "lon": 106.76008412982692,
+    "address": "Bình Đường 1, Phường An Bình, Thành phố Dĩ An, Tỉnh Bình Dương, 75350, Việt Nam"
+  },
+  {
+    "lat": 10.719472863817057,
+    "lon": 106.79706066152008,
+    "address": "Giồng Ông Đông, Xã Phú Đông, Huyện Nhơn Trạch, Tỉnh Đồng Nai, 76260, Việt Nam"
+  },
+  {
+    "lat": 10.706188418567827,
+    "lon": 106.77429076628549,
+    "address": "Phú Tân, Xã Phú Đông, Huyện Nhơn Trạch, Tỉnh Đồng Nai, 76260, Việt Nam"
+  },
+  {
+    "lat": 10.795760452974768,
+    "lon": 106.75393239576164,
+    "address": "Khu phố 14, Phường An Phú, Thành phố Thủ Đức, Thành phố Hồ Chí Minh, 08408, Việt Nam"
+  },
+  {
+    "lat": 10.734798543343372,
+    "lon": 106.60172285768407,
+    "address": "Đường Lê Đức Anh, Phường Tân Tạo A, Quận Bình Tân, Thành phố Hồ Chí Minh, 73118, Việt Nam"
+  },
+  {
+    "lat": 10.748456675005198,
+    "lon": 106.63063012931035,
+    "address": "Nhánh Hẻm Vào Lô B.E, Phường 12, Quận 6, Thành phố Hồ Chí Minh, 73118, Việt Nam"
+  },
+  {
+    "lat": 10.809284578697541,
+    "lon": 106.73419156289631,
+    "address": "Đường Số 1, Phường Thảo Điền, Thành phố Thủ Đức, Thành phố Hồ Chí Minh, 71107, Việt Nam"
+  },
+  {
+    "lat": 10.73178374020246,
+    "lon": 106.66129323080092,
+    "address": "Xã Bình Hưng, Huyện Bình Chánh, Thành phố Hồ Chí Minh, 72400, Việt Nam"
+  },
+  {
+    "lat": 10.882930653394068,
+    "lon": 106.7334166210858,
+    "address": "Đường A, Khu phố 3, Phường Bình Chiểu, Thành phố Thủ Đức, Thành phố Hồ Chí Minh, Tỉnh Bình Dương, 75207, Việt Nam"
+  },
+  {
+    "lat": 10.881003383420211,
+    "lon": 106.63874819868963,
+    "address": "Hiệp Thành 12, Phường Hiệp Thành, Quận 12, Thành phố Hồ Chí Minh, 71716, Việt Nam"
+  },
+  {
+    "lat": 10.741418615751023,
+    "lon": 106.66938807380758,
+    "address": "Đặng Thúc Liêng, Phường 4, Quận 8, Thành phố Hồ Chí Minh, 73009, Việt Nam"
+  },
+  {
+    "lat": 10.721517598393875,
+    "lon": 106.78887833853642,
+    "address": "Giồng Ông Đông, Xã Phú Đông, Huyện Nhơn Trạch, Tỉnh Đồng Nai, 76260, Việt Nam"
+  },
+  {
+    "lat": 10.840858394475873,
+    "lon": 106.7343740257036,
+    "address": "Phường Hiệp Bình Chánh, Thành phố Thủ Đức, Thành phố Hồ Chí Minh, 71221, Việt Nam"
+  },
+  {
+    "lat": 10.757015608606022,
+    "lon": 106.59791339698351,
+    "address": "Phường Tân Tạo, Quận Bình Tân, Thành phố Hồ Chí Minh, 73118, Việt Nam"
+  },
+  {
+    "lat": 10.760106322426559,
+    "lon": 106.64356700385162,
+    "address": "Hẻm 395 Minh Phụng, Phường 10, Quận 11, Thành phố Hồ Chí Minh, 72415, Việt Nam"
+  },
+  {
+    "lat": 10.777936147421531,
+    "lon": 106.64702564645653,
+    "address": "Hẻm 338/39 Âu Cơ, Phường 10, Quận Tân Bình, Thành phố Hồ Chí Minh, 72000, Việt Nam"
+  },
+  {
+    "lat": 10.73578808749391,
+    "lon": 106.79427950460122,
+    "address": "Phước Luơng, Xã Phú Hữu, Huyện Nhơn Trạch, Tỉnh Đồng Nai, 76260, Việt Nam"
+  },
+  {
+    "lat": 10.717176390396013,
+    "lon": 106.63989698711899,
+    "address": "Đường Vành Đai Trong, Xã Phong Phú, Huyện Bình Chánh, Thành phố Hồ Chí Minh, 72900, Việt Nam"
+  },
+  {
+    "lat": 10.729669601871963,
+    "lon": 106.69209192873228,
+    "address": "Trường Đại Học RMIT Việt Nam, 702, Nguyễn Văn Linh, Phường Tân Phong, Quận 7, Thành phố Hồ Chí Minh, 72915, Việt Nam"
+  },
+  {
+    "lat": 10.78528562097822,
+    "lon": 106.7951847518461,
+    "address": "Phường Phú Hữu, Thành phố Thủ Đức, Thành phố Hồ Chí Minh, 08408, Việt Nam"
+  },
+  {
+    "lat": 10.772443837294611,
+    "lon": 106.75577949769614,
+    "address": "Đường số 69-TML, Phường Thạnh Mỹ Lợi, Thành phố Thủ Đức, Thành phố Hồ Chí Minh, 71150, Việt Nam"
+  },
+  {
+    "lat": 10.849994466481329,
+    "lon": 106.70217622280254,
+    "address": "Đường số 24, Khu phố 21, Phường Hiệp Bình Phước, Thành phố Thủ Đức, Thành phố Hồ Chí Minh, 71400, Việt Nam"
+  },
+  {
+    "lat": 10.878798312860356,
+    "lon": 106.74418438874389,
+    "address": "Đường Số 19, Khu phố 36, Phường Bình Chiểu, Thành phố Thủ Đức, Thành phố Hồ Chí Minh, 75350, Việt Nam"
+  },
+  {
+    "lat": 10.702300973561902,
+    "lon": 106.7840077295671,
+    "address": "Phú Tân, Xã Phú Đông, Huyện Nhơn Trạch, Tỉnh Đồng Nai, Việt Nam"
+  },
+  {
+    "lat": 10.750231789680601,
+    "lon": 106.64004493776706,
+    "address": "Hẻm 743 Lò Gốm, Phường 9, Quận 6, Thành phố Hồ Chí Minh, 73118, Việt Nam"
+  },
+  {
+    "lat": 10.83600684490437,
+    "lon": 106.63428827473001,
+    "address": "Hẻm 269/33 Phan Huy Ích, Phường 14, Quận Gò Vấp, Thành phố Hồ Chí Minh, 71509, Việt Nam"
+  },
+  {
+    "lat": 10.808252465478573,
+    "lon": 106.78024410380223,
+    "address": "Đường D2, KDC NAM LONG, Phường Phước Long B, Thành phố Thủ Đức, Thành phố Hồ Chí Minh, 71210, Việt Nam"
+  },
+  {
+    "lat": 10.845158896496745,
+    "lon": 106.61441275543858,
+    "address": "Quán Tre, Phường Trung Mỹ Tây, Quận 12, Thành phố Hồ Chí Minh, 71507, Việt Nam"
+  },
+  {
+    "lat": 10.7722054840125,
+    "lon": 106.74441958546767,
+    "address": "Đường số 24, Phường Tân Thuận Đông, Quận 7, Thành phố Hồ Chí Minh, 71150, Việt Nam"
+  },
+  {
+    "lat": 10.819210656107895,
+    "lon": 106.70569154618103,
+    "address": "Hẻm 278 Nguyễn Xí, Phường 13, Quận Bình Thạnh, Thành phố Hồ Chí Minh, 72309, Việt Nam"
+  },
+  {
+    "lat": 10.875682161418634,
+    "lon": 106.6745037816106,
+    "address": "Phường Thạnh Xuân, Quận 12, Thành phố Hồ Chí Minh, 71514, Việt Nam"
+  },
+  {
+    "lat": 10.804153839838948,
+    "lon": 106.60297239741122,
+    "address": "Đường số 7, Phường Bình Hưng Hòa, Quận Bình Tân, Thành phố Hồ Chí Minh, 71913, Việt Nam"
+  },
+  {
+    "lat": 10.781621748053944,
+    "lon": 106.66698336390947,
+    "address": "Hẻm 156/7 Tô Hiến Thành, Phường 15, Quận 10, Thành phố Hồ Chí Minh, 70150, Việt Nam"
+  },
+  {
+    "lat": 10.722332380188108,
+    "lon": 106.63843155915148,
+    "address": "Phường 7, Quận 8, Thành phố Hồ Chí Minh, 72900, Việt Nam"
+  },
+  {
+    "lat": 10.841860017767107,
+    "lon": 106.60584012845413,
+    "address": "Xã Bà Điểm, Huyện Hóc Môn, Thành phố Hồ Chí Minh, 71507, Việt Nam"
+  },
+  {
+    "lat": 10.825009001626505,
+    "lon": 106.79025795811246,
+    "address": "Đường D12, Phường Tăng Nhơn Phú B, Thành phố Thủ Đức, Thành phố Hồ Chí Minh, 71350, Việt Nam"
+  },
+  {
+    "lat": 10.78473143574308,
+    "lon": 106.76034703137483,
+    "address": "Phường Bình Trưng Tây, Thành phố Thủ Đức, Thành phố Hồ Chí Minh, 08408, Việt Nam"
+  },
+  {
+    "lat": 10.881937116627908,
+    "lon": 106.69457557901956,
+    "address": "Tây, Phường Vĩnh Phú, Thành phố Thuận An, Tỉnh Bình Dương, 70000, Việt Nam"
+  },
+  {
+    "lat": 10.825505440686877,
+    "lon": 106.79882696305529,
+    "address": "Đường D2, Phường Tăng Nhơn Phú B, Thành phố Thủ Đức, Thành phố Hồ Chí Minh, 71350, Việt Nam"
+  },
+  {
+    "lat": 10.708354311291876,
+    "lon": 106.78850579448732,
+    "address": "Bến Ngự, Xã Phú Đông, Huyện Nhơn Trạch, Tỉnh Đồng Nai, 76260, Việt Nam"
+  },
+  {
+    "lat": 10.830915560934098,
+    "lon": 106.75156981526678,
+    "address": "Đường Số 1, Khu phố 22, Phường Trường Thọ, Thành phố Thủ Đức, Thành phố Hồ Chí Minh, 71221, Việt Nam"
+  },
+  {
+    "lat": 10.86326421386092,
+    "lon": 106.60403991010809,
+    "address": "Song Hành Quốc Lộ 22, Xã Trung Chánh, Huyện Hóc Môn, Thành phố Hồ Chí Minh, 71717, Việt Nam"
+  },
+  {
+    "lat": 10.802742547630093,
+    "lon": 106.73083608191699,
+    "address": "Hẻm 48 Đường Xuân Thủy, Phường Thảo Điền, Thành phố Thủ Đức, Thành phố Hồ Chí Minh, 71108, Việt Nam"
+  },
+  {
+    "lat": 10.755602682009627,
+    "lon": 106.79779331111452,
+    "address": "Phan Văn Đáng, Cát Lái, Xã Phú Hữu, Huyện Nhơn Trạch, Tỉnh Đồng Nai, 71150, Việt Nam"
+  },
+  {
+    "lat": 10.810575322652406,
+    "lon": 106.67291958367305,
+    "address": "L’Mak Hồng Hà, 127, Đường D, Phường 9, Quận Phú Nhuận, Thành phố Hồ Chí Minh, 72215, Việt Nam"
+  },
+  {
+    "lat": 10.72514883962312,
+    "lon": 106.68161130696548,
+    "address": "Xã Bình Hưng, Huyện Bình Chánh, Thành phố Hồ Chí Minh, 72400, Việt Nam"
+  },
+  {
+    "lat": 10.8536615648617,
+    "lon": 106.68652329164355,
+    "address": "Phường An Phú Đông, Quận 12, Thành phố Hồ Chí Minh, 71514, Việt Nam"
+  },
+  {
+    "lat": 10.726292004547917,
+    "lon": 106.62758779929244,
+    "address": "Hẻm 167 Bến Phú Định, Phường 16, Quận 8, Thành phố Hồ Chí Minh, 73118, Việt Nam"
+  },
+  {
+    "lat": 10.795375848856118,
+    "lon": 106.70409777076551,
+    "address": "Hẻm 62/65 Đường Điện Biên Phủ, Phường 17, Quận Bình Thạnh, Thành phố Hồ Chí Minh, 72210, Việt Nam"
+  },
+  {
+    "lat": 10.824100667509313,
+    "lon": 106.60941301224369,
+    "address": "Phường Tân Thới Nhất, Quận 12, Thành phố Hồ Chí Minh, 71914, Việt Nam"
+  },
+  {
+    "lat": 10.876118037432468,
+    "lon": 106.63470233322464,
+    "address": "Phường Hiệp Thành, Quận 12, Thành phố Hồ Chí Minh, 71716, Việt Nam"
+  },
+  {
+    "lat": 10.721810286938528,
+    "lon": 106.60393146286435,
+    "address": "Phường An Lạc, Quận Bình Tân, Thành phố Hồ Chí Minh, 73118, Việt Nam"
+  },
+  {
+    "lat": 10.71188489869155,
+    "lon": 106.68288226577029,
+    "address": "Xã Phước Lộc, Huyện Nhà Bè, Thành phố Hồ Chí Minh, 72915, Việt Nam"
+  },
+  {
+    "lat": 10.804542323528455,
+    "lon": 106.75902695290229,
+    "address": "Khu phố 14, Phường An Phú, Thành phố Thủ Đức, Thành phố Hồ Chí Minh, 71210, Việt Nam"
+  },
+  {
+    "lat": 10.78346654516825,
+    "lon": 106.75168432420446,
+    "address": "Đường Lê Hữu Kiều, Phường Bình Trưng Tây, Thành phố Thủ Đức, Thành phố Hồ Chí Minh, 71150, Việt Nam"
+  },
+  {
+    "lat": 10.807067692898677,
+    "lon": 106.6836952446404,
+    "address": "Nguyễn Thượng Hiền, Phường 5, Quận Phú Nhuận, Thành phố Hồ Chí Minh, 72317, Việt Nam"
+  },
+  {
+    "lat": 10.888173350639569,
+    "lon": 106.72261410247665,
+    "address": "Đường B, Khu phố 7, Phường Bình Chiểu, Thành phố Thủ Đức, Thành phố Hồ Chí Minh, 70000, Việt Nam"
+  },
+  {
+    "lat": 10.708827421939038,
+    "lon": 106.60492241041293,
+    "address": "Phường 16, Quận 8, Huyện Bình Chánh, Thành phố Hồ Chí Minh, 73118, Việt Nam"
+  }
+]

@@ -13,7 +13,6 @@ from .auth import RegisterView, VerifyEmailView, ResendVerificationView, CheckVe
 from .profile import ProfileViewSet
 from .ping import ping_view
 
-# Export all views to maintain backward compatibility
 __all__ = [
     'SmallPagePagination',
     'UserViewSet', 'IdentityVerificationViewSet',

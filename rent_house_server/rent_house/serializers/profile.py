@@ -6,7 +6,6 @@ from django.db.models import Q
 from rent_house.serializers.post import PostSerializer
 
 class ProfileSerializer(serializers.ModelSerializer):
-    """Serializer for displaying user profile information"""
     full_name = serializers.SerializerMethodField()
     avatar_thumbnail = serializers.SerializerMethodField()
     
@@ -18,7 +17,6 @@ class ProfileSerializer(serializers.ModelSerializer):
         return f"{obj.first_name} {obj.last_name}".strip()
     
     def get_avatar_thumbnail(self, obj):
-        """Return a thumbnail version of the user's avatar"""
         if not obj.avatar:
             return None
         
@@ -32,7 +30,6 @@ class ProfileSerializer(serializers.ModelSerializer):
 
 
 class DetailedProfileSerializer(ProfileSerializer):
-    """Serializer cho hiển thị thông tin chi tiết profile người dùng"""
     post_count = serializers.SerializerMethodField()
     joined_date = serializers.DateTimeField(source='date_joined', read_only=True)
     follower_count = serializers.SerializerMethodField()
@@ -54,19 +51,15 @@ class DetailedProfileSerializer(ProfileSerializer):
                            'room_count')
     
     def get_post_count(self, obj):
-        """Trả về số lượng bài đăng của người dùng"""
         return obj.posts.count()
     
     def get_follower_count(self, obj):
-        """Trả về số lượng người theo dõi"""
         return obj.followers.count()
     
     def get_following_count(self, obj):
-        """Trả về số lượng người đang theo dõi"""
         return obj.following.count()
     
     def get_avg_rating(self, obj):
-        """Trả về đánh giá trung bình nếu người dùng là chủ sở hữu"""
         if obj.role != 'owner':
             return None
         houses = obj.houses.all()
@@ -76,30 +69,24 @@ class DetailedProfileSerializer(ProfileSerializer):
         return avg['total_avg']
 
     def get_house_count(self, obj):
-        """Trả về số lượng nhà/căn hộ nếu người dùng là chủ sở hữu"""
         if obj.role != 'owner':
             return None
         return obj.houses.count()
 
     def get_room_count(self, obj):
-        """Trả về tổng số phòng từ tất cả các nhà/căn hộ của chủ sở hữu"""
-        # Không còn model Room, trả về None hoặc 0
         return None
     
     def get_posts(self, obj):
-        """Trả về danh sách bài đăng của người dùng"""
         request = self.context.get('request')
         if not request or not request.user.is_authenticated:
             return None
         
-        # Lọc bài đăng theo người dùng
         posts = obj.posts.all()
         serializer = PostSerializer(posts, many=True, context=self.context)
         return serializer.data
 
 
 class PublicProfileSerializer(ProfileSerializer):
-    """Serializer cho hiển thị thông tin profile người dùng công khai"""
     post_count = serializers.SerializerMethodField()
     joined_date = serializers.DateTimeField(source='date_joined', read_only=True)
     follower_count = serializers.SerializerMethodField()
@@ -134,15 +121,12 @@ class PublicProfileSerializer(ProfileSerializer):
         return avg['total_avg']
     
     def get_is_followed(self, obj):
-        """Kiểm tra xem người dùng hiện tại có đang theo dõi profile này không"""
         request = self.context.get('request')
         if not request or not request.user.is_authenticated:
             return False
         
-        # Nếu đang xem profile của chính mình
         if request.user.id == obj.id:
             return False
         
-        # Có bảng và đang theo dõi
         is_followed = obj.followers.filter(Q(follower=request.user) & Q(is_following=True)).exists()
         return is_followed
