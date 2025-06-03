@@ -3,20 +3,26 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 export const PostTypeSelector = ({ selectedType, onSelectType, colors, isOwner }) => {
-  // Define available post types based on user role
   const postTypes = [
     {
-      id: 'question',
-      title: 'Câu hỏi',
-      icon: 'help-circle',
-      description: 'Đặt câu hỏi về nhà thuê, phòng trọ',
+      id: 'general',
+      title: 'Thông tin chung',
+      icon: 'information',
+      description: 'Thông tin chung về nhà hoặc phòng',
       available: true, // Available for all users
     },
     {
-      id: 'news',
-      title: 'Tin tức',
-      icon: 'newspaper',
-      description: 'Chia sẻ tin tức về thị trường bất động sản',
+      id: 'search_listing',
+      title: 'Tìm kiếm',
+      icon: 'magnify',
+      description: 'Tìm kiếm nhà hoặc phòng',
+      available: true, // Available for all users
+    },
+    {
+      id: 'roommate',
+      title: 'Tìm bạn cùng phòng',
+      icon: 'account-group',
+      description: 'Tìm kiếm bạn cùng phòng',
       available: true, // Available for all users
     },
     {

@@ -18,3 +18,9 @@ class RentHouseConfig(AppConfig):
                 logger.info("Telegram notifications initialized")
             except Exception as e:
                 logger.error(f"Failed to initialize Telegram notifications: {str(e)}")
+
+        try:
+            import rent_house.services.notification_service
+            logger.info("Notification service initialized")
+        except Exception as e:
+            logger.error(f"Failed to initialize notification service: {str(e)}")

@@ -39,6 +39,7 @@ class HouseType(Enum):
         return self.value[1]
     
 class PostType(Enum):
+    GENERAL = 'general', 'Bài viết thông thường'
     RENTAL_LISTING = 'rental_listing', 'Cho thuê phòng trọ'
     SEARCH_LISTING = 'search_listing', 'Tìm phòng trọ'
     ROOMMATE = 'roommate', 'Tìm bạn ở ghép'
@@ -236,7 +237,7 @@ class User(AbstractUser):
         return self.identity_verification.is_verified
     
     def can_create_house(self):
-        return self.role == Role.OWNER.value[0] and self.is_identity_verified()
+        return self.role == Role.OWNER.value[0] and self.has_submitted_identity()
 
 ###############
 # Xác thực danh tính
@@ -296,9 +297,12 @@ class House(BaseModel):
     trash_price = models.DecimalField(max_digits=20, decimal_places=2, null=True, default=0)
     is_verified = models.BooleanField(default=False)
     media_files = GenericRelation(Media)
+    area = models.FloatField(null=True, blank=True)  
+    deposit = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True)
     max_rooms = models.IntegerField(null=True, blank=True)
     current_rooms = models.IntegerField(null=True, blank=True)
     max_people = models.IntegerField(null=True, blank=True)
+    is_renting = models.BooleanField(default=True)
 
     def __str__(self):
         return self.title or f"House {self.id}"

@@ -45,7 +45,6 @@ class FollowViewSet(viewsets.GenericViewSet):
         })
     
     def create(self, request):
-        """POST /api/follows/ - Follow một user với user_id trong request body"""
         followee_id = request.data.get('followee')
         if not followee_id:
             return Response({"error": "Vui lòng cung cấp ID người dùng cần follow"}, 
@@ -68,6 +67,16 @@ class FollowViewSet(viewsets.GenericViewSet):
             follow.is_following = True
             follow.save(update_fields=['is_following', 'updated_at'])
         
+        if created and follow.is_following:
+            try:
+                from rent_house.services.notification_service import follow_notification
+                follow_notification(request.user, target_user)
+            except Exception as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Lỗi khi gửi thông báo có người theo dõi: {str(e)}")
+        
+
         return Response({
             "status": "success",
             "is_following": True,
@@ -77,10 +86,6 @@ class FollowViewSet(viewsets.GenericViewSet):
     
     @action(detail=True, methods=['post'])
     def toggle(self, request, pk=None):
-        """
-        POST /api/follows/{id}/toggle/ - Toggle follow/unfollow với tham số is_following
-        Có thể dùng endpoint này để cả follow và unfollow
-        """
         target_user = get_object_or_404(User, id=pk)
         is_following = request.data.get('is_following', True)
         

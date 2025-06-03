@@ -3,7 +3,11 @@ import { apiClient } from './Api';
 // Tạo bài viết 
 export const createPostService = async (postData) => {
   try {
-    const response = await apiClient.post('/api/posts/', postData);
+    const response = await apiClient.post('/api/posts/', postData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+  })
     return response.data;
   } catch (error) {
     console.error('Error creating post:', error);
@@ -55,7 +59,11 @@ export const getPostCommentsService = async (postId, parentId = null, page = 1) 
 // Tạo comment cho bài viết
 export const createPostCommentService = async (formData) => {
   try {
-    const response = await apiClient.post(`/api/comments/`, formData);
+    const response = await apiClient.post(`/api/comments/`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
     return response.data;
   } catch (error) {
     console.error(`Error creating comment for post ${formData.post_id}:`, error);

@@ -60,6 +60,14 @@ class RateViewSet(viewsets.ModelViewSet):
                             public_id=image_url.split('/')[-1].split('.')[0]
                         )
 
+            try:
+                from rent_house.services.notification_service import rating_notification
+                rating_notification(self.request.user, house)
+            except Exception as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Lỗi khi gửi thông báo có đánh giá: {str(e)}")
+
             return rate
 
         except House.DoesNotExist:

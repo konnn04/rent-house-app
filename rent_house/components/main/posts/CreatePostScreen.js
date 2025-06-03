@@ -34,7 +34,7 @@ export const CreatePostScreen = () => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   // Set default post type based on user role
-  const [postType, setPostType] = useState(isOwner ? 'rental_listing' : 'question');
+  const [postType, setPostType] = useState('general');
   const [address, setAddress] = useState('');
   const [location, setLocation] = useState({ latitude: null, longitude: null });
   const [selectedImages, setSelectedImages] = useState([]);
@@ -96,9 +96,13 @@ export const CreatePostScreen = () => {
 
     if (!title.trim()) newErrors.title = 'Vui lòng nhập tiêu đề';
     if (!content.trim()) newErrors.content = 'Vui lòng nhập nội dung';
-    if (!address.trim()) newErrors.address = 'Vui lòng chọn địa chỉ';
-    if (!location.latitude || !location.longitude) {
-      newErrors.location = 'Vị trí không hợp lệ';
+
+    // Only require address and location for rental_listing and search_listing types
+    if (postType === 'rental_listing' || postType === 'search_listing') {
+      if (!address.trim()) newErrors.address = 'Vui lòng chọn địa chỉ';
+      if (!location.latitude || !location.longitude) {
+        newErrors.location = 'Vị trí không hợp lệ';
+      }
     }
 
     setErrors(newErrors);
@@ -117,27 +121,40 @@ export const CreatePostScreen = () => {
       formData.append('type', postType);
       formData.append('title', title);
       formData.append('content', content);
-      formData.append('address', address);
-      formData.append('latitude', location.latitude);
-      formData.append('longitude', location.longitude);
+
+      // Only include address and location if provided
+      if (address.trim()) {
+        formData.append('address', address);
+      }
+      if (location.latitude && location.longitude) {
+        formData.append('latitude', location.latitude);
+        formData.append('longitude', location.longitude);
+      }
 
       if (isOwner && linkedHouse) {
         formData.append('house_link', linkedHouse.id);
       }
 
       // Add images
-      selectedImages.forEach((image, index) => {
-        const imageUri = Platform.OS === 'ios' ? image.uri.replace('file://', '') : image.uri;
-        const filename = image.uri.split('/').pop();
-        const match = /\.(\w+)$/.exec(filename);
-        const fileType = match ? `image/${match[1]}` : 'image';
+      if (selectedImages.length > 0) {
+        selectedImages.forEach((image, index) => {
+          // Handle platform-specific URI formatting
+          const imageUri = Platform.OS === 'ios' ? image.uri.replace('file://', '') : image.uri;
+          const filename = image.uri.split('/').pop();
+          const match = /\.(\w+)$/.exec(filename);
+          const fileType = match ? `image/${match[1]}` : 'image/jpeg';
 
-        formData.append('images', {
-          uri: imageUri,
-          name: filename,
-          type: fileType
+          // Debug log
+          console.log(`Appending image ${index}:`, { uri: imageUri, name: filename, type: fileType });
+          
+          // Change to use 'images' instead of 'images[]' to match server expectations
+          formData.append('images', {
+            uri: imageUri,
+            name: filename || `image_${index}.jpg`,
+            type: fileType
+          });
         });
-      });
+      }
 
       // Submit post
       const data = await createPostService(formData);
@@ -275,7 +292,7 @@ export const CreatePostScreen = () => {
         {/* Location */}
         <View style={styles.formSection}>
           <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-            Địa chỉ
+            Địa chỉ {(postType === 'common' || postType === 'roommate') && '(tùy chọn)'}
           </Text>
           <TouchableOpacity
             style={[
@@ -287,7 +304,7 @@ export const CreatePostScreen = () => {
           >
             <Icon name="map-marker" size={24} color={colors.accentColor} />
             <Text style={{ color: colors.textPrimary, marginLeft: 10, flex: 1 }} numberOfLines={1}>
-              {address || 'Chọn địa điểm'}
+              {address || ((postType === 'common' || postType === 'roommate') ? 'Chọn địa điểm (không bắt buộc)' : 'Chọn địa điểm')}
             </Text>
           </TouchableOpacity>
           {errors.address && (

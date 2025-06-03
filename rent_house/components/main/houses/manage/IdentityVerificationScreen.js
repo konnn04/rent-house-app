@@ -18,7 +18,7 @@ export const IdentityVerificationScreen = () => {
   
   const navigation = useNavigation();
   const route = useRoute();
-  const { userData } = useUser();
+  const { userData, fetchUserData } = useUser();
   
   const redirectAfter = route.params?.redirectAfter;
   
@@ -127,7 +127,7 @@ export const IdentityVerificationScreen = () => {
       await submitIdentityVerificationService(formData);
       
       // Update user data to reflect identity submission
-      await userData.fetchUserData();
+      await fetchUserData();
       
       Alert.alert(
         'Gửi thông tin thành công',

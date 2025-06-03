@@ -12,9 +12,9 @@ class HouseListSerializer(serializers.ModelSerializer):
         fields = (
             'id', 'owner', 'title', 'address', 'latitude', 'longitude',
             'created_at', 'updated_at', 'base_price', 'type', 'thumbnail',
-            'max_rooms', 'current_rooms', 'max_people', 'avg_rating'
+            'max_rooms', 'current_rooms', 'max_people', 'avg_rating', 'area', 'deposit', 'is_renting', 'is_verified'
         )
-        read_only_fields = ('id', 'created_at', 'updated_at', 'owner')
+        read_only_fields = ('id', 'created_at', 'updated_at', 'owner', 'is_renting', 'is_verified')
 
     def get_thumbnail(self, obj):
         return obj.get_thumbnail()
@@ -33,7 +33,7 @@ class HouseDetailSerializer(serializers.ModelSerializer):
             'id', 'title', 'description', 'address', 'latitude', 'longitude',
             'created_at', 'updated_at', 'base_price', 'water_price',
             'electricity_price', 'internet_price', 'trash_price', 'is_verified',
-            'owner', 'type', 'media', 'max_rooms', 'current_rooms', 'max_people', 'avg_rating'
+            'owner', 'type', 'media', 'max_rooms', 'current_rooms', 'max_people', 'avg_rating', 'area', 'deposit', 'is_renting', 'is_verified'
         )
         read_only_fields = ('id', 'created_at', 'updated_at', 'owner')
 
@@ -60,7 +60,7 @@ class HouseUpdateSerializer(serializers.ModelSerializer):
             'title', 'description', 'address', 'latitude', 'longitude',
             'base_price', 'water_price', 'electricity_price',
             'internet_price', 'trash_price', 'type',
-            'max_rooms', 'current_rooms', 'max_people'
+            'max_rooms', 'current_rooms', 'max_people', 'area', 'deposit', 'is_renting'
         )
 
     def validate(self, data):

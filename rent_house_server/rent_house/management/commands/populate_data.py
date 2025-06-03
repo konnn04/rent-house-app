@@ -6,10 +6,11 @@ from django.contrib.auth.hashers import make_password
 from django.core.management import call_command
 import json
 from rent_house.models import (
-    User, House, Post, Comment, Interaction, Follow, 
+    User, House, Post, Comment, Interaction, Follow, PostType,
     Notification, ChatGroup, ChatMembership, Message, Rate, Media, 
-    Role, HouseType, PostType, InteractionType, NotificationType, ContentType
+    Role, HouseType, InteractionType, NotificationType, ContentType
 )
+
 
 TOTAL_ROOM_IMAGE = 150
 TOTAL_HOUSE_IMAGE = 70
@@ -94,6 +95,7 @@ class Command(BaseCommand):
             
         except Exception as e:
             self.stdout.write(self.style.ERROR(f'Có lỗi đã xảy ra trong quá trình: {str(e)}'))
+            self.stdout.write(self.style.ERROR('Dữ liệu mẫu không được tạo.'))
 
     def create_application(self):
         call_command('create_oauth_app')    
@@ -311,6 +313,9 @@ class Command(BaseCommand):
         
         post_types = [post_type.value[0] for post_type in PostType]
         users = User.objects.all()
+
+        print(f'[INFO] Tổng số người dùng: {users.count()}')
+        print(f'[INFO] Tổng số nhà: {len(self.houses)}')
         
         self.posts = []
         for i in range(60):
@@ -323,7 +328,7 @@ class Command(BaseCommand):
             latitude = None
             longitude = None
             house_link = None
-            
+
             if post_type == PostType.RENTAL_LISTING.value[0]:
                 if user.role == Role.OWNER.value[0]:
                     houses = House.objects.filter(owner=user)
@@ -339,7 +344,7 @@ class Command(BaseCommand):
                         continue
                 else:
                     title = "Phòng cho thuê"
-                    content = "Tôi còn dư một phòng trong căn hộ của mình. Ai có nhu cầu thuê phòng thì liên hệ với tôi nhé!"
+                    content = "Tôi sắp phải chuyển đi và cần tìm người thuê phòng. Phòng rộng rãi, thoáng mát, giá cả hợp lý. Ai có nhu cầu thì liên hệ với tôi nhé!"
                     address = "123 Đường ABC, Quận 1, TP.HCM"
                     
             elif post_type == PostType.SEARCH_LISTING.value[0]:
@@ -349,7 +354,13 @@ class Command(BaseCommand):
             elif post_type == PostType.ROOMMATE.value[0]:
                 title = "Tìm bạn cùng phòng"
                 content = f"Chào các bạn! Tôi là {user.first_name}, hiện đang tìm một bạn cùng phòng để chia sẻ chi phí thuê nhà. Ai có nhu cầu thì liên hệ với tôi nhé!"
-                
+            
+            else:
+                title = "Thông báo chung"
+                content = "Chào các bạn! Đây là một thông báo chung về việc tìm kiếm phòng trọ. Ai có thông tin gì thì chia sẻ nhé!"
+            
+            
+            
             post = Post.objects.create(
                 author=user,
                 type=post_type,
@@ -360,6 +371,7 @@ class Command(BaseCommand):
                 longitude=longitude,
                 house_link=house_link,
             )
+            
             
             num_images = random.randint(0, 3)
             for j in range(num_images):
@@ -465,7 +477,7 @@ class Command(BaseCommand):
                 interaction_type = random.choice(interaction_types)
                 
                 if not Interaction.objects.filter(user=user, post=post).exists():
-                    Interaction.objects.get_or_create(
+                    Interaction.objects.create(
                         user=user,
                         post=post,
                         type=interaction_type

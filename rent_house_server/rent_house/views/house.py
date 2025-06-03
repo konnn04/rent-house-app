@@ -74,9 +74,37 @@ class HouseViewSet(viewsets.ModelViewSet):
         return queryset
 
     def perform_create(self, serializer):
-        """Khi tạo house, tự động gán người tạo là owner"""
+        # Lấy danh sách ảnh file
+        images = self.request.FILES.getlist('images') if hasattr(self.request.FILES, 'getlist') else []
+        # Lấy danh sách ảnh base64 (nếu có)
+        base64_images = self.request.data.get('base64_images', [])
+        if isinstance(base64_images, str):
+            import json
+            try:
+                base64_images = json.loads(base64_images)
+            except Exception:
+                base64_images = [base64_images]
+        if not isinstance(base64_images, list):
+            base64_images = [base64_images]
+        # Tổng số ảnh thực sự (bỏ qua ảnh rỗng)
+        total_images = len(images) + len([img for img in base64_images if img])
+
+        if total_images < 3:
+            from rest_framework.response import Response
+            from rest_framework import status
+            raise Exception("Vui lòng tải lên tối thiểu 3 ảnh cho nhà/căn hộ.")
+
         house = serializer.save(owner=self.request.user)
         self.handle_images(house)
+
+        try:
+            from rent_house.services.notification_service import house_notification
+            house_notification(self.request.user, house)
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Lỗi khi gửi thông báo có nhà mới: {str(e)}")
+
         return house
 
     def perform_update(self, serializer):
@@ -176,7 +204,7 @@ class HouseViewSet(viewsets.ModelViewSet):
         # Kiểm tra nếu người dùng có quyền tạo nhà mới
         if not request.user.can_create_house():
             return Response({
-                "detail": "Bạn cần xác thực danh tính trước khi đăng tin nhà mới"
+                "message": "Bạn cần xác thực danh tính trước khi đăng tin nhà mới"
             }, status=status.HTTP_403_FORBIDDEN)
         
         return super().create(request, *args, **kwargs)

@@ -5,7 +5,7 @@ import {
   ActivityIndicator, Alert, Image, KeyboardAvoidingView, Platform,
   ScrollView, StyleSheet, Text, TouchableOpacity, View
 } from 'react-native';
-import { Button, HelperText, SegmentedButtons, TextInput } from 'react-native-paper';
+import { Button, HelperText, SegmentedButtons, Switch, TextInput } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 import { useTheme } from '../../../../contexts/ThemeContext';
@@ -25,6 +25,9 @@ export const AddEditHouseScreen = ({ houseId, isEditing = false }) => {
   const [description, setDescription] = useState('');
   const [address, setAddress] = useState('');
   const [basePrice, setBasePrice] = useState('');
+  const [area, setArea] = useState(''); // New field for house area
+  const [deposit, setDeposit] = useState(''); // New field for deposit
+  const [isRenting, setIsRenting] = useState(false); // New flag for rental status
   const [waterPrice, setWaterPrice] = useState('');
   const [electricityPrice, setElectricityPrice] = useState('');
   const [internetPrice, setInternetPrice] = useState('');
@@ -33,6 +36,7 @@ export const AddEditHouseScreen = ({ houseId, isEditing = false }) => {
   const [latitude, setLatitude] = useState('');
   const [longitude, setLongitude] = useState('');
   const [maxRooms, setMaxRooms] = useState('');
+  const [currentRooms, setCurrentRooms] = useState(''); // For tracking rooms currently rented
   const [maxPeople, setMaxPeople] = useState('');
   const [images, setImages] = useState([]);
   const [showLocationPicker, setShowLocationPicker] = useState(false);
@@ -57,6 +61,9 @@ export const AddEditHouseScreen = ({ houseId, isEditing = false }) => {
       setDescription(house.description || '');
       setAddress(house.address || '');
       setBasePrice(house.base_price?.toString() || '');
+      setArea(house.area?.toString() || ''); // Add area field
+      setDeposit(house.deposit?.toString() || ''); // Add deposit field
+      setIsRenting(house.is_renting || false); // Add rental status
       setWaterPrice(house.water_price?.toString() || '');
       setElectricityPrice(house.electricity_price?.toString() || '');
       setInternetPrice(house.internet_price?.toString() || '');
@@ -65,6 +72,7 @@ export const AddEditHouseScreen = ({ houseId, isEditing = false }) => {
       setLatitude(house.latitude?.toString() || '');
       setLongitude(house.longitude?.toString() || '');
       setMaxRooms(house.max_rooms?.toString() || '');
+      setCurrentRooms(house.current_rooms?.toString() || ''); // Add current rooms
       setMaxPeople(house.max_people?.toString() || '');
       
       // Convert media to the format needed for our image picker
@@ -139,6 +147,18 @@ export const AddEditHouseScreen = ({ houseId, isEditing = false }) => {
       newErrors.basePrice = 'Giá cơ bản phải là số dương';
     }
     
+    // Validate area field
+    if (!area.trim()) {
+      newErrors.area = 'Vui lòng nhập diện tích';
+    } else if (isNaN(area) || Number(area) <= 0) {
+      newErrors.area = 'Diện tích phải là số dương';
+    }
+    
+    // Validate deposit field
+    if (deposit.trim() && (isNaN(deposit) || Number(deposit) < 0)) {
+      newErrors.deposit = 'Tiền cọc phải là số dương hoặc 0';
+    }
+    
     if (waterPrice.trim() && (isNaN(waterPrice) || Number(waterPrice) < 0)) {
       newErrors.waterPrice = 'Giá nước phải là số dương hoặc 0';
     }
@@ -159,15 +179,24 @@ export const AddEditHouseScreen = ({ houseId, isEditing = false }) => {
       newErrors.type = 'Vui lòng chọn loại nhà';
     }
     
-    // Validate maxRooms and maxPeople for certain types
+    // Validate max_rooms and current_rooms only for dormitory and room types
     if (type === 'dormitory' || type === 'room') {
       if (!maxRooms.trim() || isNaN(maxRooms) || Number(maxRooms) <= 0) {
         newErrors.maxRooms = 'Vui lòng nhập số phòng tối đa (lớn hơn 0)';
       }
       
-      if (!maxPeople.trim() || isNaN(maxPeople) || Number(maxPeople) <= 0) {
-        newErrors.maxPeople = 'Vui lòng nhập số người tối đa (lớn hơn 0)';
+      if (currentRooms.trim() && (isNaN(currentRooms) || Number(currentRooms) < 0)) {
+        newErrors.currentRooms = 'Số phòng đã cho thuê phải là số dương hoặc 0';
       }
+      
+      if (currentRooms.trim() && maxRooms.trim() && Number(currentRooms) > Number(maxRooms)) {
+        newErrors.currentRooms = 'Số phòng đã cho thuê không thể lớn hơn số phòng tối đa';
+      }
+    }
+    
+    // Always validate max_people
+    if (!maxPeople.trim() || isNaN(maxPeople) || Number(maxPeople) <= 0) {
+      newErrors.maxPeople = 'Vui lòng nhập số người tối đa (lớn hơn 0)';
     }
     
     if (!isEditing && images.length === 0) {
@@ -189,6 +218,9 @@ export const AddEditHouseScreen = ({ houseId, isEditing = false }) => {
       formData.append('description', description);
       formData.append('address', address);
       formData.append('base_price', basePrice);
+      formData.append('area', area); // Add area field
+      formData.append('is_renting', isRenting ? 'true' : 'false'); // Add rental status
+      if (deposit) formData.append('deposit', deposit); // Add deposit field
       formData.append('type', type);
       
       if (waterPrice) formData.append('water_price', waterPrice);
@@ -198,10 +230,13 @@ export const AddEditHouseScreen = ({ houseId, isEditing = false }) => {
       if (latitude) formData.append('latitude', latitude);
       if (longitude) formData.append('longitude', longitude);
       
-      // Add max_rooms and max_people if necessary
+      // Always add max_people
+      formData.append('max_people', maxPeople);
+      
+      // Add max_rooms and current_rooms only for dormitory and room types
       if (type === 'dormitory' || type === 'room') {
         formData.append('max_rooms', maxRooms);
-        formData.append('max_people', maxPeople);
+        if (currentRooms) formData.append('current_rooms', currentRooms);
       }
       
       // Add new images (not the ones already in the database)
@@ -234,7 +269,7 @@ export const AddEditHouseScreen = ({ houseId, isEditing = false }) => {
           {
             text: 'OK',
             onPress: () => {
-              navigation.navigate('ManageHouse');
+              navigation.goBack();
             }
           }
         ]
@@ -242,7 +277,9 @@ export const AddEditHouseScreen = ({ houseId, isEditing = false }) => {
       
     } catch (error) {
       console.error('Error submitting house:', error);
-      Alert.alert('Lỗi', 'Không thể lưu thông tin nhà. Vui lòng thử lại sau.');
+
+      Alert.alert('Lỗi', 'Không thể lưu thông tin nhà.', error.message ? error.message : 'Vui lòng thử lại sau.');
+      setErrors({ submit: 'Không thể lưu thông tin nhà. Vui lòng thử lại.' });
     } finally {
       setSubmitting(false);
     }
@@ -402,7 +439,6 @@ export const AddEditHouseScreen = ({ houseId, isEditing = false }) => {
             buttons={[
               { value: 'house', label: 'Nhà riêng' },
               { value: 'apartment', label: 'Căn hộ' },
-              { value: 'dormitory', label: 'Ký túc xá' },
             ]}
             style={styles.segmentedButtons}
           />
@@ -410,7 +446,7 @@ export const AddEditHouseScreen = ({ houseId, isEditing = false }) => {
             value={type}
             onValueChange={setType}
             buttons={[
-              { value: 'studio', label: 'Studio' },
+              { value: 'dormitory', label: 'Ký túc xá' },
               { value: 'room', label: 'Phòng trọ' },
             ]}
             style={[styles.segmentedButtons, { marginTop: 10 }]}
@@ -421,6 +457,47 @@ export const AddEditHouseScreen = ({ houseId, isEditing = false }) => {
             </HelperText>
           )}
           
+          {/* Area field - always visible */}
+          <TextInput
+            label="Diện tích (m²)"
+            value={area}
+            onChangeText={setArea}
+            keyboardType="numeric"
+            style={styles.input}
+            error={!!errors.area}
+          />
+          {errors.area && (
+            <HelperText type="error" visible={true}>
+              {errors.area}
+            </HelperText>
+          )}
+          
+          {/* Is renting switch */}
+          <View style={styles.switchContainer}>
+            <Text style={[styles.switchLabel, { color: colors.textPrimary }]}>Đang cho thuê</Text>
+            <Switch
+              value={isRenting}
+              onValueChange={setIsRenting}
+              color={colors.accentColor}
+            />
+          </View>
+          
+          {/* Max people field - always visible */}
+          <TextInput
+            label="Số người tối đa"
+            value={maxPeople}
+            onChangeText={setMaxPeople}
+            keyboardType="numeric"
+            style={styles.input}
+            error={!!errors.maxPeople}
+          />
+          {errors.maxPeople && (
+            <HelperText type="error" visible={true}>
+              {errors.maxPeople}
+            </HelperText>
+          )}
+          
+          {/* Max rooms and current rooms - only for dormitory and room types */}
           {(type === 'dormitory' || type === 'room') && (
             <>
               <View style={styles.row}>
@@ -442,16 +519,16 @@ export const AddEditHouseScreen = ({ houseId, isEditing = false }) => {
                 
                 <View style={styles.halfInput}>
                   <TextInput
-                    label="Số người tối đa"
-                    value={maxPeople}
-                    onChangeText={setMaxPeople}
+                    label="Số phòng đã cho thuê"
+                    value={currentRooms}
+                    onChangeText={setCurrentRooms}
                     keyboardType="numeric"
                     style={styles.input}
-                    error={!!errors.maxPeople}
+                    error={!!errors.currentRooms}
                   />
-                  {errors.maxPeople && (
+                  {errors.currentRooms && (
                     <HelperText type="error" visible={true}>
-                      {errors.maxPeople}
+                      {errors.currentRooms}
                     </HelperText>
                   )}
                 </View>
@@ -472,6 +549,21 @@ export const AddEditHouseScreen = ({ houseId, isEditing = false }) => {
           {errors.basePrice && (
             <HelperText type="error" visible={true}>
               {errors.basePrice}
+            </HelperText>
+          )}
+          
+          {/* Deposit field */}
+          <TextInput
+            label="Tiền cọc (VNĐ)"
+            value={deposit}
+            onChangeText={setDeposit}
+            keyboardType="numeric"
+            style={styles.input}
+            error={!!errors.deposit}
+          />
+          {errors.deposit && (
+            <HelperText type="error" visible={true}>
+              {errors.deposit}
             </HelperText>
           )}
           
@@ -542,29 +634,6 @@ export const AddEditHouseScreen = ({ houseId, isEditing = false }) => {
               )}
             </View>
           </View>
-          
-          {/* <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Tọa độ (tùy chọn)</Text>
-          <View style={styles.priceGrid}>
-            <View style={styles.priceItem}>
-              <TextInput
-                label="Vĩ độ"
-                value={latitude}
-                onChangeText={setLatitude}
-                keyboardType="numeric"
-                style={styles.input}
-              />
-            </View>
-            
-            <View style={styles.priceItem}>
-              <TextInput
-                label="Kinh độ"
-                value={longitude}
-                onChangeText={setLongitude}
-                keyboardType="numeric"
-                style={styles.input}
-              />
-            </View>
-          </View> */}
           
           <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Hình ảnh</Text>
           
@@ -653,6 +722,16 @@ const styles = StyleSheet.create({
   },
   halfInput: {
     width: '48%',
+  },
+  switchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 15,
+    marginTop: 5,
+  },
+  switchLabel: {
+    fontSize: 16,
   },
   imagesContainer: {
     flexDirection: 'row',
