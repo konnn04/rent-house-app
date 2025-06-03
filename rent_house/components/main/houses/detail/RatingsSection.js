@@ -213,6 +213,7 @@ export const RatingsSection = ({ houseId, avgRating = 0, insideScrollView = fals
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 10,
+    marginTop: 10,
   },
   summaryContainer: {
     flexDirection: 'row',

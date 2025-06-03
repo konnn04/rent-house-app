@@ -6,18 +6,55 @@ import { formatCurrency } from '../../../../utils/Tools';
 
 export const HouseCard = ({ house, onPress }) => {
   const { colors } = useTheme();
-  
+
   // Map house types to readable text
   const getHouseTypeText = (type) => {
     const types = {
       'house': 'Nhà riêng',
       'apartment': 'Căn hộ',
-      'villa': 'Biệt thự',
       'dormitory': 'Ký túc xá',
-      'studio': 'Studio',
+      'room': 'Nhà trọ',
     };
     return types[type] || 'Nhà';
   };
+  // Map house types to icons
+  const format_houses_Type = (house) => {
+    const icons = {
+      'house': 'home',
+      'apartment': 'home-city',
+      'dormitory': 'school',
+      'room': 'bed',
+    };
+    if (house.type === 'house' || house.type === 'apartment') {
+      return (
+        <View style={styles.stat}>
+          <Icon name={icons[house.type]} size={16} color={colors.accentColor} />
+          <Text style={[styles.statText, { color: colors.dangerColor }]}>
+            {house.available_rooms > 0 ? "Còn trống" : "Đã thuê"}
+          </Text>
+        </View>
+      );
+    }
+    if (house.type === 'dormitory' || house.type === 'room') {
+      return (
+        <View style={styles.statsContainer}>
+          <View style={styles.stat}>
+            <Icon name={icons[house.type]} size={16} color={colors.accentColor} />
+            <Text style={[styles.statText, { color: colors.successColor }]}>
+              {house.current_rooms || 0} phòng
+            </Text>
+          </View>
+          <View style={styles.stat}>
+            <Icon name="door-open" size={16} color={colors.successColor} />
+            <Text style={[styles.statText, { color: colors.textSecondary }]}>
+              {house.available_rooms || 0} phòng trống
+            </Text>
+          </View>
+        </View>
+      );
+    }
+  }
+
 
   return (
     <TouchableOpacity
@@ -48,39 +85,26 @@ export const HouseCard = ({ house, onPress }) => {
 
       {/* House details */}
       <View style={styles.detailsContainer}>
-        <Text 
-          style={[styles.title, { color: colors.textPrimary }]} 
+        <Text
+          style={[styles.title, { color: colors.textPrimary }]}
           numberOfLines={1}
         >
           {house.title}
         </Text>
-        
+
         <View style={styles.locationRow}>
           <Icon name="map-marker" size={16} color={colors.textSecondary} />
-          <Text 
-            style={[styles.location, { color: colors.textSecondary }]} 
+          <Text
+            style={[styles.location, { color: colors.textSecondary }]}
             numberOfLines={1}
           >
             {house.address}
           </Text>
         </View>
-        
+
         <View style={styles.statsContainer}>
-          <View style={styles.stat}>
-            <Icon name="door" size={16} color={colors.accentColor} />
-            <Text style={[styles.statText, { color: colors.textSecondary }]}>
-              {house.room_count || 0}
-            </Text>
-          </View>
-          
-          <View style={styles.stat}>
-            <Icon name="door-open" size={16} color={colors.successColor} />
-            <Text style={[styles.statText, { color: colors.textSecondary }]}>
-              {house.available_rooms || 0}
-            </Text>
-          </View>
-          
-          <Chip 
+          {format_houses_Type(house)}
+          <Chip
             mode="outlined"
             style={styles.typeChip}
             textStyle={{ fontSize: 12 }}
@@ -88,7 +112,7 @@ export const HouseCard = ({ house, onPress }) => {
             {getHouseTypeText(house.type)}
           </Chip>
         </View>
-        
+
         <View style={styles.footer}>
           <View style={styles.ratingContainer}>
             <Icon name="star" size={16} color="#FFD700" />
@@ -96,7 +120,7 @@ export const HouseCard = ({ house, onPress }) => {
               {house.avg_rating ? house.avg_rating.toFixed(1) : '--'}
             </Text>
           </View>
-          
+
           <Text style={[styles.lastUpdated, { color: colors.textSecondary }]}>
             {house.updated_at ? new Date(house.updated_at).toLocaleDateString() : ''}
           </Text>
@@ -105,6 +129,8 @@ export const HouseCard = ({ house, onPress }) => {
     </TouchableOpacity>
   );
 };
+
+
 
 const styles = StyleSheet.create({
   container: {

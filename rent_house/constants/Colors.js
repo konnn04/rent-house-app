@@ -12,7 +12,7 @@ export default {
     successColor: "#198754",
     warningColor: "#fffb00",
     dangerColor: "#dc3545",
-    infoColor: "#00C6ED",
+    infoColor: "#3D90D7",
     borderColor: "#b0bdc9"
   },
   dark: {
@@ -25,7 +25,7 @@ export default {
     successColor: "#198754",
     warningColor: "#fffb00",
     dangerColor: "#fe1e2c",
-    infoColor: "#00738a",
+    infoColor: "#1B56FD",
     borderColor: "#000000"
   },
 };

@@ -24,13 +24,49 @@ export const HouseBasicInfo = ({ house }) => {
     const types = {
       'house': 'Nhà riêng',
       'apartment': 'Căn hộ',
-      'villa': 'Biệt thự',
       'dormitory': 'Ký túc xá',
-      'studio': 'Studio',
       'room': 'Phòng trọ',
     };
     return types[type] || 'Nhà';
   };
+
+  const format_houses_Type = (house) => {
+      const icons = {
+        'house': 'home',
+        'apartment': 'home-city',
+        'dormitory': 'school',
+        'room': 'bed',
+      };
+      if (house.type === 'house' || house.type === 'apartment') {
+        return (
+          <View style={styles.stat}>
+            <Icon name={icons[house.type]} size={16} color={colors.accentColor} />
+            <Text style={[styles.statText, { color: colors.dangerColor }]}>
+              {house.available_rooms > 0 ? "Còn trống" : "Đã thuê"}
+            </Text>
+          </View>
+        );
+      }
+      if (house.type === 'dormitory' || house.type === 'room') {
+        return (
+          <View style={styles.statsContainer}>
+            <View style={styles.stat}>
+              <Icon name={icons[house.type]} size={16} color={colors.accentColor} />
+              <Text style={[styles.statText, { color: colors.successColor }]}>
+                {house.current_rooms || 0} phòng
+              </Text>
+            </View>
+            <View style={styles.stat}>
+              <Icon name="door-open" size={16} color={colors.successColor} />
+              <Text style={[styles.statText, { color: colors.textSecondary }]}>
+                {house.available_rooms || 0} phòng trống
+              </Text>
+            </View>
+          </View>
+        );
+      }
+    }
+
   
   return (
     <View style={[styles.container, { backgroundColor: colors.backgroundSecondary }]}>
@@ -82,19 +118,8 @@ export const HouseBasicInfo = ({ house }) => {
       
       {/* Quick stats */}
       <View style={styles.statsContainer}>
-        <View style={styles.statItem}>
-          <Icon name="door" size={18} color={colors.accentColor} />
-          <Text style={[styles.statText, { color: colors.textSecondary }]}>
-            {house.max_rooms || 0} phòng
-          </Text>
-        </View>
-        
-        <View style={styles.statItem}>
-          <Icon name="door-open" size={18} color={colors.accentColor} />
-          <Text style={[styles.statText, { color: colors.textSecondary }]}>
-            {house.current_rooms || 0} phòng đã dùng
-          </Text>
-        </View>
+
+        {format_houses_Type(house)}
         
         <View style={styles.statItem}>
           <Icon name="star" size={18} color="#FFD700" />
@@ -160,7 +185,8 @@ const styles = StyleSheet.create({
   statsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 15,
+    marginTop: 10,
+    marginBottom: 7,
   },
   statItem: {
     flexDirection: 'row',
@@ -168,5 +194,10 @@ const styles = StyleSheet.create({
   },
   statText: {
     marginLeft: 5,
+  },
+  stat: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 12,
   },
 });

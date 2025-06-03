@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { timeAgo } from '../../../utils/Tools';
+import { useTheme } from '../../../contexts/ThemeContext';
 
 // Map loại thông báo đến icon tương ứng
 const NOTIFICATION_TYPE_ICONS = {
@@ -19,18 +20,29 @@ const NOTIFICATION_TYPE_ICONS = {
     'system': 'information'
 };
 
-export const NotificationCard = memo(({ item, onPress, onMenuPress, colors }) => {
+export const NotificationCard = memo(({ item, onPress, onMenuPress }) => {
     const iconName = NOTIFICATION_TYPE_ICONS[item.type] || 'bell';
-
+    const isUnread = !item.is_read;
+    const { colors } = useTheme();
     return (
         <TouchableOpacity
             style={[
                 styles.notificationContainer,
-                !item.is_read && { backgroundColor: colors.backgroundHighlight }
+                { borderBottomColor: colors.borderColor || '#E0E0E0' },
+                isUnread && {
+                    backgroundColor: colors.infoColor + '43' || colors.accentColor + '10' // Sử dụng màu accent với độ trong suốt
+                }
             ]}
             onPress={() => onPress(item)}
             activeOpacity={0.7}
         >
+            {isUnread && (
+                <View style={[
+                    styles.unreadIndicator, 
+                    { backgroundColor: colors.accentColor }
+                ]} />
+            )}
+            
             <View style={styles.avatarContainer}>
                 {item.sender.avatar_thumbnail ? (
                     <Image
@@ -40,7 +52,7 @@ export const NotificationCard = memo(({ item, onPress, onMenuPress, colors }) =>
                     />
                 ) : (
                     <View style={[styles.avatar, { backgroundColor: colors.accentColor }]}>
-                        <Text style={styles.avatarText}>
+                        <Text style={[styles.avatarText, { color: colors.textPrimary }]}>
                             {item.sender.full_name?.charAt(0) || 'U'}
                         </Text>
                     </View>
@@ -72,7 +84,7 @@ export const NotificationCard = memo(({ item, onPress, onMenuPress, colors }) =>
                 >
                     {item.content}
                 </Text>
-                <Text style={[styles.notificationTime, { color: colors.textSecondary }]}>
+                <Text style={[styles.notificationTime, { color: colors.textPrimary }]}>
                     {timeAgo(item.created_at)}
                 </Text>
             </View>
@@ -110,13 +122,12 @@ const styles = StyleSheet.create({
     },
     headerTitle: {
         fontSize: 24,
-        fontWeight: 'bold',
+        fontWeight: 400,
     },
     notificationContainer: {
         flexDirection: 'row',
         padding: 16,
         borderBottomWidth: 0.5,
-        borderBottomColor: '#E0E0E0',
     },
     avatarContainer: {
         aspectRatio: 1,
