@@ -62,3 +62,14 @@ export const createPostCommentService = async (formData) => {
     throw error;
   }
 }
+
+// Xóa comment của bài viết
+export const deletePostCommentService = async (commentId) => {
+  try {
+    const response = await apiClient.delete(`/api/comments/${commentId}/`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error deleting comment ${commentId}:`, error);
+    throw error;
+  }
+}

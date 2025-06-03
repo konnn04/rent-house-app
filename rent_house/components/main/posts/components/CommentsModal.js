@@ -17,7 +17,7 @@ import {
   View
 } from 'react-native';
 import { useUser } from '../../../../contexts/UserContext';
-import { createPostCommentService, getPostCommentsService } from '../../../../services/postService';
+import { createPostCommentService, getPostCommentsService, deletePostCommentService } from '../../../../services/postService';
 import { CommentItem } from './CommentItem';
 
 export const CommentsModal = ({ visible, onClose, postId, colors }) => {
@@ -206,6 +206,16 @@ export const CommentsModal = ({ visible, onClose, postId, colors }) => {
       </View>
     );
   };
+
+  // Handle deleting a comment
+  const handleDeleteComment = async (commentId) => {
+    try {
+      await deletePostCommentService(commentId);
+      setComments(prev => prev.filter(comment => comment.id !== commentId));
+    } catch (error) {
+      console.error('Error deleting comment:', error);
+    }
+  };
   
   return (
     <Modal
@@ -246,6 +256,7 @@ export const CommentsModal = ({ visible, onClose, postId, colors }) => {
                     <CommentItem
                       comment={item}
                       onReply={handleReply}
+                      onDelete={handleDeleteComment} 
                       colors={colors}
                       postId={postId}
                     />

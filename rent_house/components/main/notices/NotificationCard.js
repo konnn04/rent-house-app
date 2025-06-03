@@ -40,7 +40,7 @@ export const NotificationCard = memo(({ item, onPress, onMenuPress, colors }) =>
                     />
                 ) : (
                     <View style={[styles.avatar, { backgroundColor: colors.accentColor }]}>
-                        <Text style={styles.avatarText}>
+                            <Text style={[styles.avatarText, { color: colors.textPrimary }]}>
                             {item.sender.full_name?.charAt(0) || 'U'}
                         </Text>
                     </View>
