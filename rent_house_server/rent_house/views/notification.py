@@ -34,4 +34,4 @@ class NotificationViewSet(viewsets.ModelViewSet):
     def unread_count(self, request):
         """Lấy số lượng thông báo chưa đọc"""
         count = Notification.objects.filter(user=request.user, is_read=False).count()
-        return Response({"unread_count": count})
+        return Response({"total_unread": count})

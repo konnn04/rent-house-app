@@ -289,6 +289,87 @@ Creates a 1-1 chat with another user, or retrieves an existing chat.
 }
 ```
 
+### Get Unread Messages Count
+
+```http
+GET /api/chats/unread_count/
+```
+
+Retrieves the total count of unread messages across all chats, along with detailed information about each chat with unread messages.
+
+**Authentication:** Required
+
+**Response (200 OK)**:
+
+```json
+{
+  "total_unread": 15,
+  "chats_with_unread": [
+    {
+      "chat_id": 1,
+      "name": null,
+      "is_group": false,
+      "unread_count": 3,
+      "members_summary": [
+        {
+          "id": 456,
+          "username": "owner1",
+          "full_name": "Owner One",
+          "avatar_thumbnail": "https://example.com/avatars/owner1_thumb.jpg",
+          "role": "owner"
+        }
+      ],
+      "last_message": {
+        "id": 42,
+        "sender": {
+          "id": 456,
+          "username": "owner1",
+          "full_name": "Owner One", 
+          "avatar_thumbnail": "https://example.com/avatars/owner1_thumb.jpg",
+          "role": "owner"
+        },
+        "content": "Vâng, phòng vẫn còn trống.",
+        "created_at": "2023-07-15T11:45:00Z"
+      }
+    },
+    {
+      "chat_id": 2,
+      "name": "Nhóm thảo luận dự án",
+      "is_group": true,
+      "unread_count": 12,
+      "members_summary": [
+        {
+          "id": 456,
+          "username": "owner1",
+          "full_name": "Owner One",
+          "avatar_thumbnail": "https://example.com/avatars/owner1_thumb.jpg",
+          "role": "owner"
+        },
+        {
+          "id": 789,
+          "username": "user3",
+          "full_name": "User Three",
+          "avatar_thumbnail": "https://example.com/avatars/user3_thumb.jpg",
+          "role": "renter"
+        }
+      ],
+      "last_message": {
+        "id": 67,
+        "sender": {
+          "id": 789,
+          "username": "user3",
+          "full_name": "User Three",
+          "avatar_thumbnail": "https://example.com/avatars/user3_thumb.jpg",
+          "role": "renter"
+        },
+        "content": "Hẹn mọi người 10h sáng mai nhé",
+        "created_at": "2023-07-15T14:20:00Z"
+      }
+    }
+  ]
+}
+```
+
 ### Add Member to Chat Group
 
 ```http

@@ -1,64 +1,53 @@
 # User APIs
 
-## Lấy và cập nhật thông tin người dùng hiện tại
+## Lấy thông tin người dùng hiện tại
 
 ```
 GET /api/users/current-user/
+```
+
+Lấy thông tin chi tiết về người dùng hiện tại đang đăng nhập.
+
+**Headers**:
+```
+Authorization: Bearer {access_token}
+```
+
+**Response (200 OK)**:
+
+```json
+{
+  "id": 123,
+  "username": "user1",
+  "email": "user@example.com",
+  "first_name": "First",
+  "last_name": "Last",
+  "phone_number": "0987654321",
+  "role": "owner",
+  "address": "123 Street, City",
+  "avatar": "https://example.com/avatars/user1.jpg",
+  "is_active": true,
+  "is_staff": false,
+  "is_superuser": false,
+  "post_count": 5,
+  "joined_date": "2023-05-10T10:30:00Z",
+  "follower_count": 10,
+  "following_count": 20,
+  "avg_rating": 4.5,
+  "house_count": 3,
+  "room_count": null,
+  "is_verified": true,
+  "has_identity": true
+}
+```
+
+## Cập nhật thông tin người dùng
+
+```
 PATCH /api/users/current-user/
 ```
 
-Lấy hoặc cập nhật thông tin của người dùng hiện tại.
-
-**Headers**:
-```
-Authorization: Bearer {access_token}
-```
-
-**Request Body (PATCH)**:
-
-```json
-{
-  "first_name": "John",
-  "last_name": "Doe",
-  "phone_number": "0987654321"
-}
-```
-
-**Response (200 OK)**:
-
-```json
-{
-    "id": 1,
-    "username": "admin",
-    "email": "admin@example.com",
-    "first_name": "John",
-    "last_name": "Doe",
-    "phone_number": "0987654321",
-    "role": "admin",
-    "address": null,
-    "avatar": null,
-    "is_active": true,
-    "is_staff": true,
-    "is_superuser": true,
-    "post_count": 0,
-    "joined_date": "2025-05-31T14:12:36.794325Z",
-    "follower_count": 6,
-    "following_count": 5,
-    "avg_rating": null,
-    "house_count": null,
-    "room_count": null,
-    "is_verified": false,
-    "has_identity": false
-}
-```
-
-## Đăng ký FCM Token cho thông báo
-
-```
-POST /api/users/register_device/
-```
-
-Đăng ký FCM token cho thiết bị hiện tại để nhận thông báo.
+Cập nhật thông tin cá nhân của người dùng hiện tại.
 
 **Headers**:
 ```
@@ -69,7 +58,10 @@ Authorization: Bearer {access_token}
 
 ```json
 {
-  "fcm_token": "eEw23sdfsdf_FCM_TOKEN_EXAMPLE_3kjnfdwwje"
+  "first_name": "New First Name",
+  "last_name": "New Last Name",
+  "phone_number": "0987654322",
+  "address": "456 New Street, City"
 }
 ```
 
@@ -77,43 +69,34 @@ Authorization: Bearer {access_token}
 
 ```json
 {
-  "status": "Device registered successfully"
+  "id": 123,
+  "username": "user1",
+  "email": "user@example.com",
+  "first_name": "New First Name",
+  "last_name": "New Last Name",
+  "phone_number": "0987654322",
+  "role": "owner",
+  "address": "456 New Street, City",
+  "avatar": "https://example.com/avatars/user1.jpg",
+  "is_active": true,
+  "is_staff": false,
+  "is_superuser": false,
+  "post_count": 5,
+  "joined_date": "2023-05-10T10:30:00Z",
+  "follower_count": 10,
+  "following_count": 20,
+  "avg_rating": 4.5,
+  "house_count": 3,
+  "room_count": null,
+  "is_verified": true,
+  "has_identity": true
 }
 ```
 
-## Hủy đăng ký FCM Token
+## Cập nhật avatar
 
 ```
-POST /api/users/unregister_device/
-```
-
-Hủy đăng ký FCM token khi đăng xuất hoặc xóa ứng dụng.
-
-**Headers**:
-```
-Authorization: Bearer {access_token}
-```
-
-**Request Body**:
-
-```json
-{
-  "fcm_token": "eEw23sdfsdf_FCM_TOKEN_EXAMPLE_3kjnfdwwje"
-}
-```
-
-**Response (200 OK)**:
-
-```json
-{
-  "status": "Device unregistered successfully"
-}
-```
-
-## Cập nhật avatar người dùng
-
-```
-PATCH /api/users/update_avatar/
+PATCH /api/users/update-avatar/
 ```
 
 Cập nhật ảnh đại diện của người dùng.
@@ -135,129 +118,36 @@ avatar: [file]  // File hình ảnh
 ```json
 {
   "id": 123,
-  "avatar": "https://example.com/avatars/user123.jpg",
-  "avatar_thumbnail": "https://example.com/avatars/user123_thumb.jpg"
-}
-```
-
-## Đổi mật khẩu
-
-```
-POST /api/users/change_password/
-```
-
-Đổi mật khẩu của người dùng hiện tại.
-
-**Headers**:
-```
-Authorization: Bearer {access_token}
-```
-
-**Request Body**:
-
-```json
-{
-  "old_password": "old_secure_password",
-  "new_password": "new_secure_password",
-  "new_password2": "new_secure_password"
-}
-```
-
-**Response (200 OK)**:
-
-```json
-{
-  "message": "Mật khẩu đã được cập nhật thành công."
-}
-```
-
-**Response (400 Bad Request)**:
-
-```json
-{
-  "old_password": [
-    "Mật khẩu hiện tại không đúng."
-  ]
-}
-```
-
-## Xem thông tin người dùng khác
-
-```
-GET /api/users/{id}/
-```
-
-Xem thông tin cơ bản của người dùng khác.
-
-**Response (200 OK)**:
-
-```json
-{
-  "id": 124,
-  "username": "other_user",
-  "full_name": "Other User",
-  "avatar": "https://example.com/avatars/other_user.jpg",
-  "avatar_thumbnail": "https://example.com/avatars/other_user_thumb.jpg",
+  "username": "user1",
+  "email": "user@example.com",
+  "first_name": "First",
+  "last_name": "Last",
+  "phone_number": "0987654321",
   "role": "owner",
-  "joined_date": "2023-05-01T10:30:00Z",
-  "is_followed": false
+  "address": "123 Street, City",
+  "avatar": "https://res.cloudinary.com/example/image/upload/v1234567/user_avatars/abc123.jpg",
+  "is_active": true,
+  "is_staff": false,
+  "is_superuser": false,
+  "post_count": 5,
+  "joined_date": "2023-05-10T10:30:00Z",
+  "follower_count": 10,
+  "following_count": 20,
+  "avg_rating": 4.5,
+  "house_count": 3,
+  "room_count": null,
+  "is_verified": true,
+  "has_identity": true
 }
 ```
 
-## Tìm kiếm người dùng
-
-```
-GET /api/users/search/?q=john
-```
-
-Tìm kiếm người dùng theo tên đăng nhập hoặc tên đầy đủ.
-
-**Query Parameters**:
-
-- `q`: Từ khóa tìm kiếm
-- `page`: Số trang
-- `page_size`: Số lượng kết quả trên mỗi trang
-
-**Response (200 OK)**:
-
-```json
-{
-  "count": 3,
-  "next": null,
-  "previous": null,
-  "results": [
-    {
-      "id": 123,
-      "username": "john_doe",
-      "full_name": "John Doe",
-      "avatar_thumbnail": "https://example.com/avatars/john_doe_thumb.jpg",
-      "role": "renter"
-    },
-    {
-      "id": 124,
-      "username": "johnny",
-      "full_name": "Johnny Walker",
-      "avatar_thumbnail": "https://example.com/avatars/johnny_thumb.jpg",
-      "role": "owner"
-    },
-    {
-      "id": 125,
-      "username": "johnson",
-      "full_name": "John Smith",
-      "avatar_thumbnail": "https://example.com/avatars/johnson_thumb.jpg",
-      "role": "renter"
-    }
-  ]
-}
-```
-
-## Xác thực danh tính (cho người dùng vai trò owner)
+## Xác thực danh tính
 
 ```
 POST /api/identity-verification/
 ```
 
-Xác thực danh tính cho người dùng có vai trò owner.
+Gửi hồ sơ xác thực danh tính (chỉ dành cho chủ nhà).
 
 **Headers**:
 ```
@@ -268,10 +158,10 @@ Content-Type: multipart/form-data
 **Request Body**:
 
 ```
-id_number: "123456789"  # Số CCCD/CMND
-front_id_image: [file]  # Ảnh mặt trước CCCD/CMND
-back_id_image: [file]   # Ảnh mặt sau CCCD/CMND
-selfie_image: [file]    # Ảnh chân dung cầm CCCD/CMND (nếu yêu cầu)
+id_number: 123456789012
+front_id_image: [file]  // Ảnh mặt trước CCCD/CMND
+back_id_image: [file]   // Ảnh mặt sau CCCD/CMND
+selfie_image: [file]    // Ảnh chụp chân dung với giấy tờ
 ```
 
 **Response (201 Created)**:
@@ -279,50 +169,40 @@ selfie_image: [file]    # Ảnh chân dung cầm CCCD/CMND (nếu yêu cầu)
 ```json
 {
   "id": 1,
-  "user": {
-    "id": 123,
-    "username": "owner_user"
-  },
-  "id_number": "123456789",
+  "id_number": "123456789012",
   "is_verified": false,
-  "created_at": "2023-10-25T08:30:00Z",
-  "media": [
-    {
-      "id": 1,
-      "url": "https://example.com/media/id_front_123.jpg",
-      "purpose": "id_front"
-    },
-    {
-      "id": 2,
-      "url": "https://example.com/media/id_back_123.jpg",
-      "purpose": "id_back"
-    },
-    {
-      "id": 3,
-      "url": "https://example.com/media/selfie_123.jpg",
-      "purpose": "id_selfie"
-    }
-  ]
+  "front_id_image": {
+    "id": 5,
+    "url": "https://res.cloudinary.com/example/image/upload/v1234567/identity_verification/front_123.jpg"
+  },
+  "back_id_image": {
+    "id": 6,
+    "url": "https://res.cloudinary.com/example/image/upload/v1234567/identity_verification/back_123.jpg"
+  },
+  "selfie_image": {
+    "id": 7,
+    "url": "https://res.cloudinary.com/example/image/upload/v1234567/identity_verification/selfie_123.jpg"
+  },
+  "created_at": "2023-07-15T10:30:00Z",
+  "updated_at": "2023-07-15T10:30:00Z"
 }
 ```
 
-**Response (400 Bad Request)**:
+**Response (403 Forbidden)** - Khi người dùng không phải là chủ nhà:
 
 ```json
 {
-  "id_number": ["Số CCCD/CMND không hợp lệ"],
-  "front_id_image": ["Vui lòng tải lên ảnh mặt trước CCCD/CMND"],
-  "back_id_image": ["Vui lòng tải lên ảnh mặt sau CCCD/CMND"]
+  "detail": "Chỉ chủ nhà mới cần xác thực danh tính"
 }
 ```
 
-## Kiểm tra trạng thái xác thực danh tính
+## Xem trạng thái xác thực danh tính
 
 ```
-GET /api/identity-verification/status/
+GET /api/identity-verification/{id}/
 ```
 
-Kiểm tra trạng thái xác thực danh tính của người dùng hiện tại.
+Xem thông tin và trạng thái xác thực danh tính.
 
 **Headers**:
 ```
@@ -333,9 +213,22 @@ Authorization: Bearer {access_token}
 
 ```json
 {
-  "has_submitted": true,
-  "is_verified": false,
-  "submission_date": "2023-10-25T08:30:00Z",
-  "rejection_reason": null
+  "id": 1,
+  "id_number": "123456789012",
+  "is_verified": true,
+  "front_id_image": {
+    "id": 5,
+    "url": "https://res.cloudinary.com/example/image/upload/v1234567/identity_verification/front_123.jpg"
+  },
+  "back_id_image": {
+    "id": 6,
+    "url": "https://res.cloudinary.com/example/image/upload/v1234567/identity_verification/back_123.jpg"
+  },
+  "selfie_image": {
+    "id": 7,
+    "url": "https://res.cloudinary.com/example/image/upload/v1234567/identity_verification/selfie_123.jpg"
+  },
+  "created_at": "2023-07-15T10:30:00Z",
+  "updated_at": "2023-07-15T10:30:00Z"
 }
 ```

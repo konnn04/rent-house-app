@@ -42,3 +42,13 @@ export const deleteNotificationService = async (notificationId) => {
     throw error;
   }
 }
+
+export const getUnreadNotificationsCount = async () => {
+  try {
+    const response = await apiClient.get('/api/notifications/unread_count/');
+    return response.data.total_unread || 0;
+  } catch (error) {
+    console.error('Error fetching unread notifications count:', error);
+    return 0;
+  }
+}

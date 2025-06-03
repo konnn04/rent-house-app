@@ -1,6 +1,7 @@
-import { useNavigation } from '@react-navigation/native';
+import { useIsFocused, useNavigation } from '@react-navigation/native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useNotificationCount } from '../../../contexts/NotificationCountContext';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { useUser } from '../../../contexts/UserContext';
 import { getChatsService } from "../../../services/chatService";
@@ -21,6 +22,8 @@ export const ChatListScreen = () => {
   const [error, setError] = useState(null);
   const { userData } = useUser();
   const navigation = useNavigation();
+  const { resetMessageCount, fetchUnreadMessages } = useNotificationCount();
+  const isFocused = useIsFocused();
 
   // Fetch chats with lazy loading
   const fetchChats = useCallback(async (isRefresh = false) => {
@@ -72,10 +75,19 @@ export const ChatListScreen = () => {
     return unsubscribe;
   }, [navigation, fetchChats]);
 
+  // Reset message count when screen is focused
+  useEffect(() => {
+    if (isFocused) {
+      resetMessageCount();
+    }
+  }, [isFocused, resetMessageCount]);
+
+  // Update count when the user refreshes
   const onRefresh = useCallback(() => {
     setNextPageUrl(null);
     fetchChats(true);
-  }, [fetchChats]);
+    resetMessageCount();
+  }, [fetchChats, resetMessageCount]);
 
   // Lazy load more
   const handleLoadMore = () => {

@@ -263,7 +263,6 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 16,
-    paddingTop: 40,
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
   },

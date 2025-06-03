@@ -1,3 +1,4 @@
+import { useIsFocused } from '@react-navigation/native';
 import { useCallback, useEffect, useState } from 'react';
 import {
     ActivityIndicator,
@@ -10,6 +11,7 @@ import {
 } from 'react-native';
 import { Divider, Menu } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { useNotificationCount } from '../../../contexts/NotificationCountContext';
 import { useTheme } from '../../../contexts/ThemeContext';
 import {
     deleteNotificationService,
@@ -32,7 +34,9 @@ export const NoticeScreen = () => {
     const [hasError, setHasError] = useState(false);
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
-
+    const { resetNotificationCount, fetchUnreadNotifications } = useNotificationCount();
+    const isFocused = useIsFocused();
+    
     // Fetch notifications - tối ưu để tránh gọi API liên tục
     const fetchNotifications = useCallback(async (isRefresh = false) => {
         // Nếu đang tải, bỏ qua request mới
@@ -106,11 +110,20 @@ export const NoticeScreen = () => {
         fetchNotifications(true);
     }, []);
     
-    // Pull to refresh - chỉ gọi khi người dùng chủ động thực hiện refresh
+    // Reset notification count when screen is focused
+    useEffect(() => {
+        if (isFocused) {
+            resetNotificationCount();
+        }
+    }, [isFocused, resetNotificationCount]);
+
+    // Update count when the user refreshes
     const handleRefresh = useCallback(() => {
-        if (refreshing) return; // Tránh refresh khi đang refresh
+        setRefreshing(true);
+        setNextPageUrl(null);
         fetchNotifications(true);
-    }, [fetchNotifications, refreshing]);
+        resetNotificationCount();
+    }, [fetchNotifications, resetNotificationCount]);
     
     // Load more - chỉ gọi khi cần và có thêm dữ liệu
     const handleLoadMore = useCallback(() => {
@@ -145,10 +158,13 @@ export const NoticeScreen = () => {
     // Handle notification click
     const handleNotificationPress = useCallback((notification) => {
         markAsRead(notification);
+        
+        // Refresh notification count after marking as read
+        fetchUnreadNotifications();
 
         // Thêm logic điều hướng tùy theo loại thông báo
         // Ví dụ: if (notification.type === 'comment') { navigation.navigate(...) }
-    }, [markAsRead]);
+    }, [markAsRead, fetchUnreadNotifications]);
 
     // Handle notification menu
     const handleMenuPress = useCallback((notification) => {
@@ -318,7 +334,6 @@ export const NoticeScreen = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        paddingBottom: 70,
     },
     header: {
         flexDirection: 'row',
