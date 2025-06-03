@@ -62,6 +62,16 @@ class InteractionType(Enum):
     def __str__(self):
         return self.value[1]
     
+class ReportType(Enum):
+    SCAM = 'scam', 'Lừa đảo'
+    VIOLATION = 'violation', 'Vi phạm quy định'
+    OFFENSIVE = 'offensive', 'Phản cảm'
+    HATE = 'hate', 'Gây thù ghét'
+    OTHER = 'other', 'Khác'
+
+    def __str__(self):
+        return self.value[1]
+
 ###################
 # Thiết lập các trường cơ bản cho mô hình
 ###################
@@ -606,3 +616,16 @@ class PasswordResetToken(BaseModel):
     def mark_as_used(self):
         self.is_used = True
         self.save(update_fields=['is_used'])
+
+class Report(BaseModel):
+    reporter = models.ForeignKey('User', on_delete=models.CASCADE, related_name='reports_made')
+    reported_user = models.ForeignKey('User', on_delete=models.CASCADE, related_name='reports_received')
+    type = models.CharField(
+        max_length=20,
+        choices=[(t.value[0], t.value[1]) for t in ReportType]
+    )
+    reason = models.TextField()
+    is_resolved = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{self.reporter.username} tố cáo {self.reported_user.username}: {self.get_type_display()}"
