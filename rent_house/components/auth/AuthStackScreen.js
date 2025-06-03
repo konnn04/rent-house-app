@@ -1,7 +1,7 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
 import { useTheme } from '../../contexts/ThemeContext';
-import { CantLogin } from './CantLogin';
+import { ForgetPassword } from './ForgetPassword';
 import { Login } from './Login';
 import { Register } from './Register';
 
@@ -50,8 +50,8 @@ export const AuthStackScreen = () => {
         />
 
         <AuthStack.Screen
-          name="CantLogin"
-          component={CantLogin}
+          name="ForgetPassword"
+          component={ForgetPassword}
           options={{ title: 'Không thể đăng nhập' }}
         />
       </AuthStack.Navigator>

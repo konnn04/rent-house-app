@@ -3,9 +3,8 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Q
-from django.utils import timezone
 
-from rent_house.models import User, VerificationCode
+from rent_house.models import User, VerificationCode, PasswordResetToken
 
 class PreRegisterSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
@@ -171,3 +170,47 @@ class CheckVerificationStatusSerializer(serializers.Serializer):
             return value
         except User.DoesNotExist:
             raise serializers.ValidationError("Username hoặc email không tồn tại trong hệ thống")
+
+# Quên mật khẩu
+class RequestPasswordResetSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
+    
+    def validate_email(self, value):
+        """Kiểm tra email có tồn tại không"""
+        try:
+            user = User.objects.get(email=value)
+            return value
+        except User.DoesNotExist:
+            # Không báo lỗi rõ ràng để tránh lộ thông tin về tài khoản tồn tại
+            return value
+
+class PasswordResetSerializer(serializers.Serializer):
+    token = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True, style={'input_type': 'password'})
+    confirm_password = serializers.CharField(required=True, style={'input_type': 'password'})
+    
+    def validate(self, attrs):
+        """Kiểm tra token và mật khẩu"""
+        token = attrs.get('token')
+        
+        # Kiểm tra token có tồn tại và hợp lệ không
+        reset_token = PasswordResetToken.objects.filter(token=token, is_used=False).first()
+        if not reset_token:
+            raise serializers.ValidationError({"token": "Token không hợp lệ hoặc đã hết hạn"})
+        
+        if not reset_token.is_valid():
+            raise serializers.ValidationError({"token": "Token đã hết hạn"})
+        
+        # Kiểm tra mật khẩu khớp nhau không
+        if attrs.get('new_password') != attrs.get('confirm_password'):
+            raise serializers.ValidationError({"confirm_password": "Mật khẩu không khớp"})
+        
+        # Kiểm tra độ mạnh của mật khẩu
+        try:
+            validate_password(attrs.get('new_password'))
+        except ValidationError as e:
+            raise serializers.ValidationError({"new_password": list(e)})
+            
+        attrs['reset_token'] = reset_token
+        return attrs
+    

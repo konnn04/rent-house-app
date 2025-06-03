@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import {
   changeUserPasswordService,
+  checkIdentityVerificationStatusService,
   getCurrentUserService,
   updateUserAvatarService,
   updateUserProfileService
@@ -56,6 +57,7 @@ export const UserProvider = ({ children }) => {
       setUserData(data);
       // Lưu cache
       await AsyncStorage.setItem('user_data', JSON.stringify(data));
+      return data;
     } catch (err) {
       console.error('Error fetching user data:', err);
       setError('Không thể tải thông tin người dùng');
@@ -63,7 +65,23 @@ export const UserProvider = ({ children }) => {
       setLoading(false);
     }
   };
-
+  
+  // Kiểm tra trạng thái xác thực danh tính
+  const checkIdentityVerification = async () => {
+    if (!userData || userData.role !== 'owner') return null;
+    
+    try {
+      setLoading(true);
+      const status = await checkIdentityVerificationStatusService();
+      return status;
+    } catch (error) {
+      console.error('Error checking identity verification:', error);
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  };
+  
   // Hàm cập nhật thông tin profile
   const updateUserProfile = async (formData) => {
     try {
@@ -152,7 +170,8 @@ export const UserProvider = ({ children }) => {
     updateUserProfile,
     updateAvatar,
     changeUserPassword,
-    clearUserData
+    clearUserData,
+    checkIdentityVerification
   };
 
   return (

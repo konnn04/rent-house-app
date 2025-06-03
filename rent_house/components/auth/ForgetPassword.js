@@ -7,20 +7,18 @@ import {
   HelperText,
   Text,
   TextInput,
-  useTheme as usePaperTheme
 } from 'react-native-paper';
 import { useTheme } from '../../contexts/ThemeContext';
+import { resetPasswordRequest } from '../../services/authService';
 
-export  function CantLogin() {
+export function ForgetPassword() {
   const [email, setEmail] = useState('');
-  const [activeTab, setActiveTab] = useState('reset'); // 'reset' or 'activate'
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
   const navigation = useNavigation();
   const { colors } = useTheme();
-  const paperTheme = usePaperTheme();
 
   const validateEmail = (email) => {
     const re = /\S+@\S+\.\S+/;
@@ -49,8 +47,8 @@ export  function CantLogin() {
 
     try {
       // Call API to request password reset
-      await resetPasswordRequest(email);
-      setSuccess('Yêu cầu đặt lại mật khẩu đã được gửi tới email của bạn');
+      const response = await resetPasswordRequest(email);
+      setSuccess(response.message || 'Hướng dẫn đặt lại mật khẩu đã được gửi đến email của bạn (nếu email đã đăng ký).');
       
       // Clear email input after successful request
       setEmail('');
@@ -58,39 +56,6 @@ export  function CantLogin() {
       console.error('Reset password error:', error);
       setError(error.message || 'Không thể gửi yêu cầu. Vui lòng thử lại sau.');
     } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleActivateAccount = async () => {
-    if (isLoading) return;
-
-    // Clear previous messages
-    setError('');
-    setSuccess('');
-
-    // Validate email
-    if (!email.trim()) {
-      setError('Vui lòng nhập email của bạn');
-      return;
-    }
-
-    if (!validateEmail(email)) {
-      setError('Email không hợp lệ');
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      // Call API to resend activation code
-      await resendActivation(email);
-      
-      // Navigate to verification screen with email
-      navigation.navigate('Verify', { email });
-    } catch (error) {
-      console.error('Activation request error:', error);
-      setError(error.message || 'Không thể gửi yêu cầu kích hoạt. Vui lòng thử lại sau.');
       setIsLoading(false);
     }
   };
@@ -109,28 +74,10 @@ export  function CantLogin() {
         />
       </View>
 
-      <Text style={styles.title}>Hỗ Trợ Đăng Nhập</Text>
-      <Text style={styles.subtitle}>
-        Chúng tôi sẽ giúp bạn truy cập lại tài khoản
+      <Text style={[styles.title, { color: colors.textPrimary }]}>Quên mật khẩu</Text>
+      <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+        Chúng tôi sẽ gửi hướng dẫn đặt lại mật khẩu qua email
       </Text>
-
-      {/* Tab selection */}
-      <View style={styles.tabContainer}>
-        <Button
-          mode={activeTab === 'reset' ? 'contained' : 'outlined'}
-          onPress={() => setActiveTab('reset')}
-          style={[styles.tabButton, activeTab === 'reset' && { backgroundColor: colors.accentColor }]}
-        >
-          Quên mật khẩu
-        </Button>
-        <Button
-          mode={activeTab === 'activate' ? 'contained' : 'outlined'}
-          onPress={() => setActiveTab('activate')}
-          style={[styles.tabButton, activeTab === 'activate' && { backgroundColor: colors.accentColor }]}
-        >
-          Kích hoạt tài khoản
-        </Button>
-      </View>
 
       {/* Email input */}
       <TextInput
@@ -143,13 +90,11 @@ export  function CantLogin() {
         autoCapitalize="none"
       />
 
-      {/* Help text based on active tab */}
-      <Card style={styles.helpCard}>
+      {/* Help text */}
+      <Card style={[styles.helpCard, { backgroundColor: colors.backgroundSecondary }]}>
         <Card.Content>
           <Text style={{ color: colors.textSecondary }}>
-            {activeTab === 'reset' 
-              ? 'Nhập địa chỉ email bạn đã dùng để đăng ký. Chúng tôi sẽ gửi link đặt lại mật khẩu qua email.'
-              : 'Nhập địa chỉ email bạn đã dùng để đăng ký. Chúng tôi sẽ gửi lại mã kích hoạt cho tài khoản của bạn.'}
+            Nhập địa chỉ email bạn đã dùng để đăng ký. Chúng tôi sẽ gửi link đặt lại mật khẩu qua email.
           </Text>
         </Card.Content>
       </Card>
@@ -171,17 +116,13 @@ export  function CantLogin() {
       {/* Action button */}
       <Button
         mode="contained"
-        onPress={activeTab === 'reset' ? handleResetPassword : handleActivateAccount}
+        onPress={handleResetPassword}
         loading={isLoading}
         disabled={isLoading}
         style={styles.button}
         contentStyle={styles.buttonContent}
       >
-        {isLoading 
-          ? 'Đang xử lý...' 
-          : activeTab === 'reset' 
-            ? 'Gửi yêu cầu đặt lại mật khẩu' 
-            : 'Gửi lại mã kích hoạt'}
+        {isLoading ? 'Đang xử lý...' : 'Gửi yêu cầu đặt lại mật khẩu'}
       </Button>
 
       {/* Back to login */}
@@ -217,19 +158,12 @@ const styles = StyleSheet.create({
   title: {
     fontWeight: 'bold',
     textAlign: 'center',
+    fontSize: 24,
     marginBottom: 10,
   },
   subtitle: {
     textAlign: 'center',
     marginBottom: 25,
-  },
-  tabContainer: {
-    flexDirection: 'row',
-    marginBottom: 20,
-  },
-  tabButton: {
-    flex: 1,
-    marginHorizontal: 5,
   },
   input: {
     marginBottom: 15,

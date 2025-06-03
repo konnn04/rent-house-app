@@ -127,9 +127,9 @@ export const PostCard = ({ post }) => {
     <View style={[styles.postContainer, { backgroundColor: colors.backgroundSecondary }]}>
       {/* Header */}
       <View style={styles.postHeader}>
-        <View
+        <TouchableOpacity
           style={styles.postUserInfo}
-          onTouchStart={() => {
+          onPress={() => {
             navigation.navigate('PublicProfile', {
               username: post.author?.username
             });
@@ -161,7 +161,7 @@ export const PostCard = ({ post }) => {
               {formatDate(post.created_at)}
             </Text>
           </View>
-        </View>
+        </TouchableOpacity>
         <View style={styles.postOptions}>
           <TouchableOpacity onPress={toggleOptions} style={styles.optionsButton}>
             <Ionicons name="ellipsis-horizontal" size={20} color={colors.textSecondary} />

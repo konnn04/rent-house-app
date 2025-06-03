@@ -1,5 +1,35 @@
 {
-  "login": "Đăng nhập",
+  "appName": "RENT HOUSE",
+  "appDescription": "Ứng dụng cho thuê nhà",
+  "auth": {
+    "loginTitle": "Đăng nhập vào tài khoản của bạn",
+    "usernameLabel": "Tên đăng nhập",
+    "passwordLabel": "Mật khẩu",
+    "loginButton": "Đăng nhập",
+    "forgotPassword": "Quên mật khẩu?",
+    "notHaveAccount": "Chưa có tài khoản? Đăng ký ngay!",
+    "notFillInError": "Vui lòng điền đầy đủ thông tin",
+    "wrongCredentialsError": "Sai tài khoản hoặc mật khẩu",
+    "noInternetError": "Không có kết nối Internet",
+    "registerTitle": "Đăng ký tài khoản mới",
+    "roleLabel": "Bạn là",
+    "roleOptions": {
+      "owner": "Chủ nhà",
+      "renter": "Người thuê"
+    },
+    "firstNameLabel": "Tên",
+    "lastNameLabel": "Họ",
+    "emailLabel": "Email",
+    "verifyCodeLabel": "Mã xác minh",
+    "sendVerifyCodeButton": "Gửi mã xác minh",
+    "verifyCodeError": "Mã xác minh không chính xác"
+  },
+  "logout": "Đăng xuất",
   "register": "Đăng ký",
-  "welcome": "Chào mừng bạn đến với ứng dụng!"
+  "email": "Email",
+  "password": "Mật khẩu",
+  "confirmPassword": "Xác nhận mật khẩu",
+  "forgotPassword": "Quên mật khẩu?",
+  "resetPassword": "Đặt lại mật khẩu",
+  "sendResetLink": "Gửi liên kết đặt lại mật khẩu"
 }
