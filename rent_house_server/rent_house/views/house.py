@@ -49,12 +49,6 @@ class HouseViewSet(viewsets.ModelViewSet):
         return HouseListSerializer
 
     def get_permissions(self):
-        """
-        Instantiates and returns the list of permissions that this view requires:
-        - Xem không cần đăng nhập
-        - Tạo mới chỉ cho user với role OWNER
-        - Sửa/xóa chỉ cho chủ sở hữu của house
-        """
         if self.action in ['create']:
             permission_classes = [IsOwnerRoleOrReadOnly]
         elif self.action in ['update', 'partial_update', 'destroy', 'add_image', 'remove_image']:
@@ -129,9 +123,9 @@ class HouseViewSet(viewsets.ModelViewSet):
                 queryset = queryset.order_by('base_price')
             elif sort_by == 'price_desc':
                 queryset = queryset.order_by('-base_price')
-            elif sort_by == 'date_asc':
+            elif sort_by == 'created_at':
                 queryset = queryset.order_by('created_at')
-            elif sort_by == 'date_desc':
+            elif sort_by == '-created_at':
                 queryset = queryset.order_by('-created_at')
             elif sort_by == 'rating_desc':
                 from django.db.models import Avg

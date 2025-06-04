@@ -1,4 +1,4 @@
-from rest_framework import generics, status, permissions
+from rest_framework import generics, status, permissions, parsers
 from rest_framework.response import Response
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
@@ -19,6 +19,7 @@ from rent_house.models import PasswordResetToken
 import random
 import string
 
+
 from rent_house.models import User, VerificationCode
 from rent_house.serializers import RegisterSerializer, VerifyEmailSerializer, ResendVerificationSerializer, CheckVerificationStatusSerializer, PreRegisterSerializer, RequestPasswordResetSerializer, PasswordResetSerializer
 
@@ -26,6 +27,7 @@ class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     permission_classes = (permissions.AllowAny,)
     serializer_class = RegisterSerializer
+    parser_classes = [parsers.MultiPartParser, parsers.JSONParser, parsers.FormParser]
     
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -37,10 +39,8 @@ class RegisterView(generics.CreateAPIView):
             "message": "Đăng ký thành công! Hãy quay lại đăng nhập!",
             "user_id": user.id,
             "email": user.email,
+            "avatar": user.avatar
         }
-         
-        # if settings.DEBUG:
-        #     response_data["verification_code"] = verification_code.code
         
         return Response(response_data, status=status.HTTP_201_CREATED)
     
@@ -96,15 +96,9 @@ class VerifyEmailView(generics.GenericAPIView):
                 'expires_in': oauth2_settings.ACCESS_TOKEN_EXPIRE_SECONDS
             }
         except Application.DoesNotExist:
-            application = Application.objects.create(
-                name="React Native App",
-                client_type=Application.CLIENT_CONFIDENTIAL,
-                authorization_grant_type=Application.GRANT_PASSWORD,
-                skip_authorization=True,
-                user=User.objects.filter(is_superuser=True).first()
-            )
-            
-            return self.create_oauth_tokens(user)
+            return {
+                'error': 'Ứng dụng OAuth không tồn tại. Vui lòng kiểm tra lại cấu hình.'
+            }
 
 class ResendVerificationView(generics.GenericAPIView):
     permission_classes = (permissions.AllowAny,)

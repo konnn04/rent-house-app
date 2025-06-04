@@ -1,7 +1,10 @@
+from django.utils.translation import gettext_lazy as _
+from django.urls import reverse_lazy
 from pathlib import Path
 from dotenv import load_dotenv
 import os
 import pymysql
+from django.templatetags.static import static
 
 pymysql.install_as_MySQLdb()
 
@@ -100,12 +103,16 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'rent_house_server.urls'
 
-MEDIA_ROOT = '%s/rent_house/static/' % BASE_DIR
+MEDIA_ROOT = '%s/rent_house/static_media/' % BASE_DIR
+
+STATIC_URL = '/static/'
+
+STATIC_ROOT = '%s/rent_house/static/' % BASE_DIR
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'rent_house/templates')],
+        'DIRS': [os.path.join(BASE_DIR, 'rent_house', 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -122,8 +129,6 @@ TEMPLATES = [
 WSGI_APPLICATION = 'rent_house_server.wsgi.application'
 
 
-# Database
-# https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
 DATABASES = {
     # Use MySQL database
@@ -153,10 +158,9 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
-# Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'vi-vn'
 
 TIME_ZONE = 'UTC'
 
@@ -165,27 +169,12 @@ USE_I18N = True
 USE_TZ = True
 
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/4.2/howto/static-files/
 
-STATIC_URL = 'static/'
-STATIC_ROOT = '%s/static/' % BASE_DIR
 
-# Default primary key field type
-# https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
+
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Firebase config (thêm vào cuối file)
-FIREBASE_CREDENTIALS = {
-    # Thêm thông tin credential từ Firebase console
-    # Ví dụ:
-    "type": "service_account",
-    "project_id": "rent-house-app-xxxx",
-    # Các thông tin khác từ firebase credentials...
-}
-
-# Cấu hình logging
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -224,7 +213,6 @@ LOGGING = {
         },
     },
 }
-
 
 
 # Telegram Bot Settings
@@ -269,8 +257,46 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 104857600  # 100 MB
 UNFOLD = {
     "SITE_TITLE": "Quản trị Rent House",
     "SITE_HEADER": "Quản trị Rent House",
-    "SITE_SYMBOL": "home",
-    "SHOW_HISTORY": True
+    # "SITE_SYMBOL": "home",
+    "SHOW_HISTORY": True,
+    "DASHBOARD_CALLBACK": "rent_house.admin_view.dashboard_callback",
+    "SITE_URL": "/",
+    "SITE_ICON": {
+        "light": lambda request: static("logo.png"),  
+        "dark": lambda request: static("logo.png"),  
+    },
+    "LOGIN": {
+        "image": lambda request: static("logo.png"),
+    },
+    "COLORS": {
+        "base": {
+            "50": "249, 250, 251",
+            "100": "243, 244, 246",
+            "200": "229, 231, 235",
+            "300": "209, 213, 219",
+            "400": "156, 163, 175",
+            "500": "107, 114, 128",
+            "600": "75, 85, 99",
+            "700": "55, 65, 81",
+            "800": "31, 41, 55",
+            "900": "17, 24, 39",
+            "950": "3, 7, 18",
+        },
+        "primary": {
+            "50": "254, 242, 242",
+            "100": "254, 226, 226",
+            "200": "254, 202, 202",
+            "300": "252, 165, 165",
+            "400": "248, 113, 113",
+            "500": "235, 91, 0",
+            "600": "220, 79, 0",
+            "700": "185, 66, 0",
+            "800": "150, 54, 0",
+            "900": "120, 43, 0",
+            "950": "80, 29, 0",
+        }
+    },
+    "SIDEBAR": "rent_house.admin_config.get_sidebar_config",
 }
 
 # Site URL for links in emails

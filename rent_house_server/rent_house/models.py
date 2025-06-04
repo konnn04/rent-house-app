@@ -628,6 +628,7 @@ class Report(BaseModel):
         choices=[(t.value[0], t.value[1]) for t in ReportType]
     )
     reason = models.TextField()
+    url_tag = models.TextField(null=True, blank=True)
     is_resolved = models.BooleanField(default=False)
 
     def __str__(self):
