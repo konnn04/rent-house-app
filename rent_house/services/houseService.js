@@ -61,9 +61,12 @@ export const getHousesService = async ({
   type = '',
   min_price = '',
   max_price = '',
-  area = '',
-  has_rooms = false,
-  ordering = '-created_at',
+  is_verified = '',
+  is_renting = '',
+  is_blank = '',
+  lat = null,
+  lon = null,
+  sort_by = '',
   page = 1,
   page_size = 10,
   nextUrl = null,
@@ -78,9 +81,14 @@ export const getHousesService = async ({
       if (type) params.push(`type=${encodeURIComponent(type)}`);
       if (min_price) params.push(`min_price=${encodeURIComponent(min_price)}`);
       if (max_price) params.push(`max_price=${encodeURIComponent(max_price)}`);
-      if (area) params.push(`area=${encodeURIComponent(area)}`);
-      if (has_rooms) params.push(`has_rooms=true`);
-      if (ordering) params.push(`ordering=${encodeURIComponent(ordering)}`);
+      if (is_verified !== '') params.push(`is_verified=${is_verified}`);
+      if (is_renting !== '') params.push(`is_renting=${is_renting}`);
+      if (is_blank !== '') params.push(`is_blank=${is_blank}`);
+      if (lat && lon) {
+        params.push(`lat=${lat}`);
+        params.push(`lon=${lon}`);
+      }
+      if (sort_by) params.push(`sort_by=${encodeURIComponent(sort_by)}`);
       if (page) params.push(`page=${page}`);
       if (page_size) params.push(`page_size=${page_size}`);
       url = `/api/houses/?${params.join('&')}`;
@@ -89,6 +97,58 @@ export const getHousesService = async ({
     return response.data;
   } catch (error) {
     console.error('Error fetching houses:', error);
+    throw error;
+  }
+}
+
+// Tìm kiếm nhà theo bản đồ (giới hạn 20 nhà gần nhất) với timeout protection
+export const getHousesByMapService = async ({
+  query = '', // Từ khóa tìm kiếm
+  lat, 
+  lon, 
+  type = '',
+  min_price = '',
+  max_price = '',
+  is_verified = true, // Mặc định chỉ lấy nhà đã xác thực
+  is_renting = true, // Mặc định chỉ lấy nhà đang cho thuê
+  is_blank = '',
+  limit = 20, // Giới hạn số lượng kết quả
+} = {}) => {
+  try {
+    if (!lat || !lon) {
+      throw new Error('Cần cung cấp tọa độ (lat, lon)');
+    }
+
+    const params = [
+      `lat=${lat}`,
+      `lon=${lon}`,
+    ];
+    if (query) params.push(`search=${encodeURIComponent(query)}`);
+    if (type) params.push(`type=${encodeURIComponent(type)}`);
+    if (min_price) params.push(`min_price=${encodeURIComponent(min_price)}`);
+    if (max_price) params.push(`max_price=${encodeURIComponent(max_price)}`);
+    if (is_verified !== '') params.push(`is_verified=${is_verified}`);
+    if (is_renting !== '') params.push(`is_renting=${is_renting}`);
+    if (is_blank !== '') params.push(`is_blank=${is_blank}`);
+
+    const url = `/api/houses/?${params.join('&')}`;
+    
+    // Thêm timeout để tránh quá nhiều API calls
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+    
+    try {
+      const response = await apiClient.get(url, {
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+      return response.data;
+    } catch (err) {
+      clearTimeout(timeoutId);
+      throw err;
+    }
+  } catch (error) {
+    console.error('Error fetching houses by map:', error);
     throw error;
   }
 }

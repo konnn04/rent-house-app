@@ -40,6 +40,11 @@ export const OwnerInfo = ({ owner }) => {
         <View style={styles.ownerDetails}>
           <Text style={[styles.ownerName, { color: colors.textPrimary }]}>
             {owner.full_name}
+             <Icon
+                name={owner.is_verified ? 'check-circle' : 'account'}
+                size={16}
+                color={owner.is_verified ? colors.successColor : colors.textSecondary}
+              />
           </Text>
           
           <View style={styles.memberSince}>

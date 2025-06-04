@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -7,6 +7,58 @@ import { interactWithPostService } from '../../../services/postService';
 import { truncateText } from '../../../utils/Tools';
 import { ImageGallery } from '../../common/ImageGallery';
 import { CommentsModal } from './components/CommentsModal';
+
+// House attachment component to display house information
+const HouseAttachment = ({ house, colors, onPress }) => {
+  if (!house) return null;
+  
+  // Format price to display with commas
+  const formatPrice = (price) => {
+    return parseFloat(price).toLocaleString('vi-VN');
+  };
+
+  return (
+    <View style={[styles.houseAttachment, { borderColor: colors.borderColor }]}>
+      <Text style={[styles.houseAttachmentTitle, { color: colors.accentColor }]}>
+        <MaterialCommunityIcons name="home-outline" size={16} color={colors.accentColor} /> Thông tin nhà
+      </Text>
+      <TouchableOpacity onPress={onPress}>
+      <View style={styles.houseContent}>
+        {house.thumbnail && (
+          <Image 
+            source={{ uri: house.thumbnail }}
+            style={styles.houseThumbnail}
+            resizeMode="cover"
+          />
+        )}
+        
+        <View style={styles.houseDetails}>
+          <Text style={[styles.houseTitle, { color: colors.textPrimary }]}>{house.title}</Text>
+          
+          <View style={styles.houseInfoRow}>
+            <Text style={[styles.houseInfo, { color: colors.textSecondary }]}
+            >
+              {formatPrice(house.base_price)} VNĐ/tháng
+            </Text>
+          </View>
+          
+          <View style={styles.houseInfoRow}>
+            <Text style={[styles.houseInfo, { color: colors.textSecondary }]}>
+              <MaterialCommunityIcons name="ruler-square" size={14} /> 
+              {house.area} m²
+            </Text>
+            <Text style={[styles.houseInfo, { color: colors.textSecondary }]}>
+              <MaterialCommunityIcons name="door" size={14} /> 
+              {house.current_rooms}/{house.max_rooms} phòng
+            </Text>
+          </View>
+          
+        </View>
+      </View>
+      </TouchableOpacity>
+    </View>
+  );
+};
 
 export const PostCard = ({ post }) => {
   const { colors } = useTheme();
@@ -46,6 +98,15 @@ export const PostCard = ({ post }) => {
       type: post.interaction?.type || 'none'
     });
   }, [post]);
+
+  // Handle navigation to house details
+  const handleViewHouse = () => {
+    if (post.house_link && post.house_link.id) {
+      navigation.navigate('HouseDetail', {
+        houseId: post.house_link.id
+      });
+    }
+  };
 
   // Hàm xử lý tương tác mới
   const handleInteraction = async (type) => {
@@ -201,17 +262,29 @@ export const PostCard = ({ post }) => {
           </TouchableOpacity>
         )}
 
+        {/* House details attachment */}
+       
+
         {/* Thay thế phần Images bằng component ImageGallery */}
         {post.media && post.media.length > 0 && (
           <ImageGallery mediaItems={post.media} />
         )}
 
-        {/* Location info if available */}
-        {post.address && (
+        {/* Location info/House if available */}
+         
+        {(post.address && !post.house_link) && (
           <View style={styles.locationInfo}>
             <Ionicons name="location" size={16} color={colors.textSecondary} />
             <Text style={[styles.locationText, { color: colors.textSecondary }]}>{post.address}</Text>
           </View>
+        )}
+
+        {post.house_link && (
+          <HouseAttachment 
+            house={post.house_link} 
+            colors={colors} 
+            onPress={handleViewHouse} 
+          />
         )}
       </View>
 
@@ -412,5 +485,49 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 8,
+  },
+  
+  // House attachment styles
+  houseAttachment: {
+    marginVertical: 10,
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 10,
+  },
+  houseAttachmentTitle: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  houseContent: {
+    flexDirection: 'row',
+  },
+  houseThumbnail: {
+    width: 100,
+    height: 100,
+    borderRadius: 6,
+    marginRight: 12,
+  },
+  houseDetails: {
+    flex: 1,
+    justifyContent: 'space-between',
+  },
+  houseTitle: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginBottom: 6,
+  },
+  houseInfoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 6,
+  },
+  houseInfo: {
+    fontSize: 13,
+    paddingRight: 4,
+  },
+  viewHouseButton: {
+    marginTop: 6,
+    height: 32,
   },
 });

@@ -93,11 +93,12 @@ class PublicProfileSerializer(ProfileSerializer):
     following_count = serializers.SerializerMethodField()
     avg_rating = serializers.SerializerMethodField()
     is_followed = serializers.SerializerMethodField()
+    is_verified = serializers.BooleanField(source='is_identity_verified', read_only=True)
     
     class Meta(ProfileSerializer.Meta):
         fields = ProfileSerializer.Meta.fields + (
             'post_count', 'joined_date', 'follower_count', 'following_count', 
-            'avg_rating', 'is_followed'
+            'avg_rating', 'is_followed', 'is_verified'
         )
     
     def get_post_count(self, obj):

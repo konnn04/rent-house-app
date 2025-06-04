@@ -1,5 +1,5 @@
 from .user import UserSerializer, UserSummarySerializer, IdentityVerificationSerializer
-from .house import HouseListSerializer, HouseDetailSerializer
+from .house import HouseListSerializer, HouseDetailSerializer, HouseSimpleSerializer
 from .post import PostSerializer, PostDetailSerializer
 from .comment import CommentSerializer, CommentDetailSerializer
 from .rate import RateSerializer
@@ -12,7 +12,7 @@ from .report import ReportSerializer
 
 __all__ = [
     'UserSerializer', 'UserSummarySerializer', 'IdentityVerificationSerializer',
-    'HouseListSerializer', 'HouseDetailSerializer',
+    'HouseListSerializer', 'HouseDetailSerializer', 'HouseSimpleSerializer',
     'PostSerializer', 'PostDetailSerializer',
     'CommentSerializer', 'CommentDetailSerializer', 
     'RateSerializer', 'NotificationSerializer',

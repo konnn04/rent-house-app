@@ -8,8 +8,8 @@ import {
 } from 'react-native';
 import { Divider } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { ImageGallery } from '../../../../components/common/ImageGallery';
 import { useTheme } from '../../../../contexts/ThemeContext';
+import { ImageGallery } from '../../../common/ImageGallery';
 
 // Helper to format dates
 const formatDate = (dateString) => {

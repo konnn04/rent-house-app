@@ -2,6 +2,22 @@ from rest_framework import serializers
 from rent_house.models import House, Media, HouseType
 from .user import UserSummarySerializer
 
+# Chỉ xem
+class HouseSimpleSerializer(serializers.ModelSerializer):
+    thumbnail = serializers.SerializerMethodField()
+
+    class Meta:
+        model = House
+        fields = (
+            'id', 'title', 'address', 'latitude', 'longitude',
+            'created_at', 'updated_at', 'base_price', 'type', 'thumbnail',
+            'max_rooms', 'current_rooms', 'max_people', 'area', 'deposit', 'is_renting', 'is_verified'
+        )
+        read_only_fields = ('id', 'created_at', 'updated_at', 'owner')
+
+    def get_thumbnail(self, obj):
+        return obj.get_thumbnail()
+
 class HouseListSerializer(serializers.ModelSerializer):
     owner = UserSummarySerializer(read_only=True)
     thumbnail = serializers.SerializerMethodField()

@@ -6,10 +6,14 @@ from django.contrib.contenttypes.models import ContentType
 class UserSummarySerializer(serializers.ModelSerializer):
     full_name = serializers.SerializerMethodField()
     avatar_thumbnail = serializers.SerializerMethodField()
+    is_verified = serializers.SerializerMethodField()
     
     class Meta:
         model = User
-        fields = ('id', 'username', 'full_name', 'avatar', 'avatar_thumbnail', 'role', 'first_name', 'last_name')
+        fields = ('id', 'username', 'full_name', 'avatar', 'avatar_thumbnail', 'role', 'first_name', 'last_name', 'is_verified')
+
+    def get_is_verified(self, obj):
+        return obj.is_identity_verified()
         
     def get_full_name(self, obj):
         return f"{obj.first_name} {obj.last_name}".strip()

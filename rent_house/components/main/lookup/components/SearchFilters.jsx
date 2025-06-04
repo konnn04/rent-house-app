@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
-import { Button, Chip, Divider, SegmentedButtons, Switch, TextInput } from 'react-native-paper';
+import { Button, Chip, Divider, Switch, TextInput } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../../../../contexts/ThemeContext';
 
@@ -15,16 +15,18 @@ export const SearchFilters = ({
   visible,
   onClose,
   onApply,
-  initialFilters = {}
+  initialFilters = {},
+  mode = 'list' // 'list' hoặc 'map'
 }) => {
   const { colors } = useTheme();
   const [filters, setFilters] = useState({
     type: initialFilters.type || '',
     min_price: initialFilters.min_price || '',
     max_price: initialFilters.max_price || '',
-    area: initialFilters.area || '',
-    has_rooms: initialFilters.has_rooms || false,
-    ordering: initialFilters.ordering || '-created_at'
+    is_verified: initialFilters.is_verified || '',
+    is_renting: initialFilters.is_renting || '',
+    is_blank: initialFilters.is_blank || '',
+    sort_by: initialFilters.sort_by || '-created_at'
   });
 
   // Update filters when initialFilters change
@@ -34,23 +36,38 @@ export const SearchFilters = ({
         type: initialFilters.type || '',
         min_price: initialFilters.min_price || '',
         max_price: initialFilters.max_price || '',
-        area: initialFilters.area || '',
-        has_rooms: initialFilters.has_rooms || false,
-        ordering: initialFilters.ordering || '-created_at'
+        is_verified: initialFilters.is_verified || '',
+        is_renting: initialFilters.is_renting || '',
+        is_blank: initialFilters.is_blank || '',
+        sort_by: initialFilters.sort_by || '-created_at'
       });
     }
   }, [visible, initialFilters]);
 
   // Handle reset filters
   const handleReset = () => {
-    setFilters({
-      type: '',
-      min_price: '',
-      max_price: '',
-      area: '',
-      has_rooms: false,
-      ordering: '-created_at'
-    });
+    if (mode === 'list') {
+      setFilters({
+        type: '',
+        min_price: '',
+        max_price: '',
+        is_verified: '',
+        is_renting: '',
+        is_blank: '',
+        sort_by: '-created_at'
+      });
+    } else {
+      // Đối với map, giữ một số giá trị mặc định
+      setFilters({
+        type: '',
+        min_price: '',
+        max_price: '',
+        is_verified: '',
+        is_renting: '',
+        is_blank: '',
+        sort_by: '-created_at'
+      });
+    }
   };
 
   // Handle apply filters
@@ -63,27 +80,18 @@ export const SearchFilters = ({
     { label: 'Tất cả', value: '' },
     { label: 'Nhà riêng', value: 'house' },
     { label: 'Chung cư', value: 'apartment' },
-    { label: 'Biệt thự', value: 'villa' },
     { label: 'Ký túc xá', value: 'dormitory' },
-    { label: 'Studio', value: 'studio' },
-  ];
-
-  // Areas for selection (example data, can be expanded)
-  const areas = [
-    'Quận 1', 'Quận 2', 'Quận 3', 'Quận 4', 'Quận 5',
-    'Quận 6', 'Quận 7', 'Quận 8', 'Quận 9', 'Quận 10',
-    'Quận 11', 'Quận 12', 'Quận Bình Thạnh', 'Quận Gò Vấp',
-    'Quận Phú Nhuận', 'Quận Tân Bình', 'Quận Tân Phú',
-    'Quận Thủ Đức', 'Huyện Bình Chánh', 'Huyện Cần Giờ',
-    'Huyện Củ Chi', 'Huyện Hóc Môn', 'Huyện Nhà Bè'
+    { label: 'Phòng trọ', value: 'room' },
   ];
 
   // Sorting options
   const sortOptions = [
     { label: 'Mới nhất', value: '-created_at' },
     { label: 'Cũ nhất', value: 'created_at' },
-    { label: 'Giá thấp nhất', value: 'base_price' },
-    { label: 'Giá cao nhất', value: '-base_price' },
+    { label: 'Giá thấp nhất', value: 'price_asc' },
+    { label: 'Giá cao nhất', value: 'price_desc' },
+    { label: 'Đánh giá cao', value: 'rating_desc' },
+    { label: 'Đánh giá thấp', value: 'rating_asc' },
   ];
 
   return (
@@ -98,7 +106,7 @@ export const SearchFilters = ({
           {/* Header */}
           <View style={styles.modalHeader}>
             <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
-              Bộ lọc tìm kiếm
+              Bộ lọc tìm kiếm {mode === 'map' ? 'bản đồ' : ''}
             </Text>
             <TouchableOpacity onPress={onClose}>
               <Icon name="close" size={24} color={colors.textPrimary} />
@@ -113,17 +121,20 @@ export const SearchFilters = ({
               <Text style={[styles.filterTitle, { color: colors.textPrimary }]}>
                 Loại nhà
               </Text>
-              <SegmentedButtons
-                value={filters.type}
-                onValueChange={(value) => setFilters({ ...filters, type: value })}
-                buttons={houseTypes.map(type => ({
-                  value: type.value,
-                  label: type.label,
-                  checkedColor: colors.accentColor,
-                  uncheckedColor: colors.textSecondary,
-                }))}
-                style={styles.segmentedButtons}
-              />
+              <View style={styles.typeChipsContainer}>
+                {houseTypes.map((type) => (
+                  <Chip
+                    key={type.value}
+                    mode="outlined"
+                    onPress={() => setFilters({ ...filters, type: type.value })}
+                    style={styles.typeChip}
+                    selected={filters.type === type.value}
+                    selectedColor={colors.accentColor}
+                  >
+                    {type.label}
+                  </Chip>
+                ))}
+              </View>
             </View>
             
             <Divider style={{ backgroundColor: colors.borderColor, marginVertical: 10 }} />
@@ -199,33 +210,33 @@ export const SearchFilters = ({
             
             <Divider style={{ backgroundColor: colors.borderColor, marginVertical: 10 }} />
             
-            {/* Area Filter */}
+            {/* Verified Filter */}
             <View style={styles.filterSection}>
-              <Text style={[styles.filterTitle, { color: colors.textPrimary }]}>
-                Khu vực
-              </Text>
-              
-              <TextInput
-                label="Tìm kiếm khu vực"
-                value={filters.area}
-                onChangeText={(value) => setFilters({ ...filters, area: value })}
-                style={styles.areaInput}
-                mode="outlined"
-              />
-              
-              <View style={styles.areaChipsContainer}>
-                {areas.slice(0, 12).map((area) => (
-                  <Chip
-                    key={area}
-                    mode="outlined"
-                    onPress={() => setFilters({ ...filters, area })}
-                    style={styles.areaChip}
-                    selected={filters.area === area}
-                    selectedColor={colors.accentColor}
-                  >
-                    {area}
-                  </Chip>
-                ))}
+              <View style={styles.switchContainer}>
+                <Text style={[styles.filterTitle, { color: colors.textPrimary }]}>
+                  Chỉ hiện nhà đã xác thực
+                </Text>
+                <Switch
+                  value={filters.is_verified === true}
+                  onValueChange={(value) => setFilters({ ...filters, is_verified: value ? true : '' })}
+                  color={colors.accentColor}
+                />
+              </View>
+            </View>
+            
+            <Divider style={{ backgroundColor: colors.borderColor, marginVertical: 10 }} />
+            
+            {/* Available for rent Filter */}
+            <View style={styles.filterSection}>
+              <View style={styles.switchContainer}>
+                <Text style={[styles.filterTitle, { color: colors.textPrimary }]}>
+                  Chỉ hiện nhà còn cho thuê
+                </Text>
+                <Switch
+                  value={filters.is_renting === true}
+                  onValueChange={(value) => setFilters({ ...filters, is_renting: value ? true : '' })}
+                  color={colors.accentColor}
+                />
               </View>
             </View>
             
@@ -238,33 +249,52 @@ export const SearchFilters = ({
                   Chỉ hiện nhà có phòng trống
                 </Text>
                 <Switch
-                  value={filters.has_rooms}
-                  onValueChange={(value) => setFilters({ ...filters, has_rooms: value })}
+                  value={filters.is_blank === true}
+                  onValueChange={(value) => setFilters({ ...filters, is_blank: value ? true : '' })}
                   color={colors.accentColor}
                 />
               </View>
             </View>
             
-            <Divider style={{ backgroundColor: colors.borderColor, marginVertical: 10 }} />
-            
-            {/* Sorting */}
-            <View style={styles.filterSection}>
-              <Text style={[styles.filterTitle, { color: colors.textPrimary }]}>
-                Sắp xếp theo
-              </Text>
-              
-              <SegmentedButtons
-                value={filters.ordering}
-                onValueChange={(value) => setFilters({ ...filters, ordering: value })}
-                buttons={sortOptions.map(option => ({
-                  value: option.value,
-                  label: option.label,
-                  checkedColor: colors.accentColor,
-                  uncheckedColor: colors.textSecondary,
-                }))}
-                style={styles.segmentedButtons}
-              />
-            </View>
+            {/* Sorting - chỉ hiển thị trong chế độ danh sách */}
+            {mode === 'list' && (
+              <>
+                <Divider style={{ backgroundColor: colors.borderColor, marginVertical: 10 }} />
+                
+                <View style={styles.filterSection}>
+                  <Text style={[styles.filterTitle, { color: colors.textPrimary }]}>
+                    Sắp xếp theo
+                  </Text>
+                  
+                  {sortOptions.map((option) => (
+                    <TouchableOpacity
+                      key={option.value}
+                      style={[
+                        styles.sortOption,
+                        filters.sort_by === option.value && {
+                          backgroundColor: colors.backgroundSecondary,
+                          borderColor: colors.accentColor,
+                          borderWidth: 1,
+                        }
+                      ]}
+                      onPress={() => setFilters({ ...filters, sort_by: option.value })}
+                    >
+                      <Text 
+                        style={[
+                          styles.sortOptionText, 
+                          { color: filters.sort_by === option.value ? colors.accentColor : colors.textPrimary }
+                        ]}
+                      >
+                        {option.label}
+                      </Text>
+                      {filters.sort_by === option.value && (
+                        <Icon name="check" size={20} color={colors.accentColor} />
+                      )}
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </>
+            )}
           </ScrollView>
           
           <Divider style={{ backgroundColor: colors.borderColor }} />
@@ -325,8 +355,12 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginBottom: 12,
   },
-  segmentedButtons: {
-    marginBottom: 8,
+  typeChipsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  typeChip: {
+    margin: 4,
   },
   priceInputContainer: {
     flexDirection: 'row',
@@ -343,20 +377,22 @@ const styles = StyleSheet.create({
   priceChip: {
     margin: 4,
   },
-  areaInput: {
-    marginBottom: 16,
-  },
-  areaChipsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  areaChip: {
-    margin: 4,
-  },
   switchContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  sortOption: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  sortOptionText: {
+    fontSize: 16,
   },
   modalFooter: {
     flexDirection: 'row',

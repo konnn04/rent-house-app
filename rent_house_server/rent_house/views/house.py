@@ -2,6 +2,11 @@ from rest_framework import viewsets, parsers, permissions, filters, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.contrib.contenttypes.models import ContentType
+from django.db.models import F, ExpressionWrapper, FloatField
+from django.db.models.functions import Power, Sqrt
+import math
+from django.db.models import Q
+from django.db.models.expressions import RawSQL
 
 from rent_house.models import House, Media
 from rent_house.serializers.house import (
@@ -10,14 +15,27 @@ from rent_house.serializers.house import (
 from rent_house.permissions import IsOwnerOfHouseOrReadOnly, IsOwnerRoleOrReadOnly
 from rent_house.utils import upload_image_to_cloudinary, delete_cloudinary_image
 
+def haversine_sql(lat_origin, lon_origin):
+    sql = """
+        6371 * 2 * ASIN(
+            SQRT(
+                POWER(SIN(RADIANS(latitude - %s) / 2), 2) +
+                COS(RADIANS(%s)) * COS(RADIANS(latitude)) *
+                POWER(SIN(RADIANS(longitude - %s) / 2), 2)
+            )
+        )
+    """
+    params = [lat_origin, lat_origin, lon_origin]
+    return RawSQL(sql, params, output_field=FloatField())
+    
+
 class HouseViewSet(viewsets.ModelViewSet):
     """ViewSet cho quản lý House (nhà/căn hộ)"""
     queryset = House.objects.all()
     parser_classes = [parsers.MultiPartParser, parsers.JSONParser]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['title', 'address', 'type']
-    ordering_fields = ['created_at', 'base_price']
-    ordering = ['-created_at']
+    search_fields = ['title', 'description', 'address']
+    ordering_fields = ['created_at', 'base_price', 'updated_at']
 
     def get_serializer_class(self):
         """Sử dụng serializer chi tiết cho action retrieve"""
@@ -48,10 +66,25 @@ class HouseViewSet(viewsets.ModelViewSet):
         """Filter houses theo các tham số"""
         queryset = super().get_queryset()
 
+        # Tìm kiếm theo từ khóa (title, description, address)
+        search = self.request.query_params.get('search')
+        if search:
+            queryset = queryset.filter(
+                Q(title__icontains=search) | 
+                Q(description__icontains=search) | 
+                Q(address__icontains=search)
+            )
+
         # Filter theo house_type
         house_type = self.request.query_params.get('type')
         if house_type:
             queryset = queryset.filter(type=house_type)
+
+        # Filter theo xác thực
+        is_verified = self.request.query_params.get('is_verified')
+        if is_verified is not None:
+            is_verified_bool = is_verified.lower() in ['true', '1', 'yes']
+            queryset = queryset.filter(is_verified=is_verified_bool)
 
         # Filter theo giá
         min_price = self.request.query_params.get('min_price')
@@ -61,16 +94,59 @@ class HouseViewSet(viewsets.ModelViewSet):
         if max_price:
             queryset = queryset.filter(base_price__lte=max_price)
 
-        # Filter theo khu vực
-        area = self.request.query_params.get('area')
-        if area:
-            queryset = queryset.filter(address__icontains=area)
+        # Filter theo trạng thái cho thuê
+        is_renting = self.request.query_params.get('is_renting')
+        if is_renting is not None:
+            is_renting_bool = is_renting.lower() in ['true', '1', 'yes']
+            queryset = queryset.filter(is_renting=is_renting_bool)
+
+        # Filter theo phòng trống
+        is_blank = self.request.query_params.get('is_blank')
+        if is_blank is not None and is_blank.lower() in ['true', '1', 'yes']:
+            queryset = queryset.filter(
+                max_rooms__isnull=False,
+                current_rooms__lt=F('max_rooms')
+            )
+            
+        # Filter và sắp xếp theo khoảng cách
+        lat = self.request.query_params.get('lat')
+        lon = self.request.query_params.get('lon')
+        has_distance = False
+        if lat and lon:
+            try:
+                lat = float(lat)
+                lon = float(lon)
+                queryset = queryset.annotate(distance=haversine_sql(lat, lon)).order_by('distance')
+                has_distance = True
+            except (ValueError, TypeError):
+                pass
+        
+        # Sort theo các tham số
+        sort_by = self.request.query_params.get('sort_by')
+        if sort_by:
+            if sort_by == 'price_asc':
+                queryset = queryset.order_by('base_price')
+            elif sort_by == 'price_desc':
+                queryset = queryset.order_by('-base_price')
+            elif sort_by == 'date_asc':
+                queryset = queryset.order_by('created_at')
+            elif sort_by == 'date_desc':
+                queryset = queryset.order_by('-created_at')
+            elif sort_by == 'rating_desc':
+                from django.db.models import Avg
+                queryset = queryset.annotate(
+                    avg_rating=Avg('ratings__star')
+                ).order_by('-avg_rating')
+            elif sort_by == 'rating_asc':
+                from django.db.models import Avg
+                queryset = queryset.annotate(
+                    avg_rating=Avg('ratings__star')
+                ).order_by('avg_rating')
 
         # Filter theo số user sở hữu
         owner_username = self.request.query_params.get('owner_username')
         if owner_username:
             queryset = queryset.filter(owner__username=owner_username)
-
         return queryset
 
     def perform_create(self, serializer):

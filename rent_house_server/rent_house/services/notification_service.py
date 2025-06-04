@@ -75,12 +75,15 @@ def post_for_followers_notification(sender, post):
         following__followee=sender,
         following__is_following=True
     )
-    post_type_map = dict(PostType._value2member_map_)
-    post_type_enum = post_type_map.get(post.type)
-    if post_type_enum:
-        post_type_display = post_type_enum.value[1]
-    else:
-        post_type_display = str(post.type) 
+    
+    # Correctly determine the post type display name
+    post_type_display = post.type
+    
+    # Try to get the friendly display name from the enum
+    for pt_enum in PostType:
+        if pt_enum.value[0] == post.type:
+            post_type_display = pt_enum.value[1]
+            break
         
     for follower in followers:
         create_notification(
@@ -131,6 +134,26 @@ def comment_notification(sender, post_author, post_id, comment):
         related_object=comment,
         url=f"/posts/{post_id}/"
     )
+
+def house_notification(sender, house):
+    """Gửi thông báo khi người dùng đăng tin nhà/trọ mới"""
+    followers = User.objects.filter(
+        following__followee=sender,
+        following__is_following=True
+    )
+    
+    content = f"{sender.get_full_name() or sender.username} vừa đăng tin nhà mới: {house.title or house.address}"
+    url = f"/houses/{house.id}/"
+    
+    for follower in followers:
+        create_notification(
+            user=follower,
+            content=content,
+            notification_type=NotificationType.NEW_POST.value[0],
+            sender=sender,
+            related_object=house,
+            url=url
+        )
 
 # # Các receivers bắt sự kiện
 

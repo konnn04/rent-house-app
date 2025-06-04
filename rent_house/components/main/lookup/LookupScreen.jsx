@@ -12,8 +12,12 @@ export const LookupScreen = () => {
   const { colors } = useTheme();
   const [activeTab, setActiveTab] = useState('list'); 
   const [searchQuery, setSearchQuery] = useState('');
-  const [houses, setHouses] = useState([]);
-  const [filteredHouses, setFilteredHouses] = useState([]);
+  
+  // Danh sách nhà cho chế độ danh sách
+  const [listHouses, setListHouses] = useState([]);
+  // Danh sách nhà cho chế độ bản đồ (tách biệt)
+  const [mapHouses, setMapHouses] = useState([]);
+  
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
@@ -23,21 +27,32 @@ export const LookupScreen = () => {
   const [loadingMore, setLoadingMore] = useState(false);
   const [nextUrl, setNextUrl] = useState(null);
   
-  // Filter state
-  const [filters, setFilters] = useState({
+  // Filter state cho cả 2 chế độ (list và map)
+  const [listFilters, setListFilters] = useState({
     type: '',
     min_price: '',
     max_price: '',
-    area: '',
-    has_rooms: false,
-    ordering: '-created_at'
+    is_verified: '',
+    is_renting: '',
+    is_blank: '',
+    sort_by: '-created_at'
+  });
+  
+  const [mapFilters, setMapFilters] = useState({
+    query: '',
+    type: '',
+    min_price: '',
+    max_price: '',
+    is_verified: true,
+    is_renting: true,
+    is_blank: ''
   });
 
-  // Fetch houses with search and filters, hỗ trợ lazy loading
-  const fetchHouses = useCallback(async (isRefresh = false, newQuery = null, newFilters = null, customNextUrl = null) => {
+  // Fetch houses with search and filters cho chế độ danh sách
+  const fetchListHouses = useCallback(async (isRefresh = false, newQuery = null, newFilters = null, customNextUrl = null) => {
     try {
       const actualQuery = newQuery !== null ? newQuery : searchQuery;
-      const actualFilters = newFilters !== null ? newFilters : filters;
+      const actualFilters = newFilters !== null ? newFilters : listFilters;
       let actualPage = isRefresh ? 1 : page;
       let useNextUrl = customNextUrl || (isRefresh ? null : nextUrl);
 
@@ -62,9 +77,10 @@ export const LookupScreen = () => {
           type: actualFilters.type,
           min_price: actualFilters.min_price,
           max_price: actualFilters.max_price,
-          area: actualFilters.area,
-          has_rooms: actualFilters.has_rooms,
-          ordering: actualFilters.ordering,
+          is_verified: actualFilters.is_verified,
+          is_renting: actualFilters.is_renting,
+          is_blank: actualFilters.is_blank,
+          sort_by: actualFilters.sort_by,
           page: actualPage,
           page_size: 10,
         });
@@ -75,12 +91,10 @@ export const LookupScreen = () => {
       const newHouses = Array.isArray(data.results) ? data.results : [];
 
       if (isRefresh) {
-        setHouses(newHouses);
-        setFilteredHouses(newHouses);
+        setListHouses(newHouses);
         setPage(2); // next page sẽ là 2
       } else {
-        setHouses(prev => [...prev, ...newHouses]);
-        setFilteredHouses(prev => [...prev, ...newHouses]);
+        setListHouses(prev => [...prev, ...newHouses]);
         setPage(prev => prev + 1);
       }
 
@@ -93,40 +107,62 @@ export const LookupScreen = () => {
       setRefreshing(false);
       setLoadingMore(false);
     }
-  }, [searchQuery, filters, page, nextUrl]);
+  }, [searchQuery, listFilters, page, nextUrl]);
 
   // Initial fetch
   useEffect(() => {
-    fetchHouses(true);
+    fetchListHouses(true);
   }, []);
 
   // Handle search submit
   const handleSearch = () => {
-    setPage(1);
-    setNextUrl(null);
-    fetchHouses(true, searchQuery);
+    if (activeTab === 'list') {
+      setPage(1);
+      setNextUrl(null);
+      fetchListHouses(true, searchQuery);
+    } else {
+      // Khi tìm kiếm trong chế độ map, cập nhật mapFilters với query mới
+      setMapFilters({
+        ...mapFilters,
+        query: searchQuery
+      });
+    }
   };
 
-  // Handle filter application
-  const handleFilterApply = (newFilters) => {
-    setFilters(newFilters);
+  // Handle filter application cho chế độ danh sách
+  const handleListFilterApply = (newFilters) => {
+    setListFilters(newFilters);
     setShowFilters(false);
     setPage(1);
     setNextUrl(null);
-    fetchHouses(true, null, newFilters);
+    fetchListHouses(true, null, newFilters);
+  };
+  
+  // Handle filter application cho chế độ bản đồ
+  const handleMapFilterApply = (newFilters) => {
+    setMapFilters(newFilters);
+    setShowFilters(false);
   };
 
   // Handle refresh
   const handleRefresh = () => {
     setPage(1);
     setNextUrl(null);
-    fetchHouses(true);
+    fetchListHouses(true);
   };
 
   // Handle pagination (load more)
   const handleLoadMore = () => {
     if (hasMore && !loadingMore && nextUrl) {
-      fetchHouses(false, null, null, nextUrl);
+      fetchListHouses(false, null, null, nextUrl);
+    }
+  };
+  
+  // Xử lý khi chuyển đổi tab
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    if (tab === 'list' && listHouses.length === 0) {
+      fetchListHouses(true);
     }
   };
 
@@ -161,7 +197,7 @@ export const LookupScreen = () => {
             styles.tabButton,
             activeTab === 'list' && { backgroundColor: colors.accentColor }
           ]}
-          onPress={() => setActiveTab('list')}
+          onPress={() => handleTabChange('list')}
         >
           <Icon
             name="format-list-bulleted"
@@ -183,7 +219,7 @@ export const LookupScreen = () => {
             styles.tabButton,
             activeTab === 'map' && { backgroundColor: colors.accentColor }
           ]}
-          onPress={() => setActiveTab('map')}
+          onPress={() => handleTabChange('map')}
         >
           <Icon
             name="map"
@@ -221,7 +257,7 @@ export const LookupScreen = () => {
           <Text style={[styles.errorText, { color: colors.dangerColor }]}>{error}</Text>
           <TouchableOpacity
             style={[styles.retryButton, { backgroundColor: colors.accentColor }]}
-            onPress={() => fetchHouses(true)}
+            onPress={() => fetchListHouses(true)}
           >
             <Text style={styles.retryButtonText}>Thử lại</Text>
           </TouchableOpacity>
@@ -230,7 +266,7 @@ export const LookupScreen = () => {
         <>
           {activeTab === 'list' ? (
             <ListView
-              houses={filteredHouses}
+              houses={listHouses}
               refreshing={refreshing}
               onRefresh={handleRefresh}
               loadingMore={loadingMore}
@@ -239,9 +275,12 @@ export const LookupScreen = () => {
             />
           ) : (
             <MapViewCustom
-              houses={filteredHouses}
+              mapHouses={mapHouses}
+              setMapHouses={setMapHouses}
+              mapFilters={mapFilters}
               refreshing={refreshing}
               onRefresh={handleRefresh}
+              searchQuery={searchQuery}
             />
           )}
         </>
@@ -250,8 +289,9 @@ export const LookupScreen = () => {
       <SearchFilters
         visible={showFilters}
         onClose={() => setShowFilters(false)}
-        onApply={handleFilterApply}
-        initialFilters={filters}
+        onApply={activeTab === 'list' ? handleListFilterApply : handleMapFilterApply}
+        initialFilters={activeTab === 'list' ? listFilters : mapFilters}
+        mode={activeTab}
       />
     </View>
   );

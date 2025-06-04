@@ -1,6 +1,7 @@
 import { useNavigation } from '@react-navigation/native';
 import {
   ActivityIndicator,
+  Dimensions,
   FlatList,
   StyleSheet,
   Text,
@@ -8,7 +9,10 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../../../../contexts/ThemeContext';
-import { HouseCard } from '../../../main/houses/components/HouseCard';
+import { HouseMiniCard } from '../../houses/components/HouseMiniCard';
+
+const { width } = Dimensions.get('window');
+const numColumns = 2;
 
 export const ListView = ({
   houses,
@@ -53,15 +57,22 @@ export const ListView = ({
     </View>
   );
 
+  // Render house item (2 columns)
+  const renderItem = ({ item }) => (
+    <View style={styles.itemContainer}>
+      <HouseMiniCard 
+        house={item} 
+        onPress={() => handleHousePress(item)}
+      />
+    </View>
+  );
+
   return (
     <FlatList
       data={houses}
       keyExtractor={(item, index) => item.id.toString() + index}
-      renderItem={({ item }) => (
-        <View style={styles.houseCardContainer}>
-          <HouseCard house={item} onPress={() => handleHousePress(item)}/>
-        </View>
-      )}
+      renderItem={renderItem}
+      numColumns={numColumns}
       contentContainerStyle={styles.listContent}
       refreshing={refreshing}
       onRefresh={onRefresh}
@@ -70,18 +81,23 @@ export const ListView = ({
       ListFooterComponent={renderFooter}
       ListEmptyComponent={renderEmpty}
       showsVerticalScrollIndicator={false}
+      columnWrapperStyle={styles.columnWrapper}
     />
   );
 };
 
 const styles = StyleSheet.create({
   listContent: {
-    padding: 16,
+    padding: 8,
     paddingBottom: 80,
     flexGrow: 1,
   },
-  houseCardContainer: {
-    marginBottom: 16,
+  columnWrapper: {
+    justifyContent: 'space-between',
+  },
+  itemContainer: {
+    width: (width - 24) / numColumns,
+    marginBottom: 8,
   },
   loadingFooter: {
     flexDirection: 'row',

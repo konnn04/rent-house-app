@@ -1,6 +1,6 @@
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Image, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Dimensions, Image, Linking, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { useUser } from "../../../contexts/UserContext";
@@ -15,8 +15,11 @@ import {
 } from '../../../services/profileService';
 import { createDirectChat } from '../../../utils/ChatUtils';
 import { timeAgo } from '../../../utils/Tools';
-import { HouseCard } from '../houses/components/HouseCard';
+import { HouseMiniCard } from '../houses/components/HouseMiniCard';
 import { PostCard } from '../posts/PostCard';
+
+// Lấy chiều rộng màn hình để tính toán layout 2 cột
+const { width } = Dimensions.get('window');
 
 export const PublicProfile = () => {
   const navigation = useNavigation();
@@ -112,6 +115,29 @@ export const PublicProfile = () => {
     );
   };
 
+  // Hàm mở ứng dụng điện thoại để gọi
+  const handlePhoneCall = () => {
+    if (profileData?.phone_number) {
+      Linking.openURL(`tel:${profileData.phone_number}`);
+    }
+  };
+
+  // Hàm mở ứng dụng email
+  const handleEmail = () => {
+    if (profileData?.email) {
+      Linking.openURL(`mailto:${profileData.email}`);
+    }
+  };
+
+  // Hàm mở bản đồ với địa chỉ
+  const handleOpenMap = () => {
+    if (profileData?.address) {
+      // Encode địa chỉ cho URL bản đồ
+      const encodedAddress = encodeURIComponent(profileData.address);
+      Linking.openURL(`https://maps.google.com/maps?q=${encodedAddress}`);
+    }
+  };
+
   const renderHeader = () => (
     <View style={styles.header}>
       <TouchableOpacity
@@ -193,7 +219,13 @@ export const PublicProfile = () => {
           </View>
 
           <View style={styles.profileInfo}>
-            <Text style={[styles.fullName, { color: colors.textPrimary }]}>{profileData.full_name}</Text>
+            <Text style={[styles.fullName, { color: colors.textPrimary }]}>{profileData.full_name}
+              <Icon
+                name={profileData.is_verified ? 'check-circle' : 'account'}
+                size={16}
+                color={profileData.is_verified ? colors.successColor : colors.textSecondary}
+              />
+            </Text>
             <Text style={[styles.username, { color: colors.textSecondary }]}>@{profileData.username}</Text>
 
             <View style={styles.roleContainer}>
@@ -254,19 +286,33 @@ export const PublicProfile = () => {
           </View>
         </View>
 
-        {/* About section */}
+        {/* About section - Đã cập nhật phần này với các nút tương tác */}
         <View style={[styles.aboutSection, { backgroundColor: colors.backgroundSecondary }]}>
           <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Thông tin</Text>
 
           <View style={styles.infoRow}>
             <Icon name="email-outline" size={18} color={colors.textSecondary} />
             <Text style={[styles.infoText, { color: colors.textPrimary }]}>{profileData.email}</Text>
+            <TouchableOpacity 
+              style={[styles.actionButton, { backgroundColor: colors.accentColor }]} 
+              onPress={handleEmail}
+            >
+              <Icon name="email-send-outline" size={16} color="#fff" />
+              <Text style={styles.actionButtonText}>Gửi mail</Text>
+            </TouchableOpacity>
           </View>
 
           {profileData.phone_number && (
             <View style={styles.infoRow}>
               <Icon name="phone-outline" size={18} color={colors.textSecondary} />
               <Text style={[styles.infoText, { color: colors.textPrimary }]}>{profileData.phone_number}</Text>
+              <TouchableOpacity 
+                style={[styles.actionButton, { backgroundColor: colors.accentColor }]} 
+                onPress={handlePhoneCall}
+              >
+                <Icon name="phone" size={16} color="#fff" />
+                <Text style={styles.actionButtonText}>Gọi ngay</Text>
+              </TouchableOpacity>
             </View>
           )}
 
@@ -274,6 +320,13 @@ export const PublicProfile = () => {
             <View style={styles.infoRow}>
               <Icon name="map-marker-outline" size={18} color={colors.textSecondary} />
               <Text style={[styles.infoText, { color: colors.textPrimary }]}>{profileData.address}</Text>
+              <TouchableOpacity 
+                style={[styles.actionButton, { backgroundColor: colors.accentColor }]} 
+                onPress={handleOpenMap}
+              >
+                <Icon name="map" size={16} color="#fff" />
+                <Text style={styles.actionButtonText}>Bản đồ</Text>
+              </TouchableOpacity>
             </View>
           )}
 
@@ -372,14 +425,15 @@ export const PublicProfile = () => {
                 </Text>
               </View>
             ) : (
+              // Thay thế cách hiển thị trước đây bằng grid 2 cột
               <View style={styles.housesGrid}>
-                {houses.map(house => (
-                  <HouseCard
-                    key={house.id}
-                    house={house}
-                    onPress={() => navigation.navigate('HouseDetail', { houseId: house.id })}
-                    style={styles.houseCard}
-                  />
+                {houses.map((house, index) => (
+                  <View key={house.id} style={styles.houseCardContainer}>
+                    <HouseMiniCard
+                      house={house}
+                      onPress={() => navigation.navigate('HouseDetail', { houseId: house.id })}
+                    />
+                  </View>
                 ))}
               </View>
             )}
@@ -538,11 +592,26 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 10,
+    flexWrap: 'wrap',
   },
   infoText: {
     marginLeft: 10,
     fontSize: 14,
     flex: 1,
+  },
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 15,
+    marginLeft: 8,
+  },
+  actionButtonText: {
+    color: '#fff',
+    fontSize: 12,
+    marginLeft: 4,
+    fontWeight: '500',
   },
   tabContainer: {
     flexDirection: 'row',
@@ -577,9 +646,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
+    paddingHorizontal: 8,
   },
-  houseCard: {
-    width: '48%',
+  houseCardContainer: {
+    width: (width - 28) / 2, 
     marginBottom: 16,
   },
 });
