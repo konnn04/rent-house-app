@@ -5,12 +5,7 @@ import uuid
 from typing import Optional
 
 def upload_image_to_cloudinary(image_file, folder="rent_house") -> Optional[str]:
-    """
-    Tải ảnh lên Cloudinary và trả về URL của ảnh đã tải lên
-    Nếu không tải được ảnh lên thì trả về None
-    """
     try:
-        # Generate a unique public_id to prevent overwrites
         public_id = f"{folder}/{uuid.uuid4()}"
         
         result = cloudinary.uploader.upload(
@@ -26,13 +21,7 @@ def upload_image_to_cloudinary(image_file, folder="rent_house") -> Optional[str]
         return None
 
 def delete_cloudinary_image(url: str) -> bool:
-    """
-    Xoá ảnh từ Cloudinary
-    Trả về True nếu thành công, ngược lại trả về False
-    """
     try:
-        # Extract public_id from URL
-        # URL format: https://res.cloudinary.com/cloud_name/image/upload/v123456/folder/public_id.ext
         parts = url.split('/')
         if len(parts) < 2:
             return False

@@ -16,7 +16,6 @@ class CommentSerializer(serializers.ModelSerializer):
         return obj.replies.count()
         
     def get_media(self, obj):
-        """Get media attachments for this comment"""
         media_items = []
         for media in obj.media_files.filter(media_type='image'):
             media_items.append({

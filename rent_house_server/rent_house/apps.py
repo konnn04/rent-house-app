@@ -9,7 +9,7 @@ class RentHouseConfig(AppConfig):
     name = 'rent_house'
 
     def ready(self):
-        # Initialize Telegram notification
+        # Khởi tạo kênh báo Telegram 
         from django.conf import settings
         if getattr(settings, 'TELEGRAM_DEBUG_ENABLED', False):
             from rent_house.telegram_utils import send_telegram_message
@@ -18,3 +18,9 @@ class RentHouseConfig(AppConfig):
                 logger.info("Telegram notifications initialized")
             except Exception as e:
                 logger.error(f"Failed to initialize Telegram notifications: {str(e)}")
+
+        try:
+            import rent_house.services.notification_service
+            logger.info("Notification service initialized")
+        except Exception as e:
+            logger.error(f"Failed to initialize notification service: {str(e)}")

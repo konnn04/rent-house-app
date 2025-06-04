@@ -10,9 +10,6 @@ class PreRegisterSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
     
     def validate_email(self, value):
-        """
-        Validate that the email is not already registered
-        """
         if User.objects.filter(email=value).exists():
             raise serializers.ValidationError("Email đã được đăng ký.")
         return value
@@ -33,29 +30,20 @@ class RegisterSerializer(serializers.ModelSerializer):
         }
     
     def validate_email(self, value):
-        """
-        Kiểm tra email đã tồn tại chưa
-        """
         if User.objects.filter(email=value).exists():
             raise serializers.ValidationError("Email đã được đăng ký.")
         return value
     
     def validate_username(self, value):
-        """
-        Kiểm tra username đã tồn tại chưa
-        """
         if User.objects.filter(username=value).exists():
             raise serializers.ValidationError("Tên đăng nhập đã được sử dụng.")
         return value
     
     def validate(self, attrs):
-        """
-        Kiểm tra mật khẩu khớp nhau không và mã xác thực hợp lệ
-        """
         if attrs['password'] != attrs['password2']:
             raise serializers.ValidationError({"password": "Mật khẩu không khớp."})
         
-        # Kiểm tra mật khẩu có đủ mạnh không
+        # Kiểm độ mạnh có sẳn trong Django
         try:
             validate_password(attrs['password'])
         except ValidationError as e:
@@ -89,7 +77,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         validated_data.pop('password2')
         validated_data.pop('verification_code')
         
-        # Tạo user và kích hoạt luôn (đã xác thực email)
+        # Tạo user và kích hoạt luôn
         user = User.objects.create(
             username=validated_data['username'],
             email=validated_data['email'],
@@ -97,16 +85,15 @@ class RegisterSerializer(serializers.ModelSerializer):
             last_name=validated_data.get('last_name', ''),
             phone_number=validated_data.get('phone_number', ''),
             role=validated_data.get('role', 'renter'),
-            is_active=True  # Kích hoạt ngay vì đã xác thực email
+            is_active=True 
         )
         
-        # Đặt mật khẩu
         user.set_password(validated_data['password'])
         user.save()
         
-        # Đánh dấu mã xác thực đã sử dụng
+        # Đánh dấu mã xác thực cửa người này đã sử dụng
         self.verification.is_used = True
-        self.verification.user = user  # Liên kết với user mới tạo
+        self.verification.user = user 
         self.verification.save()
         
         return user
@@ -116,9 +103,6 @@ class VerifyEmailSerializer(serializers.Serializer):
     code = serializers.CharField(required=True)
     
     def validate(self, attrs):
-        """
-        Kiểm tra mã xác thực có hợp lệ không
-        """
         email = attrs.get('email')
         code = attrs.get('code')
         
@@ -127,7 +111,6 @@ class VerifyEmailSerializer(serializers.Serializer):
         except User.DoesNotExist:
             raise serializers.ValidationError("Email không hợp lệ hoặc đã được xác thực")
         
-        # Lấy mã xác thực mới nhất và chưa sử dụng
         verification = VerificationCode.objects.filter(
             user=user,
             is_used=False,
@@ -148,9 +131,6 @@ class ResendVerificationSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
     
     def validate_email(self, value):
-        """
-        Kiểm tra email đã tồn tại chưa
-        """
         try:
             user = User.objects.get(email=value, is_active=False)
         except User.DoesNotExist:
@@ -176,12 +156,10 @@ class RequestPasswordResetSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
     
     def validate_email(self, value):
-        """Kiểm tra email có tồn tại không"""
         try:
             user = User.objects.get(email=value)
             return value
         except User.DoesNotExist:
-            # Không báo lỗi rõ ràng để tránh lộ thông tin về tài khoản tồn tại
             return value
 
 class PasswordResetSerializer(serializers.Serializer):
@@ -190,10 +168,8 @@ class PasswordResetSerializer(serializers.Serializer):
     confirm_password = serializers.CharField(required=True, style={'input_type': 'password'})
     
     def validate(self, attrs):
-        """Kiểm tra token và mật khẩu"""
         token = attrs.get('token')
         
-        # Kiểm tra token có tồn tại và hợp lệ không
         reset_token = PasswordResetToken.objects.filter(token=token, is_used=False).first()
         if not reset_token:
             raise serializers.ValidationError({"token": "Token không hợp lệ hoặc đã hết hạn"})
@@ -201,11 +177,9 @@ class PasswordResetSerializer(serializers.Serializer):
         if not reset_token.is_valid():
             raise serializers.ValidationError({"token": "Token đã hết hạn"})
         
-        # Kiểm tra mật khẩu khớp nhau không
         if attrs.get('new_password') != attrs.get('confirm_password'):
             raise serializers.ValidationError({"confirm_password": "Mật khẩu không khớp"})
         
-        # Kiểm tra độ mạnh của mật khẩu
         try:
             validate_password(attrs.get('new_password'))
         except ValidationError as e:

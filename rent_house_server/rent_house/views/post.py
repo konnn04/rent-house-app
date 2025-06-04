@@ -46,27 +46,34 @@ class PostViewSet(viewsets.ModelViewSet):
         
         # Process images if any are uploaded
         self.handle_images(post)
+
+        try:
+            from rent_house.services.notification_service import post_for_followers_notification
+            post_for_followers_notification(self.request.user, post)
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Lỗi khi tạo thông báo có bài mới: {str(e)}")
         
         return post
         
     def perform_update(self, serializer):
-        # Update the post
         post = serializer.save()
-        
-        # Process images if any are uploaded
         self.handle_images(post)
-        
         return post
     
     def handle_images(self, post):
-        """Handle image uploads for posts"""
-        # Check if images were uploaded
-        images = self.request.FILES.getlist('images')
+        images = self.request.FILES.getlist('images') or self.request.FILES.getlist('images[]')
         
-        # Process image files if present
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info(f"Processing {len(images)} images for post {post.id}")
+        logger.info(f"Available files: {list(self.request.FILES.keys())}")
+
         if images:
             for image in images:
                 # Upload to Cloudinary
+                logger.info(f"Uploading image: {image.name}, size: {image.size} bytes")
                 image_url = upload_image_to_cloudinary(image, folder="post_images")
                 if image_url:
                     # Create Media object
@@ -78,26 +85,9 @@ class PostViewSet(viewsets.ModelViewSet):
                         purpose='attachment',
                         public_id=image_url.split('/')[-1].split('.')[0]
                     )
-        
-        # Check for base64 encoded images in data
-        base64_images = self.request.data.getlist('base64_images', [])
-        if base64_images:
-            for base64_image in base64_images:
-                try:
-                    # Upload to Cloudinary
-                    image_url = upload_image_to_cloudinary(base64_image, folder="post_images")
-                    if image_url:
-                        # Create Media object
-                        Media.objects.create(
-                            content_type=ContentType.objects.get_for_model(Post),
-                            object_id=post.id,
-                            url=image_url,
-                            media_type='image',
-                            purpose='attachment',
-                            public_id=image_url.split('/')[-1].split('.')[0]
-                        )
-                except Exception as e:
-                    print(f"Error processing base64 image: {e}")
+                    logger.info(f"Successfully created media for image: {image_url}")
+                else:
+                    logger.error(f"Failed to upload image to Cloudinary: {image.name}")
                     
     @action(detail=True, methods=['post'])
     def interact(self, request, pk=None):
@@ -126,6 +116,17 @@ class PostViewSet(viewsets.ModelViewSet):
                     interaction.type = interaction_type
                 interaction.save()
             
+            # Tạo thông báo
+            if created and interaction.type != 'none':
+                try:
+                    from rent_house.services.notification_service import interaction_notification
+                    interaction_notification(request.user, post)
+                except Exception as e:
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.error(f"Lỗi khi gửi thông báo có tương tác: {str(e)}")
+            
+
             return Response({
                 'like_count': post.get_interaction_count('like'),
                 'status': 'success',
@@ -265,4 +266,4 @@ class PostViewSet(viewsets.ModelViewSet):
             
         except ValueError:
             return Response({"error": "Invalid lat, lng, or radius values"}, status=400)
-    
+

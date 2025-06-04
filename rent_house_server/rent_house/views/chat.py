@@ -7,10 +7,9 @@ from rest_framework.response import Response
 from rent_house.models import ChatGroup, ChatMembership, Message, User, Media
 from rent_house.serializers import (
     ChatGroupSerializer, ChatGroupDetailSerializer, 
-    ChatGroupUpdateSerializer, MessageSerializer
+    ChatGroupUpdateSerializer, MessageSerializer, UserSummarySerializer
 )
 from rent_house.utils import upload_image_to_cloudinary
-from rent_house.firebase_utils import send_chat_notification
 from rent_house.permissions import IsOwnerOrReadOnly
 
 class ChatGroupViewSet(viewsets.ModelViewSet):
@@ -204,18 +203,14 @@ class ChatGroupViewSet(viewsets.ModelViewSet):
         # Cập nhật thời gian cập nhật của nhóm chat
         chat_group.save(update_fields=['updated_at'])
         
-        # Gửi thông báo đến các thành viên khác trong nhóm
-        recipients = chat_group.members.exclude(id=request.user.id)
-        content_preview = message.content if message.content else "Đã gửi media"
+        # Đánh dấu là đã đọc tất cả tin nhắn trong nhóm chat khi người dùng gửi tin nhắn
+        membership = ChatMembership.objects.filter(
+            chat_group=chat_group,
+            user=request.user
+        ).first()
         
-        for recipient in recipients:
-            send_chat_notification(
-                recipient=recipient,
-                sender=request.user,
-                chat_group=chat_group,
-                message_content=content_preview,
-                message_id=message.id
-            )
+        if membership:
+            membership.mark_as_read()
         
         # Cập nhật response với thông tin media
         response_data = serializer.data
@@ -264,5 +259,52 @@ class ChatGroupViewSet(viewsets.ModelViewSet):
         )
         
         return Response({"status": "success"})
+    
+    @action(detail=False, methods=['get'])
+    def unread_count(self, request):
+        """Lấy tổng số tin nhắn chưa đọc từ tất cả các nhóm chat"""
+        if not request.user.is_authenticated:
+            return Response({"error": "Authentication required"}, status=status.HTTP_401_UNAUTHORIZED)
+            
+        # Lấy tất cả các nhóm chat mà người dùng là thành viên
+        memberships = ChatMembership.objects.filter(user=request.user)
+        
+        # Tính tổng tin nhắn chưa đọc
+        total_unread = 0
+        chats_with_unread = []
+        
+        for membership in memberships:
+            unread_count = membership.get_unread_count()
+            
+            if unread_count > 0:
+                chat_group = membership.chat_group
+                chat_info = {
+                    'chat_id': chat_group.id,
+                    'name': chat_group.name if chat_group.is_group else None,
+                    'is_group': chat_group.is_group,
+                    'unread_count': unread_count,
+                    'members_summary': UserSummarySerializer(
+                        chat_group.members.exclude(id=request.user.id)[:3], 
+                        many=True
+                    ).data
+                }
+                
+                # Thêm thông tin về tin nhắn cuối cùng
+                last_message = chat_group.messages.order_by('-created_at').first()
+                if last_message:
+                    chat_info['last_message'] = {
+                        'id': last_message.id,
+                        'sender': UserSummarySerializer(last_message.sender).data,
+                        'content': last_message.get_formatted_content()[:100],
+                        'created_at': last_message.created_at
+                    }
+                
+                chats_with_unread.append(chat_info)
+                total_unread += unread_count
+        
+        return Response({
+            'total_unread': total_unread,
+            'chats_with_unread': chats_with_unread
+        })
 
 

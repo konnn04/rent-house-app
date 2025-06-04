@@ -32,25 +32,40 @@ class CommentViewSet(viewsets.ModelViewSet):
                 post=post,
                 parent=parent
             )
+
+            post_author = post.author
+            if post_author and post_author != self.request.user:
+                try:
+                    from rent_house.services.notification_service import comment_notification
+                    comment_notification(self.request.user, post_author, post_id, comment)
+                except Exception as e:
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.error(f"Lỗi khi gửi thông báo có người bình luận: {str(e)}")
+
+            post_author = post.author
+            try:
+                from rent_house.services.notification_service import comment_notification
+                comment_notification(post_author, parent, post_id, comment)
+            except Exception as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Lỗi khi gửi thông báo có người bình luận: {str(e)}")
             
             # Process images if any
             self.handle_images(comment)
-            
             return comment
         except Post.DoesNotExist:
-            raise serializers.ValidationError({"post": "Post does not exist"})
+            raise serializers.ValidationError({"error": "Bài viết không tồn tại"})
         except Comment.DoesNotExist:
-            raise serializers.ValidationError({"parent": "Parent comment does not exist"})
+            raise serializers.ValidationError({"error": "Phản hồi không tồn tại"})
     
     def perform_update(self, serializer):
         comment = serializer.save()
-        # Process images if any
         self.handle_images(comment)
         return comment
     
     def handle_images(self, comment):
-        """Handle image uploads for comments"""
-        # Check if images were uploaded
         images = self.request.FILES.getlist('images')
         
         # Process image files if present

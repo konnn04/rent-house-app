@@ -1,7 +1,7 @@
 from django.urls import path, include
 from . import views
 from rest_framework.routers import DefaultRouter
-from rent_house.admin_views import admin_dashboard
+from rent_house.views.report import ReportViewSet
 
 router = DefaultRouter()
 router.register(r'users', views.UserViewSet, basename='user')
@@ -17,6 +17,7 @@ router.register(r'chats', views.ChatGroupViewSet, basename='chat-group')
 router.register(r'messages', views.MessageViewSet, basename='message')
 router.register(r'profiles', views.ProfileViewSet, basename='profile')
 router.register(r'identity-verification', views.IdentityVerificationViewSet, basename='identity-verification')
+router.register(r'reports', ReportViewSet, basename='report')
 
 urlpatterns = [
     path('ping/', views.ping_view, name='ping'),

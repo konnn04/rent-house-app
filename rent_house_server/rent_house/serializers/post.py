@@ -2,6 +2,7 @@ from rest_framework import serializers
 from rent_house.models import Post, Follow, Interaction
 from .user import UserSummarySerializer
 from .comment import CommentSerializer
+from .house import HouseSimpleSerializer
 
 class PostSerializer(serializers.ModelSerializer):
     interaction = serializers.SerializerMethodField()
@@ -11,6 +12,7 @@ class PostSerializer(serializers.ModelSerializer):
     media = serializers.SerializerMethodField()
     like_count = serializers.SerializerMethodField()
     dislike_count = serializers.SerializerMethodField()
+    house_link = HouseSimpleSerializer(read_only=True)
     
     class Meta:
         model = Post
@@ -89,13 +91,11 @@ class PostDetailSerializer(serializers.ModelSerializer):
         read_only_fields = ('id', 'created_at', 'updated_at')
     
     def get_comments(self, obj):
-        """Get top-level comments with pagination if needed"""
-        # Get only top-level comments (no parent)
+        # Chỉ lấy comment bậc 1
         comments = obj.comments.filter(parent=None).order_by('-created_at')
         return CommentSerializer(comments, many=True, context=self.context).data
     
     def get_house_details(self, obj):
-        """Get basic details about linked house if present"""
         if not obj.house_link:
             return None
         
@@ -144,7 +144,6 @@ class PostDetailSerializer(serializers.ModelSerializer):
         ).exists()
     
     def get_media(self, obj):
-        """Get media attachments for this post"""
         media_items = []
         for media in obj.media_files.filter(media_type='image'):
             media_items.append({

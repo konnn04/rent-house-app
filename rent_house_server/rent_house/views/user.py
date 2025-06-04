@@ -4,7 +4,6 @@ from rest_framework.response import Response
 
 from rent_house.models import User, IdentityVerification
 from rent_house.serializers import UserSerializer, IdentityVerificationSerializer
-from rent_house.firebase_utils import store_fcm_token, remove_fcm_token
 
 from rent_house.utils import upload_image_to_cloudinary
 from rent_house.permissions import IsOwnerOrReadOnly
@@ -24,37 +23,7 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView):
             user.save()
         serializer = UserSerializer(user)
         return Response(serializer.data, status=status.HTTP_200_OK)
-    
-    @action(detail=False, methods=['post'], permission_classes=[permissions.IsAuthenticated])
-    def register_device(self, request):
-        """Đăng ký FCM token cho thiết bị"""
-        fcm_token = request.data.get('fcm_token')
-        
-        if not fcm_token:
-            return Response({"error": "FCM token is required"}, status=status.HTTP_400_BAD_REQUEST)
             
-        success = store_fcm_token(request.user.id, fcm_token)
-        
-        if success:
-            return Response({"status": "Device registered successfully"})
-        else:
-            return Response({"error": "Failed to register device"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
-    @action(detail=False, methods=['post'], permission_classes=[permissions.IsAuthenticated])
-    def unregister_device(self, request):
-        """Hủy đăng ký FCM token cho thiết bị"""
-        fcm_token = request.data.get('fcm_token')
-        
-        if not fcm_token:
-            return Response({"error": "FCM token is required"}, status=status.HTTP_400_BAD_REQUEST)
-            
-        success = remove_fcm_token(request.user.id, fcm_token)
-        
-        if success:
-            return Response({"status": "Device unregistered successfully"})
-        else:
-            return Response({"error": "Failed to unregister device"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
     @action(detail=False, methods=['patch'], permission_classes=[permissions.IsAuthenticated], url_path='update-avatar')
     def update_avatar(self, request):
         """Cập nhật avatar người dùng"""
