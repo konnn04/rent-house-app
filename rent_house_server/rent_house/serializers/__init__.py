@@ -1,5 +1,5 @@
 from .user import UserSerializer, UserSummarySerializer, IdentityVerificationSerializer
-from .house import HouseListSerializer, HouseDetailSerializer
+from .house import HouseListSerializer, HouseDetailSerializer, HouseSimpleSerializer
 from .post import PostSerializer, PostDetailSerializer
 from .comment import CommentSerializer, CommentDetailSerializer
 from .rate import RateSerializer
@@ -8,11 +8,11 @@ from .chat import MessageSerializer, ChatMembershipSerializer, ChatGroupSerializ
 from .follow import FollowSerializer
 from .auth import PreRegisterSerializer, RegisterSerializer, VerifyEmailSerializer, ResendVerificationSerializer, CheckVerificationStatusSerializer, PasswordResetSerializer, RequestPasswordResetSerializer
 from .profile import ProfileSerializer, PublicProfileSerializer
+from .report import ReportSerializer
 
-# Export all serializers to maintain backward compatibility
 __all__ = [
     'UserSerializer', 'UserSummarySerializer', 'IdentityVerificationSerializer',
-    'HouseListSerializer', 'HouseDetailSerializer',
+    'HouseListSerializer', 'HouseDetailSerializer', 'HouseSimpleSerializer',
     'PostSerializer', 'PostDetailSerializer',
     'CommentSerializer', 'CommentDetailSerializer', 
     'RateSerializer', 'NotificationSerializer',
@@ -23,6 +23,7 @@ __all__ = [
     'PreRegisterSerializer',
     'RegisterSerializer', 'VerifyEmailSerializer', 'ResendVerificationSerializer',
     'CheckVerificationStatusSerializer', 'PasswordResetSerializer', 'RequestPasswordResetSerializer',
-    'ProfileSerializer', 'PublicProfileSerializer'
+    'ProfileSerializer', 'PublicProfileSerializer',
+    'ReportSerializer',
 ]
  

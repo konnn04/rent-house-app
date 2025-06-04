@@ -1,39 +1,45 @@
 # Profile APIs
 
-## Get User Profile by Username
+## Xem profile người dùng
 
 ```
 GET /api/profiles/{username}/
 ```
 
-Get the public profile of a user by their username.
+Xem thông tin chi tiết về profile của người dùng dựa trên username.
 
 **Response (200 OK)**:
 
 ```json
 {
   "id": 123,
-  "username": "example_user",
-  "full_name": "John Doe",
-  "avatar": "https://example.com/avatars/user123.jpg",
-  "avatar_thumbnail": "https://example.com/avatars/user123_thumb.jpg",
-  "role": "renter",
-  "post_count": 15,
-  "joined_date": "2023-05-01T10:30:00Z",
+  "username": "user1",
+  "full_name": "User One",
+  "avatar": "https://example.com/avatars/user1.jpg",
+  "avatar_thumbnail": "https://example.com/avatars/user1_thumb.jpg",
+  "role": "owner",
+  "email": "user@example.com",
+  "phone_number": "0987654321",
+  "address": "123 Street, City",
+  "is_active": true,
+  "first_name": "User",
+  "last_name": "One",
+  "post_count": 5,
+  "joined_date": "2023-05-10T10:30:00Z",
   "follower_count": 10,
-  "following_count": 5,
+  "following_count": 20,
   "avg_rating": 4.5,
   "is_followed": false
 }
 ```
 
-## Get List of Owners
+## Danh sách chủ nhà
 
 ```
 GET /api/profiles/owners/
 ```
 
-Get a list of users with the "owner" role.
+Lấy danh sách người dùng có vai trò là chủ nhà (owner).
 
 **Query Parameters**:
 
@@ -44,22 +50,39 @@ Get a list of users with the "owner" role.
 
 ```json
 {
-  "count": 20,
+  "count": 25,
   "next": "https://api.example.com/api/profiles/owners/?page=2",
   "previous": null,
   "results": [
     {
-      "id": 456,
+      "id": 123,
       "username": "owner1",
       "full_name": "Owner One",
       "avatar": "https://example.com/avatars/owner1.jpg",
       "avatar_thumbnail": "https://example.com/avatars/owner1_thumb.jpg",
       "role": "owner",
-      "email": "owner1@example.com",
+      "email": "owner@example.com",
       "phone_number": "0987654321",
-      "address": "123 Example St"
+      "address": "123 Street, City",
+      "is_active": true,
+      "first_name": "Owner",
+      "last_name": "One"
     },
-    // ... more owner profiles
+    {
+      "id": 124,
+      "username": "owner2",
+      "full_name": "Owner Two",
+      "avatar": "https://example.com/avatars/owner2.jpg",
+      "avatar_thumbnail": "https://example.com/avatars/owner2_thumb.jpg",
+      "role": "owner",
+      "email": "owner2@example.com",
+      "phone_number": "0987654322",
+      "address": "124 Street, City",
+      "is_active": true,
+      "first_name": "Owner",
+      "last_name": "Two"
+    }
+    // ... more owners
   ]
 }
 ```

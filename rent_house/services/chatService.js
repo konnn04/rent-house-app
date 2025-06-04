@@ -104,3 +104,14 @@ export const createDirectChatService = async (userId) => {
     throw error;
   }
 }
+
+// Đếm số lượng chat chưa đọc
+export const getUnreadChatsCount = async () => {
+  try {
+    const response = await apiClient.get('/api/chats/unread_count/');
+    return response.data.total_unread || 0;
+  } catch (error) {
+    console.error('Error fetching unread chats count:', error);
+    return 0;
+  }
+}

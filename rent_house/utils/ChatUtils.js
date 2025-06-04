@@ -101,36 +101,35 @@ export const navigateToChat = (navigation, { chatId, chatName, userId = null }) 
  * @returns {object} Temporary message object
  */
 export const createOptimisticMessage = (content, userData, replyingTo = null, images = []) => {
-  // Generate a temporary ID (negative to avoid conflicts with server IDs)
-  const tempId = -Math.floor(Math.random() * 1000000);
-  
-  // Current timestamp
   const now = new Date().toISOString();
+  const tempId = `temp-${Date.now()}`;
   
-  // Format media items if present
+  // Convert image objects to the format expected by the UI
   const mediaItems = images.map((img, index) => ({
-    id: `temp-${index}-${tempId}`,
-    type: 'image',
+    id: `temp-media-${index}`,
     url: img.uri,
     thumbnail: img.uri,
+    media_type: 'image',
+    isUploading: true
   }));
   
-  // Create the optimistic message object
   return {
     id: tempId,
+    chat_group: null, // Will be set by the API
     content: content || '',
     created_at: now,
     updated_at: now,
     sender: {
-      id: userData?.id,
-      username: userData?.username,
-      full_name: userData?.full_name || userData?.username,
-      avatar: userData?.avatar,
+      id: userData.id,
+      username: userData.username,
+      full_name: userData.first_name + ' ' + userData.last_name,
+      avatar: userData.avatar,
+      avatar_thumbnail: userData.avatar
     },
-    is_read: true,
-    is_sender: true,
-    is_optimistic: true,  // Flag to identify this as a temporary message
+    is_system_message: false,
+    is_removed: false,
     replied_to: replyingTo,
-    medias: mediaItems.length > 0 ? mediaItems : null,
+    media: mediaItems,
+    isOptimistic: true // Flag to identify optimistic updates
   };
 };

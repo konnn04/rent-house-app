@@ -12,8 +12,8 @@ from .message import MessageViewSet
 from .auth import RegisterView, VerifyEmailView, ResendVerificationView, CheckVerificationStatusView, PreRegisterView, PasswordResetView, RequestPasswordResetView, WebPasswordResetView    
 from .profile import ProfileViewSet
 from .ping import ping_view
+from .report import ReportViewSet
 
-# Export all views to maintain backward compatibility
 __all__ = [
     'SmallPagePagination',
     'UserViewSet', 'IdentityVerificationViewSet',
@@ -36,4 +36,5 @@ __all__ = [
     'CheckVerificationStatusView',
     'ping_view',
     'ProfileViewSet',
+    'ReportViewSet',
 ]

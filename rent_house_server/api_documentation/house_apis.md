@@ -8,12 +8,15 @@ GET /api/houses/
 
 **Query Parameters**:
 
-- `search`: Tìm kiếm theo từ khóa (tên, địa chỉ)
+- `search`: Tìm kiếm theo từ khóa (tên, mô tả, địa chỉ)
+- `lat`, `lon`: Tìm các nhà gần tọa độ này nhất (sẽ trả về trường distance trong km)
 - `type`: Lọc theo loại nhà (house, apartment, dormitory, room)
+- `is_verified`: Lọc nhà đã được xác thực (true/false)
 - `min_price`: Giá tối thiểu
 - `max_price`: Giá tối đa
-- `area`: Lọc theo khu vực
-- `ordering`: Sắp xếp (created_at, -created_at, base_price, -base_price)
+- `is_renting`: Còn cho thuê không (true/false)
+- `is_blank`: Tìm nhà còn phòng trống (true/false)
+- `sort_by`: Sắp xếp (price_asc, price_desc, date_asc, date_desc, rating_desc)
 - `page`: Số trang
 - `page_size`: Số lượng kết quả trên mỗi trang
 
@@ -22,7 +25,7 @@ GET /api/houses/
 ```json
 {
   "count": 50,
-  "next": "...",
+  "next": "http://example.com/api/houses/?page=2",
   "previous": null,
   "results": [
     {
@@ -47,12 +50,127 @@ GET /api/houses/
       "max_rooms": null,
       "current_rooms": null,
       "max_people": null,
-      "avg_rating": 4.5
+      "avg_rating": 4.5,
+      "area": 100,
+      "deposit": 10000000,
+      "is_renting": true,
+      "is_verified": true,
+      "distance": 1.5  // Chỉ trả về khi có tham số lat và lon, đơn vị km
+    },
+    {
+      "id": 2,
+      "owner": {
+        "id": 6,
+        "username": "owner2",
+        "full_name": "Owner Two",
+        "avatar": "https://example.com/avatars/owner2.jpg",
+        "avatar_thumbnail": "https://example.com/avatars/owner2_thumb.jpg",
+        "role": "owner"
+      },
+      "title": "Phòng trọ quận Bình Thạnh",
+      "address": "45 Điện Biên Phủ, Quận Bình Thạnh, TP.HCM",
+      "latitude": 10.8012,
+      "longitude": 106.7192,
+      "created_at": "2023-07-20T15:45:00Z",
+      "updated_at": "2023-07-20T15:45:00Z",
+      "base_price": 2800000,
+      "type": "room",
+      "thumbnail": "https://example.com/thumbnails/room2.jpg",
+      "max_rooms": 10,
+      "current_rooms": 8,
+      "max_people": 20,
+      "avg_rating": 4.2,
+      "area": 25,
+      "deposit": 5000000,
+      "is_renting": true,
+      "is_verified": true,
+      "distance": 3.2  // Chỉ trả về khi có tham số lat và lon, đơn vị km
     }
     // ... more houses
   ]
 }
 ```
+
+**Ví dụ Request**:
+
+```
+GET /api/houses/?search=quận 1&min_price=3000000&max_price=6000000&type=house&is_verified=true&sort_by=price_asc
+```
+
+Tìm kiếm nhà riêng đã xác thực tại quận 1 với giá từ 3-6 triệu, sắp xếp theo giá tăng dần.
+
+```
+GET /api/houses/?lat=10.7731&lon=106.7030&is_renting=true&is_blank=true
+```
+
+Tìm kiếm nhà còn cho thuê và còn phòng trống gần tọa độ đã cho, sắp xếp theo khoảng cách tăng dần.
+
+---
+
+## Tìm kiếm nhà/căn hộ theo bán kính trên bản đồ
+
+```
+GET /api/houses/search_by_map/
+```
+
+API này cho phép tìm kiếm nhà trong phạm vi bán kính từ tọa độ trung tâm.
+
+**Query Parameters**:
+
+- `lat`: Vĩ độ tọa độ trung tâm (bắt buộc)
+- `lon`: Kinh độ tọa độ trung tâm (bắt buộc)
+- `radius`: Bán kính tìm kiếm (đơn vị km, mặc định: 5km)
+- Có thể sử dụng các tham số lọc của API `/api/houses/` như `type`, `min_price`, `max_price`, `is_verified`, ...
+
+**Response (200 OK)**:
+
+```json
+{
+  "count": 15,
+  "next": "http://example.com/api/houses/search_by_map/?page=2&lat=10.7731&lon=106.7030&radius=3",
+  "previous": null,
+  "results": [
+    {
+      "id": 1,
+      "owner": {
+        "id": 5,
+        "username": "owner1",
+        "full_name": "Owner One",
+        "avatar": "https://example.com/avatars/owner1.jpg",
+        "avatar_thumbnail": "https://example.com/avatars/owner1_thumb.jpg",
+        "role": "owner"
+      },
+      "title": "Nhà riêng quận 1",
+      "address": "123 Nguyễn Huệ, Quận 1, TP.HCM",
+      "latitude": 10.7731,
+      "longitude": 106.7030,
+      "created_at": "2023-07-15T10:30:00Z",
+      "updated_at": "2023-07-15T10:30:00Z",
+      "base_price": 5000000,
+      "type": "house",
+      "thumbnail": "https://example.com/thumbnails/house1.jpg",
+      "max_rooms": null,
+      "current_rooms": null,
+      "max_people": null,
+      "avg_rating": 4.5,
+      "area": 100,
+      "deposit": 10000000,
+      "is_renting": true,
+      "is_verified": true,
+      "distance": 0.5  // Khoảng cách từ tọa độ tìm kiếm, đơn vị km
+    }
+    // ... more houses
+  ]
+}
+```
+
+**Ví dụ Request**:
+
+```
+GET /api/houses/search_by_map/?lat=10.7731&lon=106.7030&radius=2&type=apartment&min_price=3000000&max_price=8000000
+```
+
+Tìm kiếm các căn hộ trong bán kính 2km từ tọa độ đã cho với giá từ 3-8 triệu.
 
 ---
 

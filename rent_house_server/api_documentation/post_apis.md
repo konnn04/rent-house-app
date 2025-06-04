@@ -10,7 +10,9 @@ Lấy danh sách bài đăng với các tùy chọn lọc.
 
 **Query Parameters**:
 
-- `search`: Tìm kiếm theo từ khóa (tiêu đề, nội dung, địa chỉ)
+- `search`: Tìm kiếm theo từ khóa (tên, nội dung, địa chỉ)
+- `author_username`: Lọc theo username của tác giả
+- `type`: Lọc theo loại bài đăng (general, rental_listing, search_listing, roommate)
 - `ordering`: Sắp xếp (created_at, -created_at)
 - `page`: Số trang
 - `page_size`: Số lượng kết quả trên mỗi trang
@@ -19,14 +21,14 @@ Lấy danh sách bài đăng với các tùy chọn lọc.
 
 ```json
 {
-  "count": 30,
+  "count": 50,
   "next": "https://api.example.com/api/posts/?page=2",
   "previous": null,
   "results": [
     {
       "id": 1,
       "author": {
-        "id": 5,
+        "id": 123,
         "username": "user1",
         "full_name": "User One",
         "avatar": "https://example.com/avatars/user1.jpg",
@@ -42,7 +44,6 @@ Lấy danh sách bài đăng với các tùy chọn lọc.
       "created_at": "2023-07-15T10:30:00Z",
       "updated_at": "2023-07-15T10:30:00Z",
       "house_link": 1,
-      "interaction_count": 10,
       "interaction": null,
       "is_followed_owner": false,
       "comment_count": 5,
@@ -54,12 +55,80 @@ Lấy danh sách bài đăng với các tùy chọn lọc.
           "medium": "https://example.com/medium/post1_1.jpg",
           "type": "image"
         }
-        // ... more media
       ],
-      "is_active": true
-    },
+      "is_active": true,
+      "like_count": 10,
+      "dislike_count": 2
+    }
     // ... more posts
   ]
+}
+```
+
+## Tạo bài đăng mới
+
+```
+POST /api/posts/
+```
+
+Tạo bài đăng mới.
+
+**Headers**:
+```
+Authorization: Bearer {access_token}
+Content-Type: multipart/form-data
+```
+
+**Request Body**:
+
+```
+type: rental_listing
+title: Cho thuê phòng quận 1
+content: Phòng rộng rãi, đầy đủ tiện nghi...
+address: 123 Nguyễn Huệ, Quận 1, TP.HCM
+latitude: 10.7731
+longitude: 106.7030
+house_link: 1  // ID của nhà/căn hộ (tùy chọn)
+images: [file1, file2, ...]  // Files hình ảnh (tùy chọn)
+```
+
+**Response (201 Created)**:
+
+```json
+{
+  "id": 1,
+  "author": {
+    "id": 123,
+    "username": "user1",
+    "full_name": "User One",
+    "avatar": "https://example.com/avatars/user1.jpg",
+    "avatar_thumbnail": "https://example.com/avatars/user1_thumb.jpg",
+    "role": "owner"
+  },
+  "type": "rental_listing",
+  "title": "Cho thuê phòng quận 1",
+  "content": "Phòng rộng rãi, đầy đủ tiện nghi...",
+  "address": "123 Nguyễn Huệ, Quận 1, TP.HCM",
+  "latitude": 10.7731,
+  "longitude": 106.7030,
+  "created_at": "2023-07-15T10:30:00Z",
+  "updated_at": "2023-07-15T10:30:00Z",
+  "house_link": 1,
+  "interaction": null,
+  "is_followed_owner": false,
+  "comment_count": 0,
+  "media": [
+    {
+      "id": 1,
+      "url": "https://res.cloudinary.com/example/image/upload/v1234567/post_images/abc123.jpg",
+      "thumbnail": "https://res.cloudinary.com/example/image/upload/w_150,h_150,c_fill/v1234567/post_images/abc123.jpg",
+      "medium": "https://res.cloudinary.com/example/image/upload/w_500,c_scale/v1234567/post_images/abc123.jpg",
+      "type": "image"
+    }
+  ],
+  "is_active": true,
+  "like_count": 0,
+  "dislike_count": 0
 }
 ```
 
@@ -69,7 +138,7 @@ Lấy danh sách bài đăng với các tùy chọn lọc.
 GET /api/posts/{id}/
 ```
 
-Lấy thông tin chi tiết của một bài đăng.
+Lấy thông tin chi tiết về một bài đăng.
 
 **Response (200 OK)**:
 
@@ -77,7 +146,7 @@ Lấy thông tin chi tiết của một bài đăng.
 {
   "id": 1,
   "author": {
-    "id": 5,
+    "id": 123,
     "username": "user1",
     "full_name": "User One",
     "avatar": "https://example.com/avatars/user1.jpg",
@@ -106,7 +175,7 @@ Lấy thông tin chi tiết của một bài đăng.
       "id": 1,
       "post": 1,
       "author": {
-        "id": 6,
+        "id": 124,
         "username": "user2",
         "full_name": "User Two",
         "avatar": "https://example.com/avatars/user2.jpg",
@@ -114,22 +183,17 @@ Lấy thông tin chi tiết của một bài đăng.
         "role": "renter"
       },
       "parent": null,
-      "content": "Xin hỏi còn phòng không ạ?",
+      "content": "Còn phòng không ạ?",
       "created_at": "2023-07-15T11:30:00Z",
       "updated_at": "2023-07-15T11:30:00Z",
       "reply_count": 1,
       "media": []
-    },
-    // ... more comments
+    }
   ],
-  "interaction_count": 10,
-  "interaction": {
-    "id": 5,
-    "type": "like",
-    "created_at": "2023-07-15T12:30:00Z",
-    "updated_at": "2023-07-15T12:30:00Z"
-  },
-  "is_followed_owner": true,
+  "like_count": 10,
+  "dislike_count": 2,
+  "interaction": null,
+  "is_followed_owner": false,
   "comment_count": 5,
   "media": [
     {
@@ -139,19 +203,19 @@ Lấy thông tin chi tiết của một bài đăng.
       "medium": "https://example.com/medium/post1_1.jpg",
       "type": "image"
     }
-    // ... more media
   ],
   "is_active": true
 }
 ```
 
-## Tạo bài đăng mới
+## Cập nhật bài đăng
 
 ```
-POST /api/posts/
+PUT /api/posts/{id}/
+PATCH /api/posts/{id}/
 ```
 
-Tạo mới một bài đăng.
+Cập nhật một bài đăng. Chỉ tác giả mới có quyền cập nhật.
 
 **Headers**:
 ```
@@ -162,23 +226,18 @@ Content-Type: multipart/form-data
 **Request Body**:
 
 ```
-type: rental_listing
-title: Cho thuê phòng quận 1
-content: Phòng rộng rãi, đầy đủ tiện nghi...
-address: 123 Nguyễn Huệ, Quận 1, TP.HCM
-latitude: 10.7731
-longitude: 106.7030
-house_link: 1  // ID của nhà/căn hộ (nếu có)
-images: [file1, file2, ...]  // Files hình ảnh
+title: Cho thuê phòng quận 1 (Cập nhật)
+content: Nội dung cập nhật...
+images: [file1, file2, ...]  // Files hình ảnh mới (tùy chọn)
 ```
 
-**Response (201 Created)**:
+**Response (200 OK)**:
 
 ```json
 {
   "id": 1,
   "author": {
-    "id": 5,
+    "id": 123,
     "username": "user1",
     "full_name": "User One",
     "avatar": "https://example.com/avatars/user1.jpg",
@@ -186,30 +245,89 @@ images: [file1, file2, ...]  // Files hình ảnh
     "role": "owner"
   },
   "type": "rental_listing",
-  "title": "Cho thuê phòng quận 1",
-  "content": "Phòng rộng rãi, đầy đủ tiện nghi...",
+  "title": "Cho thuê phòng quận 1 (Cập nhật)",
+  "content": "Nội dung cập nhật...",
   "address": "123 Nguyễn Huệ, Quận 1, TP.HCM",
   "latitude": 10.7731,
   "longitude": 106.7030,
   "created_at": "2023-07-15T10:30:00Z",
-  "updated_at": "2023-07-15T10:30:00Z",
+  "updated_at": "2023-07-15T12:00:00Z",
   "house_link": 1,
-  "interaction_count": 0,
   "interaction": null,
   "is_followed_owner": false,
-  "comment_count": 0,
-  "media": [],
-  "is_active": true
+  "comment_count": 5,
+  "media": [
+    {
+      "id": 1,
+      "url": "https://example.com/images/post1_1.jpg",
+      "thumbnail": "https://example.com/thumbnails/post1_1.jpg",
+      "medium": "https://example.com/medium/post1_1.jpg",
+      "type": "image"
+    }
+    // ... updated or added images
+  ],
+  "is_active": true,
+  "like_count": 10,
+  "dislike_count": 2
 }
 ```
 
-## Thêm hình ảnh cho bài đăng
+## Xóa bài đăng
+
+```
+DELETE /api/posts/{id}/
+```
+
+Xóa một bài đăng. Chỉ tác giả hoặc admin mới có quyền xóa.
+
+**Headers**:
+```
+Authorization: Bearer {access_token}
+```
+
+**Response (204 No Content)**:
+
+Không có nội dung trả về.
+
+## Tương tác với bài đăng
+
+```
+POST /api/posts/{id}/interact/
+```
+
+Like hoặc dislike một bài đăng.
+
+**Headers**:
+```
+Authorization: Bearer {access_token}
+```
+
+**Request Body**:
+
+```json
+{
+  "type": "like"  // Giá trị có thể: "like", "dislike", "none"
+}
+```
+
+**Response (200 OK)**:
+
+```json
+{
+  "like_count": 11,
+  "status": "success",
+  "type": "like",
+  "post_id": 1
+}
+```
+
+## Thêm ảnh cho bài đăng
 
 ```
 POST /api/posts/{id}/add_image/
 ```
 
-Thêm hình ảnh cho bài đăng.
+Thêm hình ảnh cho bài đăng đã tạo.
 
 **Headers**:
 ```
@@ -231,26 +349,26 @@ images: [file1, file2, ...]  // Files hình ảnh
   "message": "Added 2 images",
   "media": [
     {
-      "id": 5,
-      "url": "https://example.com/images/post1_5.jpg",
-      "thumbnail": "https://example.com/thumbnails/post1_5.jpg"
+      "id": 10,
+      "url": "https://res.cloudinary.com/example/image/upload/v1234567/post_images/def456.jpg",
+      "thumbnail": "https://res.cloudinary.com/example/image/upload/w_150,h_150,c_fill/v1234567/post_images/def456.jpg"
     },
     {
-      "id": 6,
-      "url": "https://example.com/images/post1_6.jpg",
-      "thumbnail": "https://example.com/thumbnails/post1_6.jpg"
+      "id": 11,
+      "url": "https://res.cloudinary.com/example/image/upload/v1234567/post_images/ghi789.jpg",
+      "thumbnail": "https://res.cloudinary.com/example/image/upload/w_150,h_150,c_fill/v1234567/post_images/ghi789.jpg"
     }
   ]
 }
 ```
 
-## Xóa hình ảnh của bài đăng
+## Xóa ảnh khỏi bài đăng
 
 ```
 DELETE /api/posts/{id}/remove_image/
 ```
 
-Xóa một hình ảnh của bài đăng.
+Xóa hình ảnh khỏi bài đăng.
 
 **Headers**:
 ```
@@ -261,7 +379,7 @@ Authorization: Bearer {access_token}
 
 ```json
 {
-  "media_id": 5
+  "media_id": 10
 }
 ```
 
@@ -271,37 +389,6 @@ Authorization: Bearer {access_token}
 {
   "status": "success",
   "message": "Image removed"
-}
-```
-
-## Tương tác với bài đăng (like/dislike)
-
-```
-POST /api/posts/{id}/toggle_interaction/
-```
-
-Thêm/xóa tương tác với bài đăng.
-
-**Headers**:
-```
-Authorization: Bearer {access_token}
-```
-
-**Request Body**:
-
-```json
-{
-  "type": "like"  // "like" hoặc "dislike"
-}
-```
-
-**Response (200 OK)**:
-
-```json
-{
-  "status": "success",
-  "is_interacted": true,
-  "type": "like"
 }
 ```
 
@@ -326,7 +413,42 @@ Authorization: Bearer {access_token}
   "next": null,
   "previous": null,
   "results": [
-    // ... bài đăng của người dùng
+    {
+      "id": 1,
+      "author": {
+        "id": 123,
+        "username": "user1",
+        "full_name": "User One",
+        "avatar": "https://example.com/avatars/user1.jpg",
+        "avatar_thumbnail": "https://example.com/avatars/user1_thumb.jpg",
+        "role": "owner"
+      },
+      "type": "rental_listing",
+      "title": "Cho thuê phòng quận 1",
+      "content": "Phòng rộng rãi, đầy đủ tiện nghi...",
+      "address": "123 Nguyễn Huệ, Quận 1, TP.HCM",
+      "latitude": 10.7731,
+      "longitude": 106.7030,
+      "created_at": "2023-07-15T10:30:00Z",
+      "updated_at": "2023-07-15T10:30:00Z",
+      "house_link": 1,
+      "interaction": null,
+      "is_followed_owner": false,
+      "comment_count": 5,
+      "media": [
+        {
+          "id": 1,
+          "url": "https://example.com/images/post1_1.jpg",
+          "thumbnail": "https://example.com/thumbnails/post1_1.jpg",
+          "medium": "https://example.com/medium/post1_1.jpg",
+          "type": "image"
+        }
+      ],
+      "is_active": true,
+      "like_count": 10,
+      "dislike_count": 2
+    }
+    // ... more posts
   ]
 }
 ```
@@ -337,11 +459,11 @@ Authorization: Bearer {access_token}
 GET /api/posts/by_type/?type=rental_listing
 ```
 
-Lấy danh sách bài đăng theo loại (rental_listing, search_listing, roommate).
+Lấy danh sách bài đăng theo loại cụ thể.
 
 **Query Parameters**:
 
-- `type`: Loại bài đăng (rental_listing, search_listing, roommate)
+- `type`: Loại bài đăng (general, rental_listing, search_listing, roommate)
 - `page`: Số trang
 - `page_size`: Số lượng kết quả trên mỗi trang
 
@@ -353,7 +475,7 @@ Lấy danh sách bài đăng theo loại (rental_listing, search_listing, roomma
   "next": "https://api.example.com/api/posts/by_type/?type=rental_listing&page=2",
   "previous": null,
   "results": [
-    // ... bài đăng theo loại
+    // ... posts of specified type
   ]
 }
 ```
@@ -364,13 +486,13 @@ Lấy danh sách bài đăng theo loại (rental_listing, search_listing, roomma
 GET /api/posts/by_location/?lat=10.7731&lng=106.7030&radius=5
 ```
 
-Lấy danh sách bài đăng gần một vị trí.
+Lấy danh sách bài đăng gần một vị trí địa lý cụ thể.
 
 **Query Parameters**:
 
 - `lat`: Vĩ độ
 - `lng`: Kinh độ
-- `radius`: Bán kính tìm kiếm (km)
+- `radius`: Bán kính tìm kiếm (km, mặc định: 5)
 - `page`: Số trang
 - `page_size`: Số lượng kết quả trên mỗi trang
 
@@ -382,86 +504,7 @@ Lấy danh sách bài đăng gần một vị trí.
   "next": "https://api.example.com/api/posts/by_location/?lat=10.7731&lng=106.7030&radius=5&page=2",
   "previous": null,
   "results": [
-    // ... bài đăng gần vị trí
-  ]
-}
-```
-
-## Cập nhật bài đăng
-
-```
-PATCH /api/posts/{id}/
-```
-
-Cập nhật thông tin của một bài đăng.
-
-**Headers**:
-```
-Authorization: Bearer {access_token}
-Content-Type: multipart/form-data
-```
-
-**Request Body**:
-
-```
-title: Cho thuê phòng quận 1 (Đã cập nhật)
-content: Nội dung mới
-// Các trường khác tùy theo nhu cầu cập nhật
-```
-
-**Response (200 OK)**:
-
-```json
-{
-  "id": 1,
-  // ... thông tin bài đăng đã cập nhật
-}
-```
-
-## Xóa bài đăng
-
-```
-DELETE /api/posts/{id}/
-```
-
-Xóa một bài đăng (yêu cầu người dùng là tác giả hoặc admin).
-
-**Headers**:
-```
-Authorization: Bearer {access_token}
-```
-
-**Response (204 No Content)**:
-
-Không có nội dung trả về.
-
-## Lấy feed bài đăng mới
-
-```
-GET /api/new-feed/
-```
-
-Lấy feed các bài đăng mới nhất.
-
-**Headers**:
-```
-Authorization: Bearer {access_token}
-```
-
-**Query Parameters**:
-
-- `page`: Số trang
-- `page_size`: Số lượng kết quả trên mỗi trang
-
-**Response (200 OK)**:
-
-```json
-{
-  "count": 50,
-  "next": "https://api.example.com/api/new-feed/?page=2",
-  "previous": null,
-  "results": [
-    // ... danh sách bài đăng mới nhất
+    // ... posts near the specified location
   ]
 }
 ```
