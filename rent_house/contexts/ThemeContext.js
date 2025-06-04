@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from '
 import { useColorScheme } from 'react-native';
 import Colors from '../constants/Colors';
 import { paperThemes } from '../styles/paperTheme';
-import { ThemeManager } from '../utils/theme';
+import { ThemeManager } from '../utils/Theme';
 
 const ThemeContext = createContext();
 
