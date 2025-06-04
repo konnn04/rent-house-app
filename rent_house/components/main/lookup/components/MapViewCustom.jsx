@@ -10,10 +10,10 @@ import {
 } from 'react-native';
 import MapView, { PROVIDER_GOOGLE } from 'react-native-maps';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { PaperDialog } from '../../../../components/ui/PaperDialog';
-import { PaperIconButton } from '../../../../components/ui/PaperIconButton';
 import { useTheme } from '../../../../contexts/ThemeContext';
 import { getHousesByMapService } from '../../../../services/houseService';
+import { PaperDialog } from '../../../common/PaperDialog';
+import { PaperIconButton } from '../../../common/PaperIconButton';
 import { HouseMarker } from './HouseMarker';
 import { HousePreviewModal } from './HousePreviewModal';
 

@@ -183,3 +183,4 @@ rent_house/.env
 rent_house_server/.venv/
 rent_house_server/.env
 migrations/
+rent_house_server/unfold_doc/
