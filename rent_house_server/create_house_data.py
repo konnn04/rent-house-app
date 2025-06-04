@@ -4,13 +4,13 @@ import random
 import time
 
 # Boundaries for coordinate generation (Ho Chi Minh City area)
-min_lat = 10.6989849
-min_long = 106.5976056
-max_lat = 10.8886463
-max_long = 106.8030311
+min_lat = 10.6589849
+min_long = 106.5776056
+max_lat = 10.9086463
+max_long = 106.9030311
 
 # Number of samples to generate
-n_sample = 60
+n_sample = 120
 
 def get_address_from_coordinates(lat, lon):
     """Fetch address from Nominatim API"""

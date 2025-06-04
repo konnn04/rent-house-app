@@ -23,9 +23,21 @@ class CommentViewSet(viewsets.ModelViewSet):
         try:
             post = Post.objects.get(id=post_id)
             parent = None
+            original_parent = None
             
             if parent_id:
-                parent = Comment.objects.get(id=parent_id, post=post)
+                # Get the parent comment
+                comment_to_reply = Comment.objects.get(id=parent_id, post=post)
+                
+                # Check if this comment is already a reply
+                if comment_to_reply.parent:
+                    # If it's a reply, use its parent (level 1 comment) as parent
+                    parent = comment_to_reply.parent
+                    original_parent = comment_to_reply  # Keep track of the actual comment being replied to
+                else:
+                    # If it's a top-level comment, use it as parent
+                    parent = comment_to_reply
+                    original_parent = parent
                 
             comment = serializer.save(
                 author=self.request.user, 
@@ -43,14 +55,17 @@ class CommentViewSet(viewsets.ModelViewSet):
                     logger = logging.getLogger(__name__)
                     logger.error(f"Lỗi khi gửi thông báo có người bình luận: {str(e)}")
 
-            post_author = post.author
-            try:
-                from rent_house.services.notification_service import comment_notification
-                comment_notification(post_author, parent, post_id, comment)
-            except Exception as e:
-                import logging
-                logger = logging.getLogger(__name__)
-                logger.error(f"Lỗi khi gửi thông báo có người bình luận: {str(e)}")
+            # Notify parent comment author when someone replies to their comment
+            # We use original_parent to ensure the notification goes to the right person
+            reply_target = original_parent or parent
+            if reply_target and reply_target.author != self.request.user:
+                try:
+                    from rent_house.services.notification_service import reply_comment_notification
+                    reply_comment_notification(self.request.user, reply_target, post_id, comment)
+                except Exception as e:
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.error(f"Lỗi khi gửi thông báo có người phản hồi bình luận: {str(e)}")
             
             # Process images if any
             self.handle_images(comment)

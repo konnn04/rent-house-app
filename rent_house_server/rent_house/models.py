@@ -310,7 +310,7 @@ class House(BaseModel):
     area = models.FloatField(null=True, blank=True)  
     deposit = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True)
     max_rooms = models.IntegerField(null=True, blank=True)
-    current_rooms = models.IntegerField(null=True, blank=True)
+    current_rooms = models.IntegerField(null=True, blank=True, default=0)
     max_people = models.IntegerField(null=True, blank=True)
     is_renting = models.BooleanField(default=True)
 
@@ -333,6 +333,9 @@ class House(BaseModel):
 
     def is_room_type(self):
         return self.type == HouseType.ROOM.value[0] or self.type == HouseType.DORMITORY.value[0]
+    
+    def get_type_display(self):
+        return self.type
    
 class Rate(BaseModel):
     user = models.ForeignKey(User, on_delete=models.CASCADE)

@@ -2,17 +2,17 @@ import { Ionicons } from '@expo/vector-icons';
 import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Image,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-  Alert,
 } from 'react-native';
 import { Menu, PaperProvider } from 'react-native-paper';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useUser } from '../../../../contexts/UserContext';
-import { getPostCommentsService, deletePostCommentService } from '../../../../services/postService';
+import { getPostCommentsService } from '../../../../services/postService';
 import { timeAgo } from '../../../../utils/Tools';
 import { ImageGallery } from '../../../common/ImageGallery';
 

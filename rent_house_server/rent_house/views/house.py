@@ -7,6 +7,7 @@ from django.db.models.functions import Power, Sqrt
 import math
 from django.db.models import Q
 from django.db.models.expressions import RawSQL
+from rest_framework.exceptions import ValidationError
 
 from rent_house.models import House, Media
 from rent_house.serializers.house import (
@@ -165,11 +166,16 @@ class HouseViewSet(viewsets.ModelViewSet):
         # Tổng số ảnh thực sự (bỏ qua ảnh rỗng)
         total_images = len(images) + len([img for img in base64_images if img])
 
-        if total_images < 3:
-            from rest_framework.response import Response
-            from rest_framework import status
-            raise Exception("Vui lòng tải lên tối thiểu 3 ảnh cho nhà/căn hộ.")
+        # Kiểm tra nếu người dùng có quyền tạo nhà mới
+        if not self.request.user.can_create_house():
+            raise ValidationError({
+                "message": "Bạn cần xác thực danh tính trước khi đăng tin nhà mới"
+            })
 
+        # Kiểm tra số lượng ảnh tối thiểu
+        if len(images) < 3:
+            raise ValidationError({"error": "Cần ít nhất 3 ảnh để đăng tin nhà mới"})
+        
         house = serializer.save(owner=self.request.user)
         self.handle_images(house)
 
