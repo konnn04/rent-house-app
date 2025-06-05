@@ -47,6 +47,7 @@ export const MapViewCustom = ({
   });
 
   const [locationPermissionStatus, setLocationPermissionStatus] = useState(null); 
+  const [hasRequestedLocation, setHasRequestedLocation] = useState(false); // Thêm biến cờ
 
   const defaultRegion = {
     latitude: 10.7769,
@@ -58,6 +59,10 @@ export const MapViewCustom = ({
   const searchTimeoutRef = useRef(null);
 
   const requestLocationPermissionOnce = async () => {
+    if (hasRequestedLocation) {
+      return locationPermissionStatus === 'granted';
+    }
+    setHasRequestedLocation(true);
     try {
       setLoadingLocation(true);
       setLocationError(null);
@@ -190,16 +195,18 @@ export const MapViewCustom = ({
   };
 
   useEffect(() => {
-    requestLocationPermissionOnce().then((ok) => {
-      if (ok) getUserLocation();
-    });
-
+    // Chỉ xin quyền nếu chưa có, và chỉ lấy vị trí nếu đã có quyền
+    if (locationPermissionStatus === 'granted') {
+      getUserLocation();
+    } else if (locationPermissionStatus === null) {
+      requestLocationPermissionOnce();
+    }
     return () => {
       if (searchTimeoutRef.current) {
         clearTimeout(searchTimeoutRef.current);
       }
     };
-  }, []);
+  }, [locationPermissionStatus]);
 
   useEffect(() => {
     if (mapRegion) {
@@ -327,7 +334,7 @@ const styles = StyleSheet.create({
   },
   map: {
     width: Dimensions.get('window').width,
-    height: Dimensions.get('window').height,
+    height: Dimensions.get('window').height - 100, 
   },
   locateButton: {
     position: 'absolute',

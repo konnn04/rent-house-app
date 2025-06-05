@@ -133,7 +133,7 @@ export const FeedList = () => {
               onPostDeleted={handlePostDeleted}
             />
           )}
-          contentContainerStyle={homeStyles.postsList}
+          contentContainerStyle={[homeStyles.postsList, { paddingHorizontal:8 }]}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -167,19 +167,4 @@ export const FeedList = () => {
   );
 };
 
-// Add this to the existing homeStyles in styles.js file or define it inline here
-const additionalStyles = StyleSheet.create({
-  headerTop: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    width: "100%",
-    paddingHorizontal: 16,
-  },
-  searchButton: {
-    padding: 8,
-  },
-});
 
-// Merge the additionalStyles with existing homeStyles
-Object.assign(homeStyles, additionalStyles);

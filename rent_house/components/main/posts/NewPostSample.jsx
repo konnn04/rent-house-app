@@ -64,7 +64,6 @@ const styles = StyleSheet.create({
     createPostContainer: {
         padding: 15,
         borderRadius: 10,
-        marginHorizontal: 15,
         marginBottom: 15,
     },
     headerRow: {

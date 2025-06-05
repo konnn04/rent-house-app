@@ -199,6 +199,29 @@ export const ManageHouse = () => {
       </TouchableOpacity>
     );
   };
+
+  const handleDeleteHouse = (house) => {
+    Alert.alert("Xác nhận xóa nhà", "Bạn có chắc chắn muốn xóa nhà này?", [
+      {
+        text: "Hủy",
+        style: "cancel"
+      },
+      {
+        text: "Xóa",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await deleteHouseService(house.id);
+            setHouses(prev => prev.filter(h => h.id !== house.id));
+            Alert.alert("Thành công", "Nhà đã được xóa.");
+          } catch (err) {
+            console.error("Error deleting house:", err);
+            Alert.alert("Lỗi", "Không thể xóa nhà. Vui lòng thử lại sau.");
+          }
+        }
+      }
+    ]);
+  }
   
   const renderStatistics = () => (
     <View style={[styles.statsContainer, { backgroundColor: colors.backgroundSecondary }]}>
