@@ -1,5 +1,5 @@
 import { useNavigation } from "@react-navigation/native";
-import { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -68,9 +68,21 @@ export const FeedList = () => {
     loadPosts(false);
   };
 
-  const handlePostDeleted = (deletedPostId) => {
+  // Memoize handlers and renderItem for FlatList
+  const handlePostDeleted = useCallback((deletedPostId) => {
     setPosts((prevPosts) => prevPosts.filter((post) => post.id !== deletedPostId));
-  };
+  }, []);
+
+  const renderItem = useCallback(
+    ({ item }) => (
+      <PostCard
+        post={item}
+        key={item.id}
+        onPostDeleted={handlePostDeleted}
+      />
+    ),
+    [handlePostDeleted]
+  );
 
   const handleSearchPress = () => {
     navigation.navigate("SearchScreen");
@@ -129,13 +141,7 @@ export const FeedList = () => {
           keyExtractor={(item) =>
             item?.id?.toString() || Math.random().toString()
           }
-          renderItem={({ item }) => (
-            <PostCard
-              post={item}
-              key={item.id}
-              onPostDeleted={handlePostDeleted}
-            />
-          )}
+          renderItem={renderItem}
           contentContainerStyle={homeStyles.postsList}
           refreshControl={
             <RefreshControl

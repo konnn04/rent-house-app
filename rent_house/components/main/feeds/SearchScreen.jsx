@@ -1,5 +1,5 @@
 import { useNavigation } from "@react-navigation/native";
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
     ActivityIndicator,
     FlatList,
@@ -28,6 +28,7 @@ export const SearchScreen = () => {
   const [nextPageUrl, setNextPageUrl] = useState(null);
   const [hasSearched, setHasSearched] = useState(false);
   const [selectedPostType, setSelectedPostType] = useState(null); 
+  const searchTimeout = useRef();
 
   const postTypes = [
     { value: null, label: 'Tất cả' },
@@ -36,6 +37,16 @@ export const SearchScreen = () => {
     { value: 'search_listing', label: 'Tìm phòng trọ' },
     { value: 'roommate', label: 'Tìm bạn ở ghép' },
   ];
+
+  // Debounce search input
+  useEffect(() => {
+    if (!searchQuery.trim()) return;
+    if (searchTimeout.current) clearTimeout(searchTimeout.current);
+    searchTimeout.current = setTimeout(() => {
+      handleSearch();
+    }, 400);
+    return () => clearTimeout(searchTimeout.current);
+  }, [searchQuery, activeTab, selectedPostType]);
 
   useEffect(() => {
     if (searchQuery.trim()) {

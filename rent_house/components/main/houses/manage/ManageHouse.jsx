@@ -1,5 +1,5 @@
 import { useNavigation } from '@react-navigation/native';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Badge, Button, FAB, Searchbar } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -219,6 +219,64 @@ export const ManageHouse = () => {
     </View>
   );
   
+  const renderItem = useCallback(
+    ({ item }) => (
+      <TouchableOpacity 
+        style={styles.houseCardContainer}
+        onPress={() => handleViewHouse(item)}
+        activeOpacity={0.8}
+      >
+        <HouseCard 
+          house={item} 
+          onPress={() => handleViewHouse(item)}
+        />
+        
+        <View style={styles.actionButtonsContainer}>
+          <TouchableOpacity
+            style={[styles.editButton, { backgroundColor: colors.accentColor }]}
+            onPress={() => handleEditHouse(item)}
+          >
+            <Icon name="pencil" size={20} color="#fff" />
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.actionButtonsContainer}>
+          <TouchableOpacity
+            style={[styles.deleteButton, { backgroundColor: colors.dangerColor }]}
+            onPress={() => handleEditHouse(item)}
+          >
+            <Icon name="delete" size={20} color="#fff" />
+          </TouchableOpacity>
+        </View>
+        
+        {!item.is_verified && (
+          <Badge
+            style={[styles.verificationBadge, { backgroundColor: colors.dangerColor, color: '#fff' }]}
+          >
+            Chưa xác thực
+          </Badge>
+        )}
+        
+        {item.is_active === false && (
+          <Badge
+            style={[styles.statusBadge, { backgroundColor: colors.dangerColor }]}
+          >
+            Ngừng hoạt động
+          </Badge>
+        )}
+        
+        {item.available_rooms === 0 && item.max_rooms > 0 && (
+          <Badge
+            style={[styles.fullBadge, { backgroundColor: colors.infoColor }]}
+          >
+            Đã cho thuê hết
+          </Badge>
+        )}
+      </TouchableOpacity>
+    ),
+    [handleViewHouse, handleEditHouse, colors.accentColor, colors.dangerColor, colors.infoColor]
+  );
+
   return (
     <View style={[styles.container, { backgroundColor: colors.backgroundPrimary }]}>
       <ManageHeader title="Quản lý nhà" />
@@ -261,60 +319,7 @@ export const ManageHouse = () => {
         <FlatList
           data={houses}
           keyExtractor={(item) => item.id.toString()}
-          renderItem={({ item }) => (
-            <TouchableOpacity 
-              style={styles.houseCardContainer}
-              onPress={() => handleViewHouse(item)}
-              activeOpacity={0.8}
-            >
-              <HouseCard 
-                house={item} 
-                onPress={() => handleViewHouse(item)}
-              />
-              
-              <View style={styles.actionButtonsContainer}>
-                <TouchableOpacity
-                  style={[styles.editButton, { backgroundColor: colors.accentColor }]}
-                  onPress={() => handleEditHouse(item)}
-                >
-                  <Icon name="pencil" size={20} color="#fff" />
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.actionButtonsContainer}>
-                <TouchableOpacity
-                  style={[styles.deleteButton, { backgroundColor: colors.dangerColor }]}
-                  onPress={() => handleEditHouse(item)}
-                >
-                  <Icon name="delete" size={20} color="#fff" />
-                </TouchableOpacity>
-              </View>
-              
-              {!item.is_verified && (
-                <Badge
-                  style={[styles.verificationBadge, { backgroundColor: colors.dangerColor, color: '#fff' }]}
-                >
-                  Chưa xác thực
-                </Badge>
-              )}
-              
-              {item.is_active === false && (
-                <Badge
-                  style={[styles.statusBadge, { backgroundColor: colors.dangerColor }]}
-                >
-                  Ngừng hoạt động
-                </Badge>
-              )}
-              
-              {item.available_rooms === 0 && item.max_rooms > 0 && (
-                <Badge
-                  style={[styles.fullBadge, { backgroundColor: colors.infoColor }]}
-                >
-                  Đã cho thuê hết
-                </Badge>
-              )}
-            </TouchableOpacity>
-          )}
+          renderItem={renderItem}
           contentContainerStyle={[
             styles.listContentContainer,
             houses.length === 0 && styles.emptyList

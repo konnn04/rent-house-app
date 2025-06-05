@@ -90,14 +90,14 @@ export const ChatListScreen = () => {
     fetchChats(false);
   };
 
-  const getAvatars = (members, isGroup) => {
+  const getAvatars = useCallback((members, isGroup) => {
     if (isGroup) {
-      return members.map((member, index) => (member.avatar_thumbnail))
+      return members.map((member) => member.avatar_thumbnail);
     }
     return members[0]?.username !== userData?.username
       ? [members[0].avatar_thumbnail]
       : [members[1].avatar_thumbnail];
-  }
+  }, [userData?.username]);
 
   const filteredChats = chats.filter(chat => {
     if (!chat.last_message) return false;
@@ -110,14 +110,33 @@ export const ChatListScreen = () => {
     );
   });
 
-  const getChatDisplayName = (chat) => {
+  const getChatDisplayName = useCallback((chat) => {
     if (chat.is_group && chat.name) {
       return chat.name;
     }
-    return chat.members_summary[0]?.username !=userData?.username
+    return chat.members_summary[0]?.username != userData?.username
       ? chat.members_summary[0].full_name
       : chat.members_summary[1].full_name;
-  };
+  }, [userData?.username]);
+
+  const renderItem = useCallback(
+    ({ item }) => (
+      <ChatListItem
+        key={item.id}
+        chat={{
+          id: item.id,
+          name: getChatDisplayName(item),
+          avatars: getAvatars(item.members_summary, item.is_group),
+          lastMessage: item.last_message?.content || 'Chưa có tin nhắn',
+          lastMessageTime: item.last_message ? timeAgo(item.last_message.created_at) : '',
+          unreadCount: item.unread_count || 0,
+          isGroup: item.is_group,
+          lastMessageSender: item.last_message?.sender?.full_name || ''
+        }} 
+      />
+    ),
+    [getAvatars, getChatDisplayName]
+  );
 
   if (loading && !refreshing) {
     return (
@@ -149,21 +168,7 @@ export const ChatListScreen = () => {
       <FlatList
         data={filteredChats}
         keyExtractor={item => "chatbox-" + item.id}
-        renderItem={({ item }) => (
-          <ChatListItem
-            key={item.id}
-            chat={{
-              id: item.id,
-              name: getChatDisplayName(item),
-              avatars: getAvatars(item.members_summary, item.is_group),
-              lastMessage: item.last_message?.content || 'Chưa có tin nhắn',
-              lastMessageTime: item.last_message ? timeAgo(item.last_message.created_at) : '',
-              unreadCount: item.unread_count || 0,
-              isGroup: item.is_group,
-              lastMessageSender: item.last_message?.sender?.full_name || ''
-            }} 
-          />
-        )}
+        renderItem={renderItem}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
