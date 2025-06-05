@@ -5,9 +5,9 @@ Hệ thống quản lý tài sản cho thuê toàn diện được xây dựng b
 ## Công Nghệ Sử Dụng
 
 - **Framework Backend**: Django 5.1.x
-- **Cơ sở dữ liệu**: PostgreSQL
+- **Cơ sở dữ liệu**: PostgreSQL/MySQL
 - **Lưu trữ hình ảnh**: Cloudinary
-- **Xác thực**: Hệ thống xác thực tích hợp của Django với mô hình User tùy chỉnh
+- **Xác thực**: OAuth2 (Django OAuth Toolkit) với mô hình User tùy chỉnh
 - **API**: Django REST Framework
 - **Tích hợp Frontend**: Dựa trên template với hỗ trợ JavaScript hiện đại
 
@@ -21,6 +21,12 @@ Hệ thống quản lý tài sản cho thuê toàn diện được xây dựng b
 - **Post**: Nội dung được chia sẻ bởi người dùng về tài sản, bao gồm mô tả và phương tiện
 - **Comment**: Phản hồi và đánh giá của người dùng
 - **Media**: Xử lý tải lên hình ảnh và lưu trữ, tích hợp với Cloudinary
+- **Rate**: Đánh giá nhà/phòng
+- **Notification**: Thông báo hệ thống
+- **Follow**: Theo dõi người dùng
+- **Chat/Message**: Nhắn tin, nhóm chat
+- **IdentityVerification**: Xác thực danh tính chủ nhà
+- **Report**: Báo cáo vi phạm
 
 ## Cấu Trúc Dự Án
 
@@ -45,18 +51,18 @@ rent_house_server/
 ### Yêu Cầu Tiên Quyết
 
 - Python 3.8 hoặc cao hơn
-- PostgreSQL
+- PostgreSQL hoặc MySQL
 - Tài khoản Cloudinary
 
-### Cài Đặt
+### Cài Đặt & Khởi Tạo Dữ Liệu
 
-1. Clone kho lưu trữ:
+1. **Clone kho lưu trữ:**
     ```bash
-    git clone https://github.com/yourusername/rent-house-app.git
+    git clone https://github.com/konnn04/rent-house-app.git
     cd rent-house-app/rent_house_server
     ```
 
-2. Tạo và kích hoạt môi trường ảo:
+2. **Tạo và kích hoạt môi trường ảo:**
     ```bash
     python -m venv .venv
     # Trên Windows
@@ -65,34 +71,39 @@ rent_house_server/
     source .venv/bin/activate
     ```
 
-3. Cài đặt các phụ thuộc:
+3. **Cài đặt các phụ thuộc:**
     ```bash
     pip install -r requirements.txt
     ```
 
-4. Tạo một tệp `.env` với các biến môi trường cần thiết (xem mẫu bên dưới)
+4. **Tạo file `.env` với các biến môi trường cần thiết (xem mẫu bên dưới)**
 
-5. Khởi tạo cơ sở dữ liệu:
+5. **Tạo migration và migrate database:**
     ```bash
+    python manage.py makemigrations rent_house
     python manage.py migrate
     ```
 
-6. Điền dữ liệu mẫu:
+6. **Tạo dữ liệu mẫu và app OAuth2 (tùy chọn):**
     ```bash
     python manage.py populate_data
     ```
+    - Lệnh này sẽ tạo data ảo và tự động tạo app OAuth2 cho React Native.
 
-7. Tạo tài khoản quản trị:
+    **Hoặc tự tạo superuser và app OAuth2:**
     ```bash
     python manage.py createsuperuser
+    python manage.py runserver
+    # Truy cập admin để tạo app OAuth2 nếu cần
     ```
 
-8. Chạy máy chủ phát triển:
+7. **Chạy server phát triển:**
     ```bash
     python manage.py runserver
     ```
 
-9. Truy cập giao diện quản trị tại http://127.0.0.1:8000/admin/
+8. **Truy cập giao diện quản trị tại:**  
+    http://127.0.0.1:8000/admin/
 
 ## Cấu Hình .env Mẫu
 
@@ -128,8 +139,10 @@ EMAIL_HOST_PASSWORD=your_app_password
 - Quản lý tài sản (nhà và phòng)
 - Tải lên phương tiện với tự động tạo hình thu nhỏ
 - Bình luận và đánh giá
-- Tùy chọn tìm kiếm và lọc nâng cao
+- Tùy chọn tìm kiếm và lọc nâng cao (search, filter, phân trang)
 - Giao diện quản trị đáp ứng với hỗ trợ chế độ tối
+- Xác thực OAuth2, quản lý token
+- Thông báo hệ thống, nhắn tin, báo cáo vi phạm
 
 ## Điểm Cuối API
 
@@ -140,5 +153,6 @@ Hệ thống cung cấp API RESTful cho các ứng dụng khách, bao gồm:
 - Danh sách và chi tiết tài sản
 - Tìm kiếm và lọc
 - Đánh giá và bình luận
+- Quản lý thông báo, chat, báo cáo
 
-Để xem tài liệu API chi tiết, hãy tham khảo thư mục `api_documentation`.
+**Xem chi tiết tại thư mục api_documentation.**
