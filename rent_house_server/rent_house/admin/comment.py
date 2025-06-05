@@ -17,7 +17,8 @@ class CommentAdmin(ModelAdmin):
     ordering = ('-created_at',)
     actions_row = ["soft_delete_comment"]
     list_fullwidth = True
-    list_filter_sheet = False
+    list_filter_sheet = True
+    list_filter_submit = True
 
     def post_link(self, obj):
         if obj.post:

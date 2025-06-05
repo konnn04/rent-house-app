@@ -75,17 +75,14 @@ class RegisterSerializer(serializers.ModelSerializer):
     
     @transaction.atomic
     def create(self, validated_data):
-        # Xóa trường không cần thiết
         password2 = validated_data.pop('password2')
         verification_code = validated_data.pop('verification_code')
         avatar_file = validated_data.pop('avatar')
         
-        # Tải ảnh đại diện lên Cloudinary
         avatar_url = upload_image_to_cloudinary(avatar_file, folder="user_avatars")
         if not avatar_url:
             raise serializers.ValidationError({"avatar": "Không thể tải lên ảnh đại diện. Vui lòng thử lại."})
         
-        # Tạo user và kích hoạt luôn
         user = User.objects.create(
             username=validated_data['username'],
             email=validated_data['email'],
@@ -94,7 +91,7 @@ class RegisterSerializer(serializers.ModelSerializer):
             phone_number=validated_data.get('phone_number', ''),
             role=validated_data.get('role', 'renter'),
             is_active=True,
-            avatar=avatar_url  # Đặt URL ảnh đại diện
+            avatar=avatar_url 
         )
         
         user.set_password(validated_data['password'])

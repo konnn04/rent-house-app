@@ -15,7 +15,8 @@ class RateAdmin(ModelAdmin):
     readonly_fields = ('display_images', 'created_at', 'updated_at', 'user', 'house')
     ordering = ('-created_at',)
     list_fullwidth = True
-    list_filter_sheet = False
+    list_filter_sheet = True
+    list_filter_submit = True
 
     def house_link(self, obj):
         if obj.house:

@@ -2,7 +2,6 @@ from rest_framework import serializers
 from rent_house.models import House, Media, HouseType
 from .user import UserSummarySerializer
 
-# Chỉ xem
 class HouseSimpleSerializer(serializers.ModelSerializer):
     thumbnail = serializers.SerializerMethodField()
 
@@ -79,6 +78,91 @@ class HouseUpdateSerializer(serializers.ModelSerializer):
             'max_rooms', 'current_rooms', 'max_people', 'area', 'deposit', 'is_renting'
         )
 
+    def validate_title(self, value):
+        if not value or not value.strip():
+            raise serializers.ValidationError("Tiêu đề không được để trống.")
+        return value
+
+    def validate_address(self, value):
+        if not value or not value.strip():
+            raise serializers.ValidationError("Địa chỉ không được để trống.")
+        return value
+
+    def validate_latitude(self, value):
+        if value is None:
+            raise serializers.ValidationError("Vĩ độ không được để trống.")
+        if value < -90 or value > 90:
+            raise serializers.ValidationError("Vĩ độ phải trong khoảng -90 đến 90.")
+        return value
+
+    def validate_longitude(self, value):
+        if value is None:
+            raise serializers.ValidationError("Kinh độ không được để trống.")
+        if value < -180 or value > 180:
+            raise serializers.ValidationError("Kinh độ phải trong khoảng -180 đến 180.")
+        return value
+
+    def validate_max_people(self, value):
+        if value is None:
+            raise serializers.ValidationError("Số người tối đa không được để trống.")
+        if value <= 0:
+            raise serializers.ValidationError("Số người tối đa phải lớn hơn 0.")
+        return value
+
+    def validate_area(self, value):
+        if value is None:
+            raise serializers.ValidationError("Diện tích không được để trống.")
+        if value <= 0:
+            raise serializers.ValidationError("Diện tích phải lớn hơn 0.")
+        return value
+
+    def validate_deposit(self, value):
+        if value is None:
+            raise serializers.ValidationError("Tiền cọc không được để trống.")
+        if value < 0:
+            raise serializers.ValidationError("Tiền cọc không được âm.")
+        return value
+
+    def validate_is_renting(self, value):
+        if value is None:
+            raise serializers.ValidationError("Trạng thái cho thuê không được để trống.")
+        return value
+
+    def validate_base_price(self, value):
+        if value is not None and value < 0:
+            raise serializers.ValidationError("Giá cơ bản không được âm.")
+        return value
+
+    def validate_water_price(self, value):
+        if value is not None and value < 0:
+            raise serializers.ValidationError("Giá nước không được âm.")
+        return value
+
+    def validate_electricity_price(self, value):
+        if value is not None and value < 0:
+            raise serializers.ValidationError("Giá điện không được âm.")
+        return value
+
+    def validate_internet_price(self, value):
+        if value is not None and value < 0:
+            raise serializers.ValidationError("Giá internet không được âm.")
+        return value
+
+    def validate_trash_price(self, value):
+        if value is not None and value < 0:
+            raise serializers.ValidationError("Giá rác không được âm.")
+        return value
+
+    def validate_max_rooms(self, value):
+        if value is not None and value <= 0:
+            raise serializers.ValidationError("Số phòng tối đa phải lớn hơn 0.")
+        return value
+
+    def validate_current_rooms(self, value):
+        if value is not None and value < 0:
+            raise serializers.ValidationError("Số phòng hiện tại không được âm.")
+        return value
+
     def validate(self, data):
         house_type = data.get('type', getattr(self.instance, 'type', None))
         if house_type == HouseType.ROOM.value[0]:
@@ -88,4 +172,11 @@ class HouseUpdateSerializer(serializers.ModelSerializer):
             data['max_rooms'] = None
             data['current_rooms'] = None
             data['max_people'] = None
+
+        max_rooms = data.get('max_rooms', getattr(self.instance, 'max_rooms', None))
+        current_rooms = data.get('current_rooms', getattr(self.instance, 'current_rooms', None))
+        if max_rooms is not None and current_rooms is not None:
+            if current_rooms > max_rooms:
+                raise serializers.ValidationError("Số phòng hiện tại không được vượt quá số phòng tối đa.")
+
         return data

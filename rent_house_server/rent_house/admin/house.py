@@ -22,7 +22,8 @@ class HouseAdmin(ModelAdmin):
     ordering = ('-created_at',)
     actions_row = ["verify_house", "toggle_renting_status"]
     list_fullwidth = True
-    list_filter_sheet = False
+    list_filter_sheet = True
+    list_filter_submit = True
     
     @action(description="Verify House")
     def verify_house(self, request, object_id):

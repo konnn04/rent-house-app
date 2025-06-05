@@ -25,7 +25,7 @@ from rent_house.serializers import RegisterSerializer, VerifyEmailSerializer, Re
 
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
-    permission_classes = (permissions.AllowAny,)
+    permission_classes = [permissions.AllowAny]
     serializer_class = RegisterSerializer
     parser_classes = [parsers.MultiPartParser, parsers.JSONParser, parsers.FormParser]
     
@@ -46,7 +46,7 @@ class RegisterView(generics.CreateAPIView):
     
 
 class VerifyEmailView(generics.GenericAPIView):
-    permission_classes = (permissions.AllowAny,)
+    permission_classes = [permissions.AllowAny]
     serializer_class = VerifyEmailSerializer
     
     @transaction.atomic
@@ -101,7 +101,7 @@ class VerifyEmailView(generics.GenericAPIView):
             }
 
 class ResendVerificationView(generics.GenericAPIView):
-    permission_classes = (permissions.AllowAny,)
+    permission_classes = [permissions.AllowAny]
     serializer_class = ResendVerificationSerializer
     
     def post(self, request, *args, **kwargs):
@@ -150,7 +150,7 @@ class ResendVerificationView(generics.GenericAPIView):
             return False
 
 class CheckVerificationStatusView(generics.GenericAPIView):
-    permission_classes = (permissions.AllowAny,)
+    permission_classes = [permissions.AllowAny]
     serializer_class = CheckVerificationStatusSerializer
     
     def post(self, request, *args, **kwargs):
@@ -167,7 +167,7 @@ class CheckVerificationStatusView(generics.GenericAPIView):
         })
 
 class PreRegisterView(generics.GenericAPIView):
-    permission_classes = (permissions.AllowAny,)
+    permission_classes = [permissions.AllowAny]
     serializer_class = PreRegisterSerializer
     
     def post(self, request, *args, **kwargs):
@@ -200,7 +200,6 @@ class PreRegisterView(generics.GenericAPIView):
         if existing_code and existing_code.is_valid():
             return existing_code
             
-        # Đánh dấu mã xác thực cũ là đã sử dụng
         VerificationCode.objects.filter(
             user=None,
             email=email,
@@ -243,7 +242,7 @@ class PreRegisterView(generics.GenericAPIView):
             return False
 
 class RequestPasswordResetView(generics.GenericAPIView):
-    permission_classes = (permissions.AllowAny,)
+    permission_classes = [permissions.AllowAny]
     serializer_class = RequestPasswordResetSerializer
     
     def post(self, request, *args, **kwargs):
@@ -257,7 +256,6 @@ class RequestPasswordResetView(generics.GenericAPIView):
             self.send_reset_email(user, reset_token.token)
             
         except User.DoesNotExist:
-            # Vì lý do bảo mật, vẫn trả về thành công ngay cả khi email không tồn tại
             pass
             
         return Response({
@@ -278,7 +276,7 @@ class RequestPasswordResetView(generics.GenericAPIView):
         html_message = render_to_string('email/reset_password.html', {
             'user': user,
             'reset_url': reset_url,
-            'expiry_hours': 24  # Token có hiệu lực trong 24 giờ
+            'expiry_hours': 24 
         })
         plain_message = strip_tags(html_message)
         
@@ -297,9 +295,10 @@ class RequestPasswordResetView(generics.GenericAPIView):
             return False
 
 class PasswordResetView(generics.GenericAPIView):
-    permission_classes = (permissions.AllowAny,)
+    permission_classes = [permissions.AllowAny]
     serializer_class = PasswordResetSerializer
     
+    @transaction.atomic
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -312,15 +311,14 @@ class PasswordResetView(generics.GenericAPIView):
         user.set_password(new_password)
         user.save()
         
-        # Đánh dấu token đã sử dụng
         reset_token.mark_as_used()
         
         return Response({
             "message": "Mật khẩu đã được đặt lại thành công."
         }, status=status.HTTP_200_OK)
     
-# WEB ĐỔI MẬT KHẨU
 class WebPasswordResetView(View):
+    permission_classes = [permissions.AllowAny]
     template_name = 'password_reset/reset_password.html'
     
     def get(self, request, token=None):
@@ -338,6 +336,7 @@ class WebPasswordResetView(View):
             
         return render(request, self.template_name, {})
     
+    @transaction.atomic
     def post(self, request, token=None):
         if not token:
             return render(request, self.template_name, {

@@ -81,6 +81,7 @@ export const LookupScreen = () => {
           is_renting: actualFilters.is_renting,
           is_blank: actualFilters.is_blank,
           sort_by: actualFilters.sort_by,
+          max_people: actualFilters.max_people,
           page: actualPage,
           page_size: 10,
         });

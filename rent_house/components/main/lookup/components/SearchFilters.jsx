@@ -16,7 +16,7 @@ export const SearchFilters = ({
   onClose,
   onApply,
   initialFilters = {},
-  mode = 'list' // 'list' hoặc 'map'
+  mode = 'list' 
 }) => {
   const { colors } = useTheme();
   const [filters, setFilters] = useState({
@@ -26,10 +26,10 @@ export const SearchFilters = ({
     is_verified: initialFilters.is_verified || '',
     is_renting: initialFilters.is_renting || '',
     is_blank: initialFilters.is_blank || '',
+    max_people: initialFilters.max_people || '',
     sort_by: initialFilters.sort_by || '-created_at'
   });
 
-  // Update filters when initialFilters change
   useEffect(() => {
     if (visible) {
       setFilters({
@@ -39,6 +39,7 @@ export const SearchFilters = ({
         is_verified: initialFilters.is_verified || '',
         is_renting: initialFilters.is_renting || '',
         is_blank: initialFilters.is_blank || '',
+        max_people: initialFilters.max_people || '',
         sort_by: initialFilters.sort_by || '-created_at'
       });
     }
@@ -54,28 +55,27 @@ export const SearchFilters = ({
         is_verified: '',
         is_renting: '',
         is_blank: '',
+        max_people: '',
         sort_by: '-created_at'
       });
     } else {
-      // Đối với map, giữ một số giá trị mặc định
       setFilters({
         type: '',
         min_price: '',
         max_price: '',
         is_verified: '',
         is_renting: '',
+        max_people: '',
         is_blank: '',
         sort_by: '-created_at'
       });
     }
   };
 
-  // Handle apply filters
   const handleApply = () => {
     onApply(filters);
   };
 
-  // House types for selection
   const houseTypes = [
     { label: 'Tất cả', value: '' },
     { label: 'Nhà riêng', value: 'house' },
@@ -84,14 +84,13 @@ export const SearchFilters = ({
     { label: 'Phòng trọ', value: 'room' },
   ];
 
-  // Sorting options
   const sortOptions = [
     { label: 'Mới nhất', value: '-created_at' },
     { label: 'Cũ nhất', value: 'created_at' },
-    { label: 'Giá thấp nhất', value: 'price_asc' },
-    { label: 'Giá cao nhất', value: 'price_desc' },
-    { label: 'Đánh giá cao', value: 'rating_desc' },
-    { label: 'Đánh giá thấp', value: 'rating_asc' },
+    { label: 'Giá thấp nhất', value: '-base_price' },
+    { label: 'Giá cao nhất', value: 'base_price' },
+    { label: 'Đánh giá cao', value: '-rating' },
+    { label: 'Đánh giá thấp', value: 'rating' },
   ];
 
   return (
@@ -103,7 +102,6 @@ export const SearchFilters = ({
     >
       <View style={[styles.modalContainer, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
         <View style={[styles.modalContent, { backgroundColor: colors.backgroundPrimary }]}>
-          {/* Header */}
           <View style={styles.modalHeader}>
             <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
               Bộ lọc tìm kiếm {mode === 'map' ? 'bản đồ' : ''}
@@ -116,7 +114,6 @@ export const SearchFilters = ({
           <Divider style={{ backgroundColor: colors.borderColor }} />
           
           <ScrollView style={styles.filtersContainer}>
-            {/* House Type Filter */}
             <View style={styles.filterSection}>
               <Text style={[styles.filterTitle, { color: colors.textPrimary }]}>
                 Loại nhà
@@ -136,10 +133,24 @@ export const SearchFilters = ({
                 ))}
               </View>
             </View>
-            
+
+            <View style={styles.filterSection}>
+              <Text style={[styles.filterTitle, { color: colors.textPrimary }]}>
+                Số người ở tối đa:
+              </Text>
+              <TextInput
+                label="Số người tối đa"
+                value={filters.max_people}
+                onChangeText={(value) => (value >= 0 && value <= 50)? setFilters({ ...filters, max_people: value }) : 1}
+                keyboardType="numeric"
+                style={styles.priceInput}
+                mode="outlined"
+                right={<TextInput.Affix text="người" />}
+              />
+            </View>
+
             <Divider style={{ backgroundColor: colors.borderColor, marginVertical: 10 }} />
             
-            {/* Price Range Filter */}
             <View style={styles.filterSection}>
               <Text style={[styles.filterTitle, { color: colors.textPrimary }]}>
                 Khoảng giá
@@ -299,7 +310,6 @@ export const SearchFilters = ({
           
           <Divider style={{ backgroundColor: colors.borderColor }} />
           
-          {/* Footer with buttons */}
           <View style={styles.modalFooter}>
             <Button
               mode="outlined"

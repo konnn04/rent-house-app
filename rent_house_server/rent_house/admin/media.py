@@ -15,7 +15,8 @@ class MediaAdmin(ModelAdmin):
     readonly_fields = ('preview', 'created_at', 'updated_at', 'content_type', 'object_id')
     ordering = ('-created_at',)
     list_fullwidth = True
-    list_filter_sheet = False
+    list_filter_sheet = True
+    list_filter_submit = True
 
     def preview(self, obj):
         if obj.media_type == 'image':

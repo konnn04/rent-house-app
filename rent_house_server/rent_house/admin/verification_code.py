@@ -14,3 +14,5 @@ class VerificationCodeAdmin(ModelAdmin):
     readonly_fields = ('user', 'email', 'code', 'is_used', 'expires_at', 'created_at', 'updated_at')
     ordering = ('-created_at',)
     list_fullwidth = True
+    list_filter_sheet = True
+    list_filter_submit = True

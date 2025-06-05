@@ -13,7 +13,9 @@ class ChatGroupAdmin(ModelAdmin):
     list_filter = ('is_group', 'created_at')
     readonly_fields = ('created_at', 'updated_at', 'display_members')
     ordering = ('-created_at',)
-    list_filter_sheet = False
+    list_filter_sheet = True
+    list_filter_submit = True
+
     
     def display_name(self, obj):
         if obj.name:

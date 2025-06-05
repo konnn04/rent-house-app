@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 from django.contrib.contenttypes.models import ContentType
 from math import cos, radians
+from django.db import transaction
 
 from rent_house.models import Post, Media, Interaction
 from rent_house.serializers import PostSerializer, PostDetailSerializer
@@ -11,9 +12,9 @@ from rent_house.permissions import IsOwnerOrAdminOrReadOnly
 from rent_house.utils import upload_image_to_cloudinary, delete_cloudinary_image
 
 class PostViewSet(viewsets.ModelViewSet):
-    """ViewSet for managing posts with pagination and filtering"""
     queryset = Post.objects.filter(is_active=True)
     parser_classes = [parsers.MultiPartParser, parsers.JSONParser]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrAdminOrReadOnly]
     pagination_class = PageNumberPagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['title', 'content', 'address']
@@ -40,11 +41,10 @@ class PostViewSet(viewsets.ModelViewSet):
             return PostDetailSerializer
         return PostSerializer
     
+    @transaction.atomic
     def perform_create(self, serializer):
-        # Create the post first without images
         post = serializer.save(author=self.request.user, is_active=True)
         
-        # Process images if any are uploaded
         self.handle_images(post)
 
         try:
@@ -141,10 +141,8 @@ class PostViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['post'])
     def add_image(self, request, pk=None):
-        """Add an image to an existing post"""
         post = self.get_object()
         
-        # Check permissions (only author can add images)
         self.check_object_permissions(request, post)
         
         images = request.FILES.getlist('images')
@@ -153,10 +151,8 @@ class PostViewSet(viewsets.ModelViewSet):
             
         media_items = []
         for image in images:
-            # Upload to Cloudinary
             image_url = upload_image_to_cloudinary(image, folder="post_images")
             if image_url:
-                # Create Media object
                 media = Media.objects.create(
                     content_type=ContentType.objects.get_for_model(Post),
                     object_id=post.id,
@@ -179,10 +175,8 @@ class PostViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['delete'])
     def remove_image(self, request, pk=None):
-        """Remove an image from a post"""
         post = self.get_object()
         
-        # Check permissions (only author can remove images)
         self.check_object_permissions(request, post)
         
         media_id = request.data.get('media_id')
@@ -196,7 +190,6 @@ class PostViewSet(viewsets.ModelViewSet):
                 object_id=post.id
             )
             
-            # Delete from Cloudinary
             if media.url and 'cloudinary' in media.url:
                 delete_cloudinary_image(media.url)
                 

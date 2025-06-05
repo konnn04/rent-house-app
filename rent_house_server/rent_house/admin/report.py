@@ -19,7 +19,8 @@ class ReportAdmin(ModelAdmin):
     list_filter = ('is_resolved', 'created_at')
     readonly_fields = ('reporter', 'reported_user', 'reason', 'created_at')
     ordering = ('-created_at',)
-    list_filter_sheet = False
+    list_filter_sheet = True
+    list_filter_submit = True
 
     def has_ban(self, obj):
         if obj.reported_user:

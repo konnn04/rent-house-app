@@ -10,7 +10,6 @@ export const getUserProfileService = async (username) => {
     }
 };
 
-// Follow người dùng khác
 export const followUserService = async (userId) => {
     try {
         const response = await apiClient.post(`/api/follows/`, { followee: userId });
@@ -24,7 +23,7 @@ export const followUserService = async (userId) => {
 // Unfollow người dùng khác
 export const unfollowUserService = async (userId) => {
     try {
-        const response = await apiClient.delete(`/api/follows/${userId}/`);
+        const response = await apiClient.post(`/api/follows/${userId}/unfollow/`);
         return response.data;
     } catch (error) {
         console.error(`Error unfollowing user ${userId}:`, error);

@@ -69,6 +69,7 @@ export const getHousesService = async ({
   sort_by = '',
   page = 1,
   page_size = 10,
+  max_people = 1,
   nextUrl = null,
 } = {}) => {
   try {
@@ -84,6 +85,7 @@ export const getHousesService = async ({
       if (is_verified !== '') params.push(`is_verified=${is_verified}`);
       if (is_renting !== '') params.push(`is_renting=${is_renting}`);
       if (is_blank !== '') params.push(`is_blank=${is_blank}`);
+      if (max_people) params.push(`max_people=${max_people}`);
       if (lat && lon) {
         params.push(`lat=${lat}`);
         params.push(`lon=${lon}`);

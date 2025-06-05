@@ -21,7 +21,8 @@ class PostAdmin(ModelAdmin):
     list_filter = ('type', 'is_active', 'created_at')
     readonly_fields = ('display_thumbnail', 'display_images', 'interaction_info', 'created_at', 'updated_at', 'author', 'info_house')
     ordering = ('-created_at',)
-    list_filter_sheet = False
+    list_filter_sheet = True
+    list_filter_submit = True
 
     actions_row = ["toggle_active_status"]
     

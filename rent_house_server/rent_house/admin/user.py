@@ -49,7 +49,8 @@ class UserAdmin(BaseUserAdmin, ModelAdmin):
     list_filter = ('is_active', 'is_staff', 'is_superuser', 'role', 'date_joined')
     readonly_fields = ('last_login', 'date_joined', 'display_avatar', 'is_identity_verified')
     ordering = ('-date_joined',)
-    list_filter_sheet = False
+    list_filter_sheet = True
+    list_filter_submit = True
     actions_row = ["toggle_active_status", "promote_to_owner"]
 
     actions_detail = ["verify_identity"]

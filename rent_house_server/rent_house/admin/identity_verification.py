@@ -25,7 +25,8 @@ class IdentityVerificationAdmin(ModelAdmin):
     readonly_fields = ('display_avatar', 'display_id_front', 'display_id_back', 'display_selfie', 'user')
     
     ordering = ('-created_at',)
-    list_filter_sheet = False
+    list_filter_sheet = True
+    list_filter_submit = True
     warn_unsaved_form = True
     list_disable_select_all = False
     list_fullwidth = True
