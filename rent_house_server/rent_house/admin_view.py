@@ -20,8 +20,8 @@ def dashboard_callback(request, context):
     if previous_month_user_count > 0:
         user_growth = round(((user_count - previous_month_user_count) / previous_month_user_count) * 100, 1)
     
-    available_houses = House.objects.filter(is_renting=True).count()
-    rented_houses = House.objects.filter(is_renting=False).count()
+    available_houses = House.objects.filter(is_renting=False).count()
+    rented_houses = House.objects.filter(is_renting=True).count()
     
     posts_this_month = Post.objects.filter(created_at__gte=current_month_start).count()
     

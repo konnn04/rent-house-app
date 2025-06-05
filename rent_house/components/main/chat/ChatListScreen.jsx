@@ -25,7 +25,6 @@ export const ChatListScreen = () => {
   const { resetMessageCount, fetchUnreadMessages } = useNotificationCount();
   const isFocused = useIsFocused();
 
-  // Fetch chats with lazy loading
   const fetchChats = useCallback(async (isRefresh = false) => {
     try {
       setError(null);
@@ -67,7 +66,6 @@ export const ChatListScreen = () => {
     fetchChats(true);
   }, []);
 
-  // Khi đang xem component này, làm mới danh sách chat
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
       fetchChats(true);
@@ -75,58 +73,70 @@ export const ChatListScreen = () => {
     return unsubscribe;
   }, [navigation, fetchChats]);
 
-  // Reset message count when screen is focused
   useEffect(() => {
     if (isFocused) {
       resetMessageCount();
     }
   }, [isFocused, resetMessageCount]);
 
-  // Update count when the user refreshes
   const onRefresh = useCallback(() => {
     setNextPageUrl(null);
     fetchChats(true);
     resetMessageCount();
   }, [fetchChats, resetMessageCount]);
 
-  // Lazy load more
   const handleLoadMore = () => {
     if (loadingMore || !nextPageUrl) return;
     fetchChats(false);
   };
 
-  const getAvatars = (members, isGroup) => {
+  const getAvatars = useCallback((members, isGroup) => {
     if (isGroup) {
-      return members.map((member, index) => (member.avatar_thumbnail))
+      return members.map((member) => member.avatar_thumbnail);
     }
     return members[0]?.username !== userData?.username
       ? [members[0].avatar_thumbnail]
       : [members[1].avatar_thumbnail];
-  }
+  }, [userData?.username]);
 
-  // Lọc danh sách chat theo từ khóa tìm kiếm
   const filteredChats = chats.filter(chat => {
-    if (!chat.last_message) return false; // Không hiển thị chat không có tin nhắn
+    if (!chat.last_message) return false;
 
-    // Với nhóm chat, tìm theo tên nhóm
     if (chat.is_group && chat.name) {
       return chat.name.toLowerCase().includes(searchQuery.toLowerCase());
     }
-    // Với chat 1-1, tìm theo tên thành viên
     return chat.members_summary.some(member => 
       member.full_name.toLowerCase().includes(searchQuery.toLowerCase())
     );
   });
 
-  // Lấy tên hiển thị cho chat
-  const getChatDisplayName = (chat) => {
+  const getChatDisplayName = useCallback((chat) => {
     if (chat.is_group && chat.name) {
       return chat.name;
     }
-    return chat.members_summary[0]?.username !=userData?.username
+    return chat.members_summary[0]?.username != userData?.username
       ? chat.members_summary[0].full_name
       : chat.members_summary[1].full_name;
-  };
+  }, [userData?.username]);
+
+  const renderItem = useCallback(
+    ({ item }) => (
+      <ChatListItem
+        key={item.id}
+        chat={{
+          id: item.id,
+          name: getChatDisplayName(item),
+          avatars: getAvatars(item.members_summary, item.is_group),
+          lastMessage: item.last_message?.content || 'Chưa có tin nhắn',
+          lastMessageTime: item.last_message ? timeAgo(item.last_message.created_at) : '',
+          unreadCount: item.unread_count || 0,
+          isGroup: item.is_group,
+          lastMessageSender: item.last_message?.sender?.full_name || ''
+        }} 
+      />
+    ),
+    [getAvatars, getChatDisplayName]
+  );
 
   if (loading && !refreshing) {
     return (
@@ -158,21 +168,7 @@ export const ChatListScreen = () => {
       <FlatList
         data={filteredChats}
         keyExtractor={item => "chatbox-" + item.id}
-        renderItem={({ item }) => (
-          <ChatListItem
-            key={item.id}
-            chat={{
-              id: item.id,
-              name: getChatDisplayName(item),
-              avatars: getAvatars(item.members_summary, item.is_group),
-              lastMessage: item.last_message?.content || 'Chưa có tin nhắn',
-              lastMessageTime: item.last_message ? timeAgo(item.last_message.created_at) : '',
-              unreadCount: item.unread_count || 0,
-              isGroup: item.is_group,
-              lastMessageSender: item.last_message?.sender?.full_name || ''
-            }} 
-          />
-        )}
+        renderItem={renderItem}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}

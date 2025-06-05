@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../../../../contexts/ThemeContext';
 /**
@@ -7,7 +7,7 @@ import { useTheme } from '../../../../contexts/ThemeContext';
  * @param {Number} size - Kích thước avatar
  * @param {String} borderColor - Màu viền
  */
-export const AvatarChatBox = ({
+export const AvatarChatBox = React.memo(({
     avatars = [],
     size = 50,
     borderColor = '#fff',
@@ -63,7 +63,6 @@ export const AvatarChatBox = ({
         );
     }
 
-    // Xử lý trường hợp có nhiều avatar
     const limitedAvatars = avatars.slice(0, 4);
     const avatarCount = limitedAvatars.length;
 
@@ -123,10 +122,8 @@ export const AvatarChatBox = ({
             )}
         </View>
     );
-};
+});
 
-// Hàm để render avatar
-// Nếu có lỗi tải ảnh, hiển thị một hình vuông với dấu hỏi
 const renderAvatar = (avatarUrl, index, size, loadError, setLoadError, colors) => {
     if (!avatarUrl) return null;
 

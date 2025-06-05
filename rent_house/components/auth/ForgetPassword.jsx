@@ -28,11 +28,9 @@ export function ForgetPassword() {
   const handleResetPassword = async () => {
     if (isLoading) return;
 
-    // Clear previous messages
     setError('');
     setSuccess('');
 
-    // Validate email
     if (!email.trim()) {
       setError('Vui lòng nhập email của bạn');
       return;
@@ -46,11 +44,9 @@ export function ForgetPassword() {
     setIsLoading(true);
 
     try {
-      // Call API to request password reset
       const response = await resetPasswordRequest(email);
       setSuccess(response.message || 'Hướng dẫn đặt lại mật khẩu đã được gửi đến email của bạn (nếu email đã đăng ký).');
       
-      // Clear email input after successful request
       setEmail('');
     } catch (error) {
       console.error('Reset password error:', error);
@@ -65,7 +61,6 @@ export function ForgetPassword() {
       style={[styles.container, { backgroundColor: colors.backgroundPrimary }]}
       contentContainerStyle={styles.scrollContent}
     >
-      {/* Logo and Header */}
       <View style={styles.logoContainer}>
         <Image
           source={require('@assets/logo.png')}
@@ -79,7 +74,6 @@ export function ForgetPassword() {
         Chúng tôi sẽ gửi hướng dẫn đặt lại mật khẩu qua email
       </Text>
 
-      {/* Email input */}
       <TextInput
         label="Email"
         value={email}
@@ -90,7 +84,6 @@ export function ForgetPassword() {
         autoCapitalize="none"
       />
 
-      {/* Help text */}
       <Card style={[styles.helpCard, { backgroundColor: colors.backgroundSecondary }]}>
         <Card.Content>
           <Text style={{ color: colors.textSecondary }}>
@@ -99,21 +92,18 @@ export function ForgetPassword() {
         </Card.Content>
       </Card>
 
-      {/* Error message */}
       {error ? (
         <HelperText type="error" visible={true} style={styles.message}>
           {error}
         </HelperText>
       ) : null}
 
-      {/* Success message */}
       {success ? (
         <HelperText type="info" visible={true} style={styles.successMessage}>
           {success}
         </HelperText>
       ) : null}
 
-      {/* Action button */}
       <Button
         mode="contained"
         onPress={handleResetPassword}
@@ -125,7 +115,6 @@ export function ForgetPassword() {
         {isLoading ? 'Đang xử lý...' : 'Gửi yêu cầu đặt lại mật khẩu'}
       </Button>
 
-      {/* Back to login */}
       <Button
         mode="text"
         onPress={() => navigation.navigate('Login')}

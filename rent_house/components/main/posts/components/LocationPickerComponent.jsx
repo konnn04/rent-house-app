@@ -10,7 +10,7 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
-import MapView, { Marker } from 'react-native-maps';
+import MapView, { Marker, UrlTile } from 'react-native-maps';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const { width, height } = Dimensions.get('window');
@@ -26,14 +26,13 @@ export const LocationPickerComponent = ({
   const [address, setAddress] = useState(initialAddress);
   const [searchResults, setSearchResults] = useState([]);
   const [selectedLocation, setSelectedLocation] = useState(initialLocation || {
-    latitude: 10.7756587,  // Default to HCMC
+    latitude: 10.7756587,  
     longitude: 106.7004238,
   });
   const [showSearchResults, setShowSearchResults] = useState(false);
   
   const mapRef = useRef(null);
 
-  // Get current location
   const getCurrentLocation = async () => {
     try {
       setLoading(true);
@@ -62,7 +61,6 @@ export const LocationPickerComponent = ({
         setAddress(data.display_name);
       }
       
-      // Animate to the location
       mapRef.current?.animateToRegion({
         latitude,
         longitude,
@@ -77,7 +75,6 @@ export const LocationPickerComponent = ({
     }
   };
 
-  // Handle location search
   const handleSearch = async (text) => {
     setAddress(text);
     
@@ -88,18 +85,15 @@ export const LocationPickerComponent = ({
     }
     
     try {
-      // Sử dụng Nominatim thay cho Google Places
       const response = await fetch(
         `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(text)}&format=json&addressdetails=1&countrycodes=vn&accept-language=vi&limit=5`
       );
       const data = await response.json();
       
       if (data && data.length > 0) {
-        // Chuyển đổi định dạng kết quả để phù hợp với code hiện tại
         const predictions = data.map(item => ({
           place_id: item.place_id,
           description: item.display_name,
-          // Lưu thêm thông tin tọa độ để không cần gọi API lần nữa
           lat: parseFloat(item.lat),
           lng: parseFloat(item.lon)
         }));
@@ -112,7 +106,6 @@ export const LocationPickerComponent = ({
     }
   };
 
-  // Handle map press
   const handleMapPress = async (event) => {
     const { latitude, longitude } = event.nativeEvent.coordinate;
     setSelectedLocation({
@@ -138,10 +131,8 @@ export const LocationPickerComponent = ({
     }
   };
 
-  // Handle search result selection
   const handleSelectSearchResult = async (item) => {
     try {
-      // Đã có tọa độ từ kết quả tìm kiếm, không cần gọi API lần nữa
       const lat = item.lat;
       const lng = item.lng;
       
@@ -152,7 +143,6 @@ export const LocationPickerComponent = ({
       
       setAddress(item.description);
       
-      // Animate to the location
       mapRef.current?.animateToRegion({
         latitude: lat,
         longitude: lng,
@@ -166,12 +156,10 @@ export const LocationPickerComponent = ({
     }
   };
 
-  // Confirm location selection
   const handleConfirm = () => {
     onLocationSelected(address, selectedLocation.latitude, selectedLocation.longitude);
   };
   
-  // Set region when initial location changes
   useEffect(() => {
     if (initialLocation?.latitude && initialLocation?.longitude && mapRef.current) {
       mapRef.current.animateToRegion({
@@ -191,7 +179,6 @@ export const LocationPickerComponent = ({
       onRequestClose={onCancel}
     >
       <View style={[styles.container, { backgroundColor: colors.backgroundPrimary }]}>
-        {/* Header */}
         <View style={[styles.header, { backgroundColor: colors.accentColor }]}>
           <TouchableOpacity onPress={onCancel} style={styles.backButton}>
             <Icon name="arrow-left" size={24} color="#FFFFFF" />
@@ -202,7 +189,6 @@ export const LocationPickerComponent = ({
           </TouchableOpacity>
         </View>
         
-        {/* Search input */}
         <View style={styles.searchContainer}>
           <View style={[
             styles.searchInputContainer,
@@ -231,7 +217,6 @@ export const LocationPickerComponent = ({
           </TouchableOpacity>
         </View>
         
-        {/* Search results */}
         {showSearchResults && searchResults.length > 0 && (
           <View style={[styles.searchResultsContainer, { backgroundColor: colors.backgroundSecondary }]}>
             {searchResults.map((item) => (
@@ -252,7 +237,6 @@ export const LocationPickerComponent = ({
           </View>
         )}
         
-        {/* Map view */}
         <View style={styles.mapContainer}>
           <MapView
             ref={mapRef}
@@ -265,6 +249,13 @@ export const LocationPickerComponent = ({
             }}
             onPress={handleMapPress}
           >
+            <UrlTile
+              urlTemplate="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              maximumZ={19}
+              flipY={false}
+              tileSize={256}
+              zIndex={-1}
+            />
             <Marker
               coordinate={{
                 latitude: selectedLocation.latitude,
@@ -275,7 +266,6 @@ export const LocationPickerComponent = ({
             />
           </MapView>
           
-          {/* Loading indicator */}
           {loading && (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color={colors.accentColor} />

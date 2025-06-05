@@ -22,7 +22,6 @@ import {
 } from "../../../services/chatService";
 import { getChatDetailsFromRoute } from '../../../utils/ChatUtils';
 
-// Import custom components
 import { ChatHeader } from './components/ChatHeader';
 import { Message } from './components/Message';
 import { MessageActions } from './components/MessageActions';
@@ -35,7 +34,6 @@ export const ChatDetailScreen = () => {
   const route = useRoute();
   const flatListRef = useRef(null);
 
-  // Get chat details using our utility
   const { chatId } = getChatDetailsFromRoute(route);
 
   const [chatData, setChatData] = useState(null);
@@ -50,16 +48,13 @@ export const ChatDetailScreen = () => {
   const [hasMorePages, setHasMorePages] = useState(true);
   const [replyingTo, setReplyingTo] = useState(null);
 
-  // Message actions modal state
   const [actionsVisible, setActionsVisible] = useState(false);
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [messageActionPosition, setMessageActionPosition] = useState({ x: 0, y: 0 });
 
-  // Track if we should scroll to bottom after adding a new message
   const [shouldScrollToBottom, setShouldScrollToBottom] = useState(false);
 
 
-  // Fetch chat details
   const fetchChatDetails = useCallback(async () => {
     try {
       if (!chatId) {
@@ -83,7 +78,6 @@ export const ChatDetailScreen = () => {
     }
   }, [chatId, refreshing]);
 
-  // Fetch messages with pagination
   const fetchMessages = useCallback(async (isRefresh = false) => {
     if (!chatId) return;
     try {
@@ -115,7 +109,6 @@ export const ChatDetailScreen = () => {
     }
   }, [chatId, messagesNextUrl]);
 
-  // Scroll to bottom if flag is set
   useEffect(() => {
     if (shouldScrollToBottom && flatListRef.current && messages.length > 0) {
       flatListRef.current.scrollToOffset({ animated: true, offset: 0 });
@@ -123,24 +116,20 @@ export const ChatDetailScreen = () => {
     }
   }, [messages, shouldScrollToBottom]);
 
-  // Initial data loading
   useEffect(() => {
     fetchChatDetails();
     fetchMessages(true);
-  }, [fetchChatDetails, fetchMessages]);
+  }, [fetchChatDetails]);
 
-  // Handle message long press
   const handleMessageLongPress = (message, event) => {
     setSelectedMessage(message);
     
-    // Calculate position for the menu
     const { pageX, pageY } = event.nativeEvent;
     setMessageActionPosition({ x: pageX, y: pageY });
     
     setActionsVisible(true);
   };
 
-  // Handle message deletion
   const handleDeleteMessage = async (message) => {
     try {
       Alert.alert(
@@ -176,7 +165,6 @@ export const ChatDetailScreen = () => {
     }
   };
 
-  // Handle message edit
   const handleEditMessage = async (messageId, newContent) => {
     try {
       const updated = await editMessageService(messageId, { content: newContent });
@@ -193,7 +181,6 @@ export const ChatDetailScreen = () => {
     }
   };
 
-  // Refresh data on pull
   const handleRefresh = useCallback(() => {
     setRefreshing(true);
     setMessagesNextUrl(null);
@@ -201,54 +188,43 @@ export const ChatDetailScreen = () => {
     fetchMessages(true);
   }, [fetchChatDetails, fetchMessages]);
 
-  // Load more messages when scrolling up
   const handleLoadMore = useCallback(() => {
     if (messagesNextUrl && !loadingMore) {
       fetchMessages(false);
     }
   }, [fetchMessages, messagesNextUrl, loadingMore]);
 
-  // Navigate back
   const handleBackPress = useCallback(() => {
     navigation.goBack();
   }, [navigation]);
 
-  // Open chat info screen
   const handleInfoPress = useCallback(() => {
     navigation.navigate('ChatInfo', { chatId : chatId });
   }, [navigation, chatId]);
 
-  // Handle message sent - add optimistic update
   const handleMessageSent = useCallback((newMessage) => {
-    // If we have details of the sent message, add it to the state optimistically
     if (newMessage) {
-      // Add the new message to the top of the list (since FlatList is inverted)
       setMessages(prevMessages => [newMessage, ...prevMessages]);
       setShouldScrollToBottom(true);
     } else {
-      // Fallback to fetching if no message details
       fetchMessages(1, false);
     }
   }, [fetchMessages]);
 
-  // Set replying message
   const handleReply = useCallback((message) => {
     setReplyingTo(message);
   }, []);
 
-  // Cancel replying
   const handleCancelReply = useCallback(() => {
     setReplyingTo(null);
   }, []);
 
-  // Retry loading on error
   const handleRetry = useCallback(() => {
     setError(null);
     fetchChatDetails();
     fetchMessages();
   }, [fetchChatDetails, fetchMessages]);
 
-  // Show loading state
   if (loading && !refreshing) {
     return (
       <View style={[styles.container, { backgroundColor: colors.backgroundPrimary }]}>
@@ -265,7 +241,6 @@ export const ChatDetailScreen = () => {
     );
   }
 
-  // Show error state
   if (error) {
     return (
       <View style={[styles.container, { backgroundColor: colors.backgroundPrimary }]}>
@@ -317,7 +292,6 @@ export const ChatDetailScreen = () => {
               message={item}
               currentUserId={userData?.id}
               onLongPress={handleMessageLongPress}
-              // Truyền hàm edit vào Message nếu cần
               onEdit={handleEditMessage}
             />
           )}
@@ -370,7 +344,6 @@ export const ChatDetailScreen = () => {
   );
 };
 
-// Styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,

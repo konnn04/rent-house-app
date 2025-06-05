@@ -189,7 +189,6 @@
             maxZoom: 19
         }).addTo(map);
         
-        // Define custom icons for different house statuses
         const icons = {
             available: L.divIcon({
                 className: 'custom-marker available-marker',
@@ -250,13 +249,11 @@
                 .then(data => {
                     console.log("Houses data received:", data);
                     
-                    // Handle both array and single object responses
                     const houses = Array.isArray(data) ? data : data.results || [data];
                     
                     console.log("Processing", houses.length, "houses");
                     
                     houses.forEach(house => {
-                        // Skip houses without coordinates
                         if (!house.latitude || !house.longitude) {
                             console.log("Skipping house without coordinates:", house.id || "unknown");
                             return;
@@ -270,7 +267,7 @@
                         let statusText;
                         
                         try {
-                            if (house.is_renting) {
+                            if (!house.is_renting) {
                                 markerIcon = icons.available;
                                 statusClass = 'status-available';
                                 statusText = 'Có sẵn';

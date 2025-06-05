@@ -28,7 +28,6 @@ import { timeAgo } from "../../../utils/Tools";
 import { HouseMiniCard } from "../houses/components/HouseMiniCard";
 import { PostCard } from "../posts/PostCard";
 
-// Lấy chiều rộng màn hình để tính toán layout 2 cột
 const { width } = Dimensions.get("window");
 
 export const PublicProfile = () => {
@@ -45,7 +44,7 @@ export const PublicProfile = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState("posts"); // 'posts' or 'houses'
+  const [activeTab, setActiveTab] = useState("posts"); 
   const [isFollowing, setIsFollowing] = useState(false);
   const [messageButtonLoading, setMessageButtonLoading] = useState(false);
 
@@ -54,16 +53,13 @@ export const PublicProfile = () => {
       if (!refreshing) setLoading(true);
       setError(null);
 
-      // Fetch profile data
       const profileData = await getUserProfileService(username);
       setProfileData(profileData);
       setIsFollowing(profileData.is_followed || false);
 
-      // Fetch posts
       const postsResponse = await getUserPostsService(username);
       setPosts(postsResponse?.results || []);
 
-      // If user is owner, fetch houses
       if (profileData.role === "owner") {
         const housesResponse = await getUserHouseService(username);
         setHouses(housesResponse?.results || []);
@@ -90,7 +86,6 @@ export const PublicProfile = () => {
   const handleFollowToggle = async () => {
     try {
       if (isFollowing) {
-        // Unfollow the user
         await unfollowUserService(profileData.id);
         setIsFollowing(false);
         setProfileData((prev) => ({
@@ -98,7 +93,6 @@ export const PublicProfile = () => {
           follower_count: Math.max(0, prev.follower_count - 1),
         }));
       } else {
-        // Follow the user
         await followUserService(profileData.id);
         setIsFollowing(true);
         setProfileData((prev) => ({
@@ -127,24 +121,20 @@ export const PublicProfile = () => {
     );
   };
 
-  // Hàm mở ứng dụng điện thoại để gọi
   const handlePhoneCall = () => {
     if (profileData?.phone_number) {
       Linking.openURL(`tel:${profileData.phone_number}`);
     }
   };
 
-  // Hàm mở ứng dụng email
   const handleEmail = () => {
     if (profileData?.email) {
       Linking.openURL(`mailto:${profileData.email}`);
     }
   };
 
-  // Hàm mở bản đồ với địa chỉ
   const handleOpenMap = () => {
     if (profileData?.address) {
-      // Encode địa chỉ cho URL bản đồ
       const encodedAddress = encodeURIComponent(profileData.address);
       Linking.openURL(`https://maps.google.com/maps?q=${encodedAddress}`);
     }
@@ -166,7 +156,6 @@ export const PublicProfile = () => {
         Thông tin người dùng
       </Text>
       <View style={styles.headerRight} />
-      // nút báo cáo
       <TouchableOpacity
         style={[styles.reportButton, { backgroundColor: colors.accentColor }]}
         onPress={() =>
@@ -272,7 +261,6 @@ export const PublicProfile = () => {
           />
         }
       >
-        {/* Profile header */}
         <View
           style={[
             styles.profileHeader,
@@ -405,7 +393,6 @@ export const PublicProfile = () => {
           </View>
         </View>
 
-        {/* About section - Đã cập nhật phần này với các nút tương tác */}
         <View
           style={[
             styles.aboutSection,
@@ -513,7 +500,6 @@ export const PublicProfile = () => {
           )}
         </View>
 
-        {/* Tab navigation */}
         <View
           style={[
             styles.tabContainer,
@@ -573,7 +559,6 @@ export const PublicProfile = () => {
           )}
         </View>
 
-        {/* Tab content */}
         {activeTab === "posts" ? (
           <View style={styles.contentContainer}>
             {posts.length === 0 ? (
@@ -624,7 +609,6 @@ export const PublicProfile = () => {
                 </Text>
               </View>
             ) : (
-              // Thay thế cách hiển thị trước đây bằng grid 2 cột
               <View style={styles.housesGrid}>
                 {houses.map((house, index) => (
                   <View key={house.id} style={styles.houseCardContainer}>

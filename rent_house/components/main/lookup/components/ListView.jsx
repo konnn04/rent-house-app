@@ -25,12 +25,10 @@ export const ListView = ({
   const { colors } = useTheme();
   const navigation = useNavigation();
 
-  // Handle house selection
   const handleHousePress = (house) => {
     navigation.navigate('HouseDetail', { houseId: house.id });
   };
 
-  // Render loading footer for pagination
   const renderFooter = () => {
     if (!loadingMore) return null;
 
@@ -44,7 +42,6 @@ export const ListView = ({
     );
   };
 
-  // Render empty state
   const renderEmpty = () => (
     <View style={styles.emptyContainer}>
       <Icon name="home-search" size={60} color={colors.textSecondary} />
@@ -57,7 +54,6 @@ export const ListView = ({
     </View>
   );
 
-  // Render house item (2 columns)
   const renderItem = ({ item }) => (
     <View style={styles.itemContainer}>
       <HouseMiniCard 

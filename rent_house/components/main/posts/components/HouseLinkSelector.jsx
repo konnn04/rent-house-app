@@ -91,7 +91,6 @@ export const HouseLinkSelector = ({ onSelectHouse, onCancel, colors, navigation 
       onRequestClose={onCancel}
     >
       <View style={[styles.container, { backgroundColor: colors.backgroundPrimary }]}>
-        {/* Header */}
         <View style={[styles.header, { backgroundColor: colors.accentColor }]}>
           <TouchableOpacity onPress={onCancel} style={styles.backButton}>
             <Icon name="arrow-left" size={24} color="#FFFFFF" />
@@ -100,7 +99,6 @@ export const HouseLinkSelector = ({ onSelectHouse, onCancel, colors, navigation 
           <View style={{ width: 32 }} />
         </View>
         
-        {/* Search input */}
         <View style={styles.searchContainer}>
           <View style={[
             styles.searchInputContainer,
@@ -122,7 +120,6 @@ export const HouseLinkSelector = ({ onSelectHouse, onCancel, colors, navigation 
           </View>
         </View>
         
-        {/* House list */}
         {loading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={colors.accentColor} />
@@ -154,7 +151,6 @@ export const HouseLinkSelector = ({ onSelectHouse, onCancel, colors, navigation 
                 style={[styles.createHouseButton, { backgroundColor: colors.accentColor }]}
                 onPress={() => {
                   onCancel();
-                  // Navigate to AddHouse screen
                   navigation.navigate('AddHouse');
                 }}
               >

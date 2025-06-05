@@ -40,15 +40,12 @@ export const PaperDialog = ({
   );
 };
 
-// Helper function to show alert similar to React Native's Alert API
 export const showDialog = (
   title,
   content,
   buttons = [{ text: 'OK', onPress: () => {} }],
   options = {}
 ) => {
-  // This is a placeholder - in a real implementation, you would need
-  // to use a state manager or context to show the dialog
   console.warn('showDialog needs to be implemented with a state management solution');
 };
 

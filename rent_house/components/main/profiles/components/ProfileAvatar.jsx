@@ -13,14 +13,12 @@ export const ProfileAvatar = ({ profile, onAvatarUpdate }) => {
   
   const handleUpdateAvatar = async () => {
     try {
-      // Request media library permissions
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
         Alert.alert('Lỗi', 'Cần quyền truy cập thư viện ảnh để thay đổi avatar');
         return;
       }
       
-      // Open image picker
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
@@ -29,16 +27,13 @@ export const ProfileAvatar = ({ profile, onAvatarUpdate }) => {
       });
       
       if (!result.canceled && result.assets && result.assets.length > 0) {
-        // Get selected image URI
         const imageUri = result.assets[0].uri;
         const filename = imageUri.split('/').pop();
         const match = /\.(\w+)$/.exec(filename);
         const type = match ? `image/${match[1]}` : 'image/jpeg';
         
-        // Show loading indicator
         setAvatarLoading(true);
         
-        // Call the callback with properly formatted image data
         if (onAvatarUpdate) {
           onAvatarUpdate({
             uri: imageUri,
@@ -81,6 +76,11 @@ export const ProfileAvatar = ({ profile, onAvatarUpdate }) => {
       </TouchableOpacity>
       <Text style={[styles.userName, { color: colors.textPrimary }]}>
         {profile?.first_name || 'Người'} {profile?.last_name || 'dùng'}
+        {
+          profile.is_verified && (
+            <Ionicons name="checkmark-circle" size={24} color={colors.successColor} />
+          )
+        }
       </Text>
       <Text style={[styles.userRole, { color: colors.textSecondary }]}>
         {profile?.role === 'renter' ? 'Người thuê' : 'Chủ nhà'}

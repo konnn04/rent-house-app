@@ -3,7 +3,6 @@ from .user import UserViewSet, IdentityVerificationViewSet
 from .house import HouseViewSet
 from .post import PostViewSet
 from .comment import CommentViewSet
-from .feed import NewFeedViewSet
 from .rate import RateViewSet
 from .notification import NotificationViewSet
 from .follow import FollowViewSet
@@ -23,7 +22,6 @@ __all__ = [
     'HouseViewSet',
     'PostViewSet',
     'CommentViewSet', 
-    'NewFeedViewSet',
     'RateViewSet',
     'NotificationViewSet',
     'FollowViewSet',

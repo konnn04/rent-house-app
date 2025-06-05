@@ -26,7 +26,7 @@ const styles = StyleSheet.create({
     elevation: 0,
   },
   title: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: 'bold',
   },
 });

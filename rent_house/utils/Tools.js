@@ -1,20 +1,16 @@
-/**
- * Format a number as currency (VND)
- * @param {number} amount - The amount to format
- * @returns {string} Formatted currency string
- */
+
 export const formatCurrency = (amount) => {
-  if (amount === null || amount === undefined) return '0';
-  
-  // Format number with thousand separators
-  return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  if (typeof amount == 'string') {
+    amount = parseFloat(amount.replace(/[^0-9.-]+/g, ""));
+  }
+  return amount.toLocaleString('vi-VN', {
+    style: 'currency',
+    currency: 'VND',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  });
 };
 
-/**
- * Format date string to a readable format
- * @param {string} dateString - ISO date string
- * @returns {string} Formatted date string
- */
 export const formatDate = (dateString) => {
   if (!dateString) return '';
   
@@ -22,11 +18,6 @@ export const formatDate = (dateString) => {
   return date.toLocaleDateString('vi-VN');
 };
 
-/**
- * Calculate time elapsed since a given date
- * @param {string} dateString - ISO date string
- * @returns {string} Relative time text
- */
 export const timeAgo = (dateString) => {
   if (!dateString) return '';
   
@@ -50,12 +41,7 @@ export const timeAgo = (dateString) => {
   }
 };
 
-/**
- * Truncate text to a specified length
- * @param {string} text - The text to truncate
- * @param {number} maxLength - Maximum length before truncating
- * @returns {string} Truncated text
- */
+
 export const truncateText = (text, maxLength = 100) => {
   if (!text || text.length <= maxLength) return text;
   

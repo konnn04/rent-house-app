@@ -12,10 +12,6 @@ import {
   View
 } from 'react-native';
 
-/**
- * A reusable image viewer component that displays images in a modal with fullscreen view
- * and swipe navigation between images.
- */
 export const ImageViewer = ({ 
   images = [], 
   visible = false, 

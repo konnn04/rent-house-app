@@ -3,7 +3,6 @@ import * as ImagePicker from 'expo-image-picker';
 import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -17,6 +16,7 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { useUser } from '../../../contexts/UserContext';
 import { createPostService } from '../../../services/postService';
+import { PaperDialog } from '../../common/PaperDialog';
 import { HouseLinkSelector } from './components/HouseLinkSelector';
 import { ImagePickerComponent } from './components/ImagePickerComponent';
 import { LocationPickerComponent } from './components/LocationPickerComponent';
@@ -27,57 +27,54 @@ export const CreatePostScreen = () => {
   const navigation = useNavigation();
   const { userData } = useUser();
 
-  // Check if user is an owner
   const isOwner = userData?.role === 'owner';
 
-  // Form states
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  // Set default post type based on user role
   const [postType, setPostType] = useState('general');
   const [address, setAddress] = useState('');
   const [location, setLocation] = useState({ latitude: null, longitude: null });
   const [selectedImages, setSelectedImages] = useState([]);
   const [linkedHouse, setLinkedHouse] = useState(null);
 
-  // UI states
   const [loading, setLoading] = useState(false);
   const [showLocationPicker, setShowLocationPicker] = useState(false);
   const [showHousePicker, setShowHousePicker] = useState(false);
+  const [dialogVisible, setDialogVisible] = useState(false);
+  const [dialogContent, setDialogContent] = useState({ title: '', message: '', actions: [] });
 
-  // Validation state
   const [errors, setErrors] = useState({});
 
-  // Check permissions
   useEffect(() => {
     (async () => {
       if (Platform.OS !== 'web') {
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (status !== 'granted') {
-          Alert.alert('Cần quyền truy cập', 'Ứng dụng cần quyền truy cập vào thư viện ảnh để thêm ảnh vào bài đăng');
+          setDialogContent({
+            title: 'Cần quyền truy cập',
+            message: 'Ứng dụng cần quyền truy cập vào thư viện ảnh để thêm ảnh vào bài đăng',
+            actions: [{ label: 'OK', onPress: () => setDialogVisible(false) }]
+          });
+          setDialogVisible(true);
         }
       }
     })();
   }, []);
 
-  // Handle image selection
   const handleImagesSelected = useCallback((images) => {
     setSelectedImages(images);
   }, []);
 
-  // Handle image removal
   const handleRemoveImage = useCallback((index) => {
     setSelectedImages(prev => prev.filter((_, i) => i !== index));
   }, []);
 
-  // Handle location selection
   const handleLocationSelected = useCallback((address, lat, lng) => {
     setAddress(address);
     setLocation({ latitude: lat, longitude: lng });
     setShowLocationPicker(false);
   }, []);
 
-  // Handle house selection
   const handleHouseSelected = useCallback((house) => {
     setLinkedHouse(house);
     if (house) {
@@ -90,14 +87,12 @@ export const CreatePostScreen = () => {
     setShowHousePicker(false);
   }, []);
 
-  // Validate form
   const validateForm = () => {
     const newErrors = {};
 
     if (!title.trim()) newErrors.title = 'Vui lòng nhập tiêu đề';
     if (!content.trim()) newErrors.content = 'Vui lòng nhập nội dung';
 
-    // Only require address and location for rental_listing and search_listing types
     if (postType === 'rental_listing' || postType === 'search_listing') {
       if (!address.trim()) newErrors.address = 'Vui lòng chọn địa chỉ';
       if (!location.latitude || !location.longitude) {
@@ -109,20 +104,17 @@ export const CreatePostScreen = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  // Handle post submission
   const handleSubmit = async () => {
     if (!validateForm()) return;
 
     try {
       setLoading(true);
 
-      // Create form data for multipart/form-data
       const formData = new FormData();
       formData.append('type', postType);
       formData.append('title', title);
       formData.append('content', content);
 
-      // Only include address and location if provided
       if (address.trim()) {
         formData.append('address', address);
       }
@@ -135,19 +127,15 @@ export const CreatePostScreen = () => {
         formData.append('house_link', linkedHouse.id);
       }
 
-      // Add images
       if (selectedImages.length > 0) {
         selectedImages.forEach((image, index) => {
-          // Handle platform-specific URI formatting
           const imageUri = Platform.OS === 'ios' ? image.uri.replace('file://', '') : image.uri;
           const filename = image.uri.split('/').pop();
           const match = /\.(\w+)$/.exec(filename);
           const fileType = match ? `image/${match[1]}` : 'image/jpeg';
 
-          // Debug log
           console.log(`Appending image ${index}:`, { uri: imageUri, name: filename, type: fileType });
           
-          // Change to use 'images' instead of 'images[]' to match server expectations
           formData.append('images', {
             uri: imageUri,
             name: filename || `image_${index}.jpg`,
@@ -156,189 +144,197 @@ export const CreatePostScreen = () => {
         });
       }
 
-      // Submit post
       const data = await createPostService(formData);
 
-      // Navigate back on success
-      Alert.alert('Thành công', 'Bài đăng đã được tạo thành công', [
-        { text: 'OK', onPress: () => navigation.goBack() }
-      ]);
+      setDialogContent({
+        title: 'Thành công',
+        message: 'Bài đăng đã được tạo thành công',
+        actions: [{ label: 'OK', onPress: () => { setDialogVisible(false); navigation.goBack(); } }]
+      });
+      setDialogVisible(true);
     } catch (error) {
       console.error('Error creating post:', error);
-      Alert.alert('Lỗi', 'Không thể tạo bài đăng. Vui lòng thử lại sau.');
+      setDialogContent({
+        title: 'Lỗi',
+        message: 'Không thể tạo bài đăng. Vui lòng thử lại sau.',
+        actions: [{ label: 'OK', onPress: () => setDialogVisible(false) }]
+      });
+      setDialogVisible(true);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 20}
-    >
-      <ScrollView
-        style={[styles.container, { backgroundColor: colors.backgroundPrimary }]}
-        contentContainerStyle={styles.contentContainer}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={true}
+    <>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 20}
       >
-        <View style={styles.header}>
-          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
-            Tạo bài đăng mới
-          </Text>
-        </View>
+        <ScrollView
+          style={[styles.container, { backgroundColor: colors.backgroundPrimary }]}
+          contentContainerStyle={styles.contentContainer}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={true}
+        >
+          <View style={styles.header}>
+            <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
+              Tạo bài đăng mới
+            </Text>
+          </View>
 
-        {/* Post type selector */}
-        <View style={styles.formSection}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-            Loại bài đăng
-          </Text>
-          <PostTypeSelector
-            selectedType={postType}
-            onSelectType={setPostType}
-            colors={colors}
-            isOwner={isOwner}
-          />
-        </View>
-
-        {/* Title input */}
-        <View style={styles.formSection}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-            Tiêu đề
-          </Text>
-          <TextInput
-            style={[
-              styles.input,
-              { backgroundColor: colors.backgroundSecondary, color: colors.textPrimary },
-              errors.title && styles.inputError
-            ]}
-            value={title}
-            onChangeText={setTitle}
-            placeholder="Nhập tiêu đề bài đăng"
-            placeholderTextColor={colors.textSecondary}
-          />
-          {errors.title && (
-            <Text style={styles.errorText}>{errors.title}</Text>
-          )}
-        </View>
-
-        {/* Content input */}
-        <View style={styles.formSection}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-            Nội dung
-          </Text>
-          <TextInput
-            style={[
-              styles.textArea,
-              { backgroundColor: colors.backgroundSecondary, color: colors.textPrimary },
-              errors.content && styles.inputError
-            ]}
-            value={content}
-            onChangeText={setContent}
-            placeholder="Mô tả chi tiết về bài đăng của bạn..."
-            placeholderTextColor={colors.textSecondary}
-            multiline
-            numberOfLines={5}
-            textAlignVertical="top"
-          />
-          {errors.content && (
-            <Text style={styles.errorText}>{errors.content}</Text>
-          )}
-        </View>
-
-        {/* Image Picker */}
-        <View style={styles.formSection}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-            Hình ảnh
-          </Text>
-          <ImagePickerComponent
-            images={selectedImages}
-            onImagesSelected={handleImagesSelected}
-            onRemoveImage={handleRemoveImage}
-            colors={colors}
-          />
-        </View>
-
-        {/* House Link - Only for owners */}
-        {isOwner && (
           <View style={styles.formSection}>
             <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-              Liên kết với nhà/phòng (tùy chọn)
+              Loại bài đăng
+            </Text>
+            <PostTypeSelector
+              selectedType={postType}
+              onSelectType={setPostType}
+              colors={colors}
+              isOwner={isOwner}
+            />
+          </View>
+
+          <View style={styles.formSection}>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+              Tiêu đề
+            </Text>
+            <TextInput
+              style={[
+                styles.input,
+                { backgroundColor: colors.backgroundSecondary, color: colors.textPrimary },
+                errors.title && styles.inputError
+              ]}
+              value={title}
+              onChangeText={setTitle}
+              placeholder="Nhập tiêu đề bài đăng"
+              placeholderTextColor={colors.textSecondary}
+            />
+            {errors.title && (
+              <Text style={styles.errorText}>{errors.title}</Text>
+            )}
+          </View>
+
+          <View style={styles.formSection}>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+              Nội dung
+            </Text>
+            <TextInput
+              style={[
+                styles.textArea,
+                { backgroundColor: colors.backgroundSecondary, color: colors.textPrimary },
+                errors.content && styles.inputError
+              ]}
+              value={content}
+              onChangeText={setContent}
+              placeholder="Mô tả chi tiết về bài đăng của bạn..."
+              placeholderTextColor={colors.textSecondary}
+              multiline
+              numberOfLines={5}
+              textAlignVertical="top"
+            />
+            {errors.content && (
+              <Text style={styles.errorText}>{errors.content}</Text>
+            )}
+          </View>
+
+          <View style={styles.formSection}>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+              Hình ảnh
+            </Text>
+            <ImagePickerComponent
+              images={selectedImages}
+              onImagesSelected={handleImagesSelected}
+              onRemoveImage={handleRemoveImage}
+              colors={colors}
+            />
+          </View>
+
+          {isOwner && (
+            <View style={styles.formSection}>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+                Liên kết với nhà/phòng (tùy chọn)
+              </Text>
+              <TouchableOpacity
+                style={[
+                  styles.linkButton,
+                  { backgroundColor: colors.backgroundSecondary }
+                ]}
+                onPress={() => setShowHousePicker(true)}
+              >
+                <Icon name="home-outline" size={24} color={colors.accentColor} />
+                <Text style={{ color: colors.textPrimary, marginLeft: 10 }}>
+                  {linkedHouse ? `Đã chọn: ${linkedHouse.title}` : 'Chọn nhà/phòng'}
+                </Text>
+              </TouchableOpacity>
+
+              {showHousePicker && (
+                <HouseLinkSelector
+                  onSelectHouse={handleHouseSelected}
+                  onCancel={() => setShowHousePicker(false)}
+                  colors={colors}
+                />
+              )}
+            </View>
+          )}
+
+          <View style={styles.formSection}>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+              Địa chỉ {(postType === 'common' || postType === 'roommate') && '(tùy chọn)'}
             </Text>
             <TouchableOpacity
               style={[
                 styles.linkButton,
-                { backgroundColor: colors.backgroundSecondary }
+                { backgroundColor: colors.backgroundSecondary },
+                errors.address && styles.inputError
               ]}
-              onPress={() => setShowHousePicker(true)}
+              onPress={() => setShowLocationPicker(true)}
             >
-              <Icon name="home-outline" size={24} color={colors.accentColor} />
-              <Text style={{ color: colors.textPrimary, marginLeft: 10 }}>
-                {linkedHouse ? `Đã chọn: ${linkedHouse.title}` : 'Chọn nhà/phòng'}
+              <Icon name="map-marker" size={24} color={colors.accentColor} />
+              <Text style={{ color: colors.textPrimary, marginLeft: 10, flex: 1 }} numberOfLines={1}>
+                {address || ((postType === 'common' || postType === 'roommate') ? 'Chọn địa điểm (không bắt buộc)' : 'Chọn địa điểm')}
               </Text>
             </TouchableOpacity>
+            {errors.address && (
+              <Text style={styles.errorText}>{errors.address}</Text>
+            )}
 
-            {showHousePicker && (
-              <HouseLinkSelector
-                onSelectHouse={handleHouseSelected}
-                onCancel={() => setShowHousePicker(false)}
+            {showLocationPicker && (
+              <LocationPickerComponent
+                onLocationSelected={handleLocationSelected}
+                onCancel={() => setShowLocationPicker(false)}
+                initialAddress={address}
+                initialLocation={location.latitude && location.longitude ? location : null}
                 colors={colors}
               />
             )}
           </View>
-        )}
 
-        {/* Location */}
-        <View style={styles.formSection}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-            Địa chỉ {(postType === 'common' || postType === 'roommate') && '(tùy chọn)'}
-          </Text>
           <TouchableOpacity
             style={[
-              styles.linkButton,
-              { backgroundColor: colors.backgroundSecondary },
-              errors.address && styles.inputError
+              styles.submitButton,
+              { backgroundColor: loading ? colors.disabledColor : colors.accentColor }
             ]}
-            onPress={() => setShowLocationPicker(true)}
+            onPress={handleSubmit}
+            disabled={loading}
           >
-            <Icon name="map-marker" size={24} color={colors.accentColor} />
-            <Text style={{ color: colors.textPrimary, marginLeft: 10, flex: 1 }} numberOfLines={1}>
-              {address || ((postType === 'common' || postType === 'roommate') ? 'Chọn địa điểm (không bắt buộc)' : 'Chọn địa điểm')}
-            </Text>
+            {loading ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Text style={styles.submitButtonText}>Đăng bài</Text>
+            )}
           </TouchableOpacity>
-          {errors.address && (
-            <Text style={styles.errorText}>{errors.address}</Text>
-          )}
-
-          {showLocationPicker && (
-            <LocationPickerComponent
-              onLocationSelected={handleLocationSelected}
-              onCancel={() => setShowLocationPicker(false)}
-              initialAddress={address}
-              initialLocation={location.latitude && location.longitude ? location : null}
-              colors={colors}
-            />
-          )}
-        </View>
-
-        {/* Submit button */}
-        <TouchableOpacity
-          style={[
-            styles.submitButton,
-            { backgroundColor: loading ? colors.disabledColor : colors.accentColor }
-          ]}
-          onPress={handleSubmit}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator size="small" color="#fff" />
-          ) : (
-            <Text style={styles.submitButtonText}>Đăng bài</Text>
-          )}
-        </TouchableOpacity>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        </ScrollView>
+      </KeyboardAvoidingView>
+      <PaperDialog
+        visible={dialogVisible}
+        title={dialogContent.title}
+        message={dialogContent.message}
+        actions={dialogContent.actions}
+        onDismiss={() => setDialogVisible(false)}
+      />
+    </>
   );
 };
 
@@ -348,7 +344,7 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     padding: 16,
-    paddingBottom: Platform.OS === 'ios' ? 50 : 100, // Increased bottom padding for Android
+    paddingBottom: Platform.OS === 'ios' ? 50 : 100, 
   },
   header: {
     marginBottom: 20,

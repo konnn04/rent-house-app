@@ -1,3 +1,4 @@
-export const CLIENT_ID = "fevw5CVF2CF7AIie2VJoNOhXvnJSiTd4SDf3Y4I0"; 
-export const CLIENT_SECRET = "VJFy42pjW2KTW2CN7huVpJaPdiRzKdZ13EPY5BPjQtAr9XbUQkggKLFaV52QnllatWHdRsOLR58fXdSw6eGPKMtviQ9lz5GLoOalnvxBz5Sre5SYCiHVVGm3K0pJQ7za";
-export const API_BASE_URL = "https://djan.konnn04.live"
+import Constants from 'expo-constants';
+export const CLIENT_ID = Constants.expoConfig.extra.CLIENT_ID || "";
+export const CLIENT_SECRET = Constants.expoConfig.extra.CLIENT_SECRET || "";
+export const API_BASE_URL = "https://djan.konnn04.live";

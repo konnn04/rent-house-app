@@ -64,19 +64,7 @@ def create_notification(user, content, notification_type, sender=None, related_o
     
     return notification
 
-# def send_notification_to_device(notification):
-#     try:
-#         sender_info = notification.sender.id if notification.sender else 'system'
-#         ascii_content = unicodedata.normalize('NFKD', notification.content).encode('ascii', 'ignore').decode('ascii')
-#         logger.info(
-#             f"Would send push notification: "
-#             f"to={notification.user.id}, "
-#             f"from={sender_info}, "
-#             f"content={ascii_content}"
-#         )
-#     except Exception as e:
-#         logger.info(f"Would send push notification to user {notification.user.id} [Unicode content]")
-#     return True
+
 
 def interaction_notification(sender, post):
     create_notification(
@@ -217,6 +205,20 @@ def house_notification(sender, house):
         }
         
         send_notification_email_async(subject, context, follower.email)
+
+# def send_notification_to_device(notification):
+#     try:
+#         sender_info = notification.sender.id if notification.sender else 'system'
+#         ascii_content = unicodedata.normalize('NFKD', notification.content).encode('ascii', 'ignore').decode('ascii')
+#         logger.info(
+#             f"Would send push notification: "
+#             f"to={notification.user.id}, "
+#             f"from={sender_info}, "
+#             f"content={ascii_content}"
+#         )
+#     except Exception as e:
+#         logger.info(f"Would send push notification to user {notification.user.id} [Unicode content]")
+#     return True
 
 # @receiver(post_save, sender=Follow)
 # def follow_notification(sender, instance, created, **kwargs):

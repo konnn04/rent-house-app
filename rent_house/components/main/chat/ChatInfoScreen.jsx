@@ -2,7 +2,6 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Image,
   Platform,
   ScrollView,
@@ -18,7 +17,7 @@ import { useUser } from '../../../contexts/UserContext';
 import { apiClient } from '../../../services/Api'; // Thêm dòng này để gọi API thêm thành viên
 import { getInfoChatService, leaveChatService } from '../../../services/chatService';
 import { getChatDetailsFromRoute } from '../../../utils/ChatUtils';
-// Component hiển thị thành viên
+import { PaperDialog } from '../../common/PaperDialog';
 const MemberItem = ({ member, isCurrentUser, isAdmin, onRemoveMember, onViewProfile }) => {
   const { colors } = useTheme();
 
@@ -36,7 +35,6 @@ const MemberItem = ({ member, isCurrentUser, isAdmin, onRemoveMember, onViewProf
           {member.is_admin ? 'Quản trị viên' : 'Thành viên'}
         </Text>
       </View>
-      {/* Nút chuyển đến trang cá nhân nếu không phải mình */}
       {!isCurrentUser && (
         <TouchableOpacity
           style={styles.profileButton}
@@ -45,7 +43,6 @@ const MemberItem = ({ member, isCurrentUser, isAdmin, onRemoveMember, onViewProf
           <Icon name="account-circle-outline" size={24} color={colors.accentColor} />
         </TouchableOpacity>
       )}
-      {/* Nút xóa thành viên nếu là admin và không phải mình */}
       {!isCurrentUser && isAdmin && (
         <TouchableOpacity 
           style={styles.removeButton}
@@ -72,6 +69,8 @@ export const ChatInfoScreen = () => {
   const [showAddMember, setShowAddMember] = useState(false);
   const [addUsername, setAddUsername] = useState('');
   const [addMemberLoading, setAddMemberLoading] = useState(false);
+  const [dialogVisible, setDialogVisible] = useState(false);
+  const [dialogContent, setDialogContent] = useState({ title: '', message: '', actions: [] });
   
   const isCurrentUserAdmin = useCallback(() => {
     if (!chatData || !userData) return false;
@@ -105,71 +104,73 @@ export const ChatInfoScreen = () => {
   
   // Handle remove member
   const handleRemoveMember = (member) => {
-    Alert.alert(
-      'Xóa thành viên',
-      `Bạn có chắc muốn xóa ${member.full_name} khỏi nhóm chat này?`,
-      [
-        { text: 'Hủy', style: 'cancel' },
+    setDialogContent({
+      title: 'Xóa thành viên',
+      message: `Bạn có chắc muốn xóa ${member.full_name} khỏi nhóm chat này?`,
+      actions: [
+        { label: 'Hủy', onPress: () => setDialogVisible(false) },
         { 
-          text: 'Xóa', 
-          style: 'destructive',
+          label: 'Xóa', 
           onPress: async () => {
             try {
-              await api.post(`/chats/${chatId}/remove_member/`, {
+              await apiClient.post(`/api/chats/${chatId}/remove_member/`, {
                 user_id: member.id
               });
-              
-              // Refresh chat info
               fetchChatInfo();
-              
+              setDialogVisible(false);
             } catch (err) {
-              console.error('Error removing member:', err);
-              Alert.alert('Lỗi', 'Không thể xóa thành viên. Vui lòng thử lại sau.');
+              setDialogContent({
+                title: 'Lỗi',
+                message: 'Không thể xóa thành viên. Vui lòng thử lại sau.',
+                actions: [{ label: 'OK', onPress: () => setDialogVisible(false) }]
+              });
+              setDialogVisible(true);
             }
-          }
+          },
+          isDestructive: true
         }
       ]
-    );
+    });
+    setDialogVisible(true);
   };
   
-  // Handle leave group
   const handleLeaveGroup = () => {
-    Alert.alert(
-      'Rời nhóm',
-      'Bạn có chắc muốn rời khỏi nhóm chat này?',
-      [
-        { text: 'Hủy', style: 'cancel' },
+    setDialogContent({
+      title: 'Rời nhóm',
+      message: 'Bạn có chắc muốn rời khỏi nhóm chat này?',
+      actions: [
+        { label: 'Hủy', onPress: () => setDialogVisible(false) },
         { 
-          text: 'Rời nhóm', 
-          style: 'destructive',
+          label: 'Rời nhóm',
           onPress: async () => {
             try {
               await leaveChatService(chatId);
-
-              // Quay lại màn hình danh sách chat
+              setDialogVisible(false);
               navigation.navigate('Chats');
-              
             } catch (err) {
-              console.error('Error leaving group:', err);
-              Alert.alert('Lỗi', 'Không thể rời nhóm. Vui lòng thử lại sau.');
+              setDialogContent({
+                title: 'Lỗi',
+                message: 'Không thể rời nhóm. Vui lòng thử lại sau.',
+                actions: [{ label: 'OK', onPress: () => setDialogVisible(false) }]
+              });
+              setDialogVisible(true);
             }
-          }
+          },
+          isDestructive: true
         }
       ]
-    );
+    });
+    setDialogVisible(true);
   };
   
-  // Handle add member
   const handleAddMember = () => {
     navigation.navigate('AddMembers', { chatId: chatId });
   };
 
-  // Thêm hàm chuyển đến trang cá nhân
   const handleViewProfile = (username) => {
     navigation.navigate('PublicProfile', { username });
   };
 
-  // Thêm thành viên qua username
   const handleAddMemberByUsername = async () => {
     if (!addUsername.trim()) return;
     setAddMemberLoading(true);
@@ -180,9 +181,19 @@ export const ChatInfoScreen = () => {
       setAddUsername('');
       setShowAddMember(false);
       fetchChatInfo();
-      Alert.alert('Thành công', 'Đã thêm thành viên vào nhóm!');
+      setDialogContent({
+        title: 'Thành công',
+        message: 'Đã thêm thành viên vào nhóm!',
+        actions: [{ label: 'OK', onPress: () => setDialogVisible(false) }]
+      });
+      setDialogVisible(true);
     } catch (err) {
-      Alert.alert('Lỗi', err?.response?.data?.detail || 'Không thể thêm thành viên. Kiểm tra username!');
+      setDialogContent({
+        title: 'Lỗi',
+        message: err?.response?.data?.detail || 'Không thể thêm thành viên. Kiểm tra username!',
+        actions: [{ label: 'OK', onPress: () => setDialogVisible(false) }]
+      });
+      setDialogVisible(true);
     } finally {
       setAddMemberLoading(false);
     }
@@ -253,7 +264,6 @@ export const ChatInfoScreen = () => {
       </View>
       
       <ScrollView>
-        {/* Thông tin nhóm */}
         <View style={[styles.groupInfo, { backgroundColor: colors.backgroundSecondary }]}>
           {chatData?.is_group ? (
             <>
@@ -276,7 +286,6 @@ export const ChatInfoScreen = () => {
           )}
         </View>
         
-        {/* Danh sách thành viên */}
         <View style={styles.membersSection}>
           <View style={styles.sectionHeader}>
             <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
@@ -305,7 +314,6 @@ export const ChatInfoScreen = () => {
           ))}
         </View>
         
-        {/* Options */}
         {chatData?.is_group && (
           <TouchableOpacity 
             style={[styles.leaveButton, { backgroundColor: colors.dangerColor }]}
@@ -316,7 +324,6 @@ export const ChatInfoScreen = () => {
           </TouchableOpacity>
         )}
       </ScrollView>
-      {/* Modal thêm thành viên qua username */}
       {showAddMember && (
         <View style={[styles.addMemberModal, { backgroundColor: colors.backgroundSecondary }]}>
           <Text style={{ color: colors.textPrimary, fontWeight: 'bold', marginBottom: 10 }}>Thêm thành viên bằng username</Text>
@@ -350,6 +357,13 @@ export const ChatInfoScreen = () => {
           </View>
         </View>
       )}
+      <PaperDialog
+        visible={dialogVisible}
+        title={dialogContent.title}
+        message={dialogContent.message}
+        actions={dialogContent.actions}
+        onDismiss={() => setDialogVisible(false)}
+      />
     </View>
   );
 };

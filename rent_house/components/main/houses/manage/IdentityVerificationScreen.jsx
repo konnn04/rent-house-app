@@ -1,20 +1,20 @@
 import { useNavigation, useRoute } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
-import { Alert, Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Button, HelperText, TextInput } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 import { useTheme } from '../../../../contexts/ThemeContext';
 import { useUser } from '../../../../contexts/UserContext';
 import { submitIdentityVerificationService } from '../../../../services/userService';
+import { PaperDialog } from '../../../common/PaperDialog';
 import { ManageHeader } from './components/ManageHeader';
 
 export const IdentityVerificationScreen = () => {
   const { colors } = useTheme();
-  // Add fallback colors for info styling if not defined in theme
-  const infoLightColor = colors.infoLight || '#e6f7ff';  // Light blue background
-  const infoDarkColor = colors.infoDark || '#0066cc';    // Dark blue text
+  const infoLightColor = colors.infoLight || '#e6f7ff';  
+  const infoDarkColor = colors.infoDark || '#0066cc';    
   
   const navigation = useNavigation();
   const route = useRoute();
@@ -28,13 +28,20 @@ export const IdentityVerificationScreen = () => {
   const [selfieImage, setSelfieImage] = useState(null);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const [dialogVisible, setDialogVisible] = useState(false);
+  const [dialogContent, setDialogContent] = useState({ title: '', message: '', actions: [] });
   
   const pickImage = async (setter) => {
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       
       if (status !== 'granted') {
-        Alert.alert('Cần quyền truy cập', 'Ứng dụng cần quyền truy cập thư viện ảnh');
+        setDialogContent({
+          title: 'Cần quyền truy cập',
+          message: 'Ứng dụng cần quyền truy cập thư viện ảnh',
+          actions: [{ label: 'OK', onPress: () => setDialogVisible(false) }]
+        });
+        setDialogVisible(true);
         return;
       }
       
@@ -50,7 +57,12 @@ export const IdentityVerificationScreen = () => {
       }
     } catch (error) {
       console.error('Error picking image:', error);
-      Alert.alert('Lỗi', 'Không thể chọn ảnh. Vui lòng thử lại.');
+      setDialogContent({
+        title: 'Lỗi',
+        message: 'Không thể chọn ảnh. Vui lòng thử lại.',
+        actions: [{ label: 'OK', onPress: () => setDialogVisible(false) }]
+      });
+      setDialogVisible(true);
     }
   };
   
@@ -85,11 +97,9 @@ export const IdentityVerificationScreen = () => {
     setLoading(true);
     
     try {
-      // Create form data
       const formData = new FormData();
       formData.append('id_number', idNumber);
       
-      // Add images to form data
       if (frontIdImage) {
         const uriParts = frontIdImage.split('.');
         const fileType = uriParts[uriParts.length - 1];
@@ -123,34 +133,30 @@ export const IdentityVerificationScreen = () => {
         });
       }
       
-      // Call API to submit verification
       await submitIdentityVerificationService(formData);
       
-      // Update user data to reflect identity submission
       await fetchUserData();
       
-      Alert.alert(
-        'Gửi thông tin thành công',
-        'Thông tin của bạn đã được gửi đi và đang chờ xác thực. Bạn có thể tiếp tục sử dụng ứng dụng trong khi chờ xác thực.',
-        [
-          {
-            text: 'OK',
-            onPress: () => {
-              // Navigate to the redirect page if specified
-              if (redirectAfter) {
-                navigation.navigate(redirectAfter);
-              } else {
-                navigation.goBack();
-              }
+      setDialogContent({
+        title: 'Gửi thông tin thành công',
+        message: 'Thông tin của bạn đã được gửi đi và đang chờ xác thực. Bạn có thể tiếp tục sử dụng ứng dụng trong khi chờ xác thực.',
+        actions: [{
+          label: 'OK',
+          onPress: () => {
+            setDialogVisible(false);
+            if (redirectAfter) {
+              navigation.navigate(redirectAfter);
+            } else {
+              navigation.goBack();
             }
           }
-        ]
-      );
+        }]
+      });
+      setDialogVisible(true);
       
     } catch (error) {
       console.error('Error submitting verification:', error);
       
-      // Handle field-specific errors
       if (error.response?.data) {
         const fieldErrors = {};
         Object.keys(error.response.data).forEach(key => {
@@ -164,10 +170,20 @@ export const IdentityVerificationScreen = () => {
         if (Object.keys(fieldErrors).length > 0) {
           setErrors(fieldErrors);
         } else {
-          Alert.alert('Lỗi', 'Không thể gửi thông tin xác thực. Vui lòng thử lại sau.');
+          setDialogContent({
+            title: 'Lỗi',
+            message: 'Không thể gửi thông tin xác thực. Vui lòng thử lại sau.',
+            actions: [{ label: 'OK', onPress: () => setDialogVisible(false) }]
+          });
+          setDialogVisible(true);
         }
       } else {
-        Alert.alert('Lỗi', 'Không thể gửi thông tin xác thực. Vui lòng thử lại sau.');
+        setDialogContent({
+          title: 'Lỗi',
+          message: 'Không thể gửi thông tin xác thực. Vui lòng thử lại sau.',
+          actions: [{ label: 'OK', onPress: () => setDialogVisible(false) }]
+        });
+        setDialogVisible(true);
       }
     } finally {
       setLoading(false);
@@ -272,6 +288,14 @@ export const IdentityVerificationScreen = () => {
           </Button>
         </ScrollView>
       </KeyboardAvoidingView>
+      
+      <PaperDialog
+        visible={dialogVisible}
+        title={dialogContent.title}
+        message={dialogContent.message}
+        actions={dialogContent.actions}
+        onDismiss={() => setDialogVisible(false)}
+      />
     </View>
   );
 };
@@ -291,8 +315,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 16,
     alignItems: 'flex-start',
-    borderLeftWidth: 4,  // Add a left border for emphasis
-    borderLeftColor: '#0066cc',  // Same as the default infoDarkColor
+    borderLeftWidth: 4,  
+    borderLeftColor: '#0066cc',  
   },
   infoText: {
     marginLeft: 8,

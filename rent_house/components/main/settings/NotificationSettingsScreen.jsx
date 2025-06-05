@@ -26,7 +26,6 @@ export const NotificationSettingsScreen = () => {
       
       setNotifications(newSettings);
       
-      // Lưu cài đặt vào AsyncStorage
       await AsyncStorage.setItem('notificationSettings', JSON.stringify(newSettings));
     } catch (error) {
       console.error('Error saving notification settings:', error);

@@ -1,12 +1,13 @@
 import { useNavigation } from '@react-navigation/native';
-import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, FlatList, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Badge, Button, FAB, Searchbar } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 import { useTheme } from '../../../../contexts/ThemeContext';
 import { useUser } from '../../../../contexts/UserContext';
-import { getMyHousesService, deleteHouseService } from '../../../../services/houseService';
+import { getMyHousesService } from '../../../../services/houseService';
+import { PaperDialog } from '../../../common/PaperDialog';
 import { HouseCard } from '../components/HouseCard';
 import { ManageHeader } from './components/ManageHeader';
 
@@ -29,11 +30,13 @@ export const ManageHouse = () => {
   const [nextPageUrl, setNextPageUrl] = useState(null);
   const [loadingMore, setLoadingMore] = useState(false);
   
-  // Lấy thông tin đã xác thực hay chưa từ userData
+  // Dialog state
+  const [dialogVisible, setDialogVisible] = useState(false);
+  const [dialogContent, setDialogContent] = useState({ title: '', message: '', actions: [] });
+  
   const isVerified = userData?.is_verified || false;
   const hasIdentity = userData?.has_identity || false;
 
-  // Lấy danh sách nhà
   const fetchHouses = async (refresh = false) => {
     try {
       setError(null);
@@ -46,7 +49,6 @@ export const ManageHouse = () => {
         response = await getMyHousesService();
       }
 
-      // Nếu có phân trang, response có thể là object với results, count, next
       const results = response.results || response.data?.results || [];
       const count = response.count || response.data?.count || 0;
       const next = response.next || response.data?.next || null;
@@ -57,7 +59,6 @@ export const ManageHouse = () => {
         refresh ? results : [...(prev || []), ...results]
       );
 
-      // Calculate statistics
       const totalHouses = count;
       let totalRooms = 0;
       let availableRooms = 0;
@@ -72,12 +73,18 @@ export const ManageHouse = () => {
         totalHouses,
         totalRooms,
         availableRooms,
-        pendingVerifications: 0 // This will be updated from another API
+        pendingVerifications: 0 
       });
 
     } catch (err) {
       console.error('Error fetching houses:', err);
       setError('Không thể tải danh sách nhà. Vui lòng thử lại sau.');
+      setDialogContent({
+        title: 'Lỗi',
+        message: 'Không thể tải danh sách nhà. Vui lòng thử lại sau.',
+        actions: [{ label: 'OK', onPress: () => setDialogVisible(false) }]
+      });
+      setDialogVisible(true);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -89,10 +96,8 @@ export const ManageHouse = () => {
     fetchHouses(true);
   }, []);
   
-  // Focus listener để cập nhật lại dữ liệu khi quay lại màn hình này
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
-      // Tải lại thông tin người dùng để cập nhật trạng thái xác thực
       userData.fetchUserData && userData.fetchUserData();
       fetchHouses(true);
     });
@@ -112,8 +117,6 @@ export const ManageHouse = () => {
   };
 
   const handleSearch = () => {
-    // Implement search functionality
-    // For now, we'll just filter the houses by title
     if (!searchQuery.trim()) {
       fetchHouses();
       return;
@@ -132,22 +135,16 @@ export const ManageHouse = () => {
   };
   
   const handleAddHouse = () => {
-    // Kiểm tra xem người dùng đã gửi thông tin xác thực chưa
     if (!hasIdentity && userData?.role === 'owner') {
-      Alert.alert(
-        'Xác thực danh tính',
-        'Bạn cần xác thực danh tính trước khi thêm nhà mới.',
-        [
-          {
-            text: 'Hủy',
-            style: 'cancel'
-          },
-          {
-            text: 'Xác thực ngay',
-            onPress: () => navigation.navigate('IdentityVerification', { redirectAfter: 'AddHouse' })
-          }
+      setDialogContent({
+        title: 'Xác thực danh tính',
+        message: 'Bạn cần xác thực danh tính trước khi thêm nhà mới.',
+        actions: [
+          { label: 'Hủy', onPress: () => setDialogVisible(false), style: 'cancel' },
+          { label: 'Xác thực ngay', onPress: () => { setDialogVisible(false); navigation.navigate('IdentityVerification', { redirectAfter: 'AddHouse' }); } }
         ]
-      );
+      });
+      setDialogVisible(true);
     } else {
       navigation.navigate('AddHouse');
     }
@@ -178,7 +175,6 @@ export const ManageHouse = () => {
   );
   
   const renderVerificationBanner = () => {
-    // Chỉ hiển thị banner cho người dùng là chủ nhà và chưa gửi thông tin xác thực
     if (userData?.role !== 'owner' || hasIdentity) return null;
     
     return (
@@ -246,6 +242,64 @@ export const ManageHouse = () => {
     </View>
   );
   
+  const renderItem = useCallback(
+    ({ item }) => (
+      <TouchableOpacity 
+        style={styles.houseCardContainer}
+        onPress={() => handleViewHouse(item)}
+        activeOpacity={0.8}
+      >
+        <HouseCard 
+          house={item} 
+          onPress={() => handleViewHouse(item)}
+        />
+        
+        <View style={styles.actionButtonsContainer}>
+          <TouchableOpacity
+            style={[styles.editButton, { backgroundColor: colors.accentColor }]}
+            onPress={() => handleEditHouse(item)}
+          >
+            <Icon name="pencil" size={20} color="#fff" />
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.actionButtonsContainer}>
+          <TouchableOpacity
+            style={[styles.deleteButton, { backgroundColor: colors.dangerColor }]}
+            onPress={() => handleEditHouse(item)}
+          >
+            <Icon name="delete" size={20} color="#fff" />
+          </TouchableOpacity>
+        </View>
+        
+        {!item.is_verified && (
+          <Badge
+            style={[styles.verificationBadge, { backgroundColor: colors.dangerColor, color: '#fff' }]}
+          >
+            Chưa xác thực
+          </Badge>
+        )}
+        
+        {item.is_active === false && (
+          <Badge
+            style={[styles.statusBadge, { backgroundColor: colors.dangerColor }]}
+          >
+            Ngừng hoạt động
+          </Badge>
+        )}
+        
+        {item.available_rooms === 0 && item.max_rooms > 0 && (
+          <Badge
+            style={[styles.fullBadge, { backgroundColor: colors.infoColor }]}
+          >
+            Đã cho thuê hết
+          </Badge>
+        )}
+      </TouchableOpacity>
+    ),
+    [handleViewHouse, handleEditHouse, colors.accentColor, colors.dangerColor, colors.infoColor]
+  );
+
   return (
     <View style={[styles.container, { backgroundColor: colors.backgroundPrimary }]}>
       <ManageHeader title="Quản lý nhà" />
@@ -288,60 +342,7 @@ export const ManageHouse = () => {
         <FlatList
           data={houses}
           keyExtractor={(item) => item.id.toString()}
-          renderItem={({ item }) => (
-            <TouchableOpacity 
-              style={styles.houseCardContainer}
-              onPress={() => handleViewHouse(item)}
-              activeOpacity={0.8}
-            >
-              <HouseCard 
-                house={item} 
-                onPress={() => handleViewHouse(item)}
-              />
-              
-              <View style={styles.actionButtonsContainer}>
-                <TouchableOpacity
-                  style={[styles.editButton, { backgroundColor: colors.accentColor }]}
-                  onPress={() => handleEditHouse(item)}
-                >
-                  <Icon name="pencil" size={20} color="#fff" />
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.actionButtonsContainer}>
-                <TouchableOpacity
-                  style={[styles.deleteButton, { backgroundColor: colors.dangerColor }]}
-                  onPress={() => handleDeleteHouse(item)}
-                >
-                  <Icon name="delete" size={20} color="#fff" />
-                </TouchableOpacity>
-              </View>
-              
-              {!item.is_verified && (
-                <Badge
-                  style={[styles.verificationBadge, { backgroundColor: colors.dangerColor, color: '#fff' }]}
-                >
-                  Chưa xác thực
-                </Badge>
-              )}
-              
-              {item.is_active === false && (
-                <Badge
-                  style={[styles.statusBadge, { backgroundColor: colors.dangerColor }]}
-                >
-                  Ngừng hoạt động
-                </Badge>
-              )}
-              
-              {item.available_rooms === 0 && item.max_rooms > 0 && (
-                <Badge
-                  style={[styles.fullBadge, { backgroundColor: colors.infoColor }]}
-                >
-                  Đã cho thuê hết
-                </Badge>
-              )}
-            </TouchableOpacity>
-          )}
+          renderItem={renderItem}
           contentContainerStyle={[
             styles.listContentContainer,
             houses.length === 0 && styles.emptyList
@@ -375,6 +376,14 @@ export const ManageHouse = () => {
         onPress={handleAddHouse}
         disabled={loading || (userData?.role === 'owner' && !hasIdentity)}
         color="#FFFFFF"
+      />
+      
+      <PaperDialog
+        visible={dialogVisible}
+        title={dialogContent.title}
+        message={dialogContent.message}
+        actions={dialogContent.actions}
+        onDismiss={() => setDialogVisible(false)}
       />
     </View>
   );

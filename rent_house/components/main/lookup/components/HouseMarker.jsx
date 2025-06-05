@@ -5,7 +5,6 @@ import { useTheme } from '../../../../contexts/ThemeContext';
 export const HouseMarker = ({ house, onMarkerPress }) => {
   const { colors } = useTheme();
 
-  // Handle marker press directly
   const handlePress = () => {
     if (onMarkerPress) {
       onMarkerPress(house.id);
@@ -20,7 +19,6 @@ export const HouseMarker = ({ house, onMarkerPress }) => {
       }}
       onPress={handlePress}
     >
-      {/* Custom marker */}
       <View style={[styles.markerContainer, { backgroundColor: colors.accentColor }]}>
         <Text style={styles.markerPrice}>
           {Math.round(house.base_price / 1000000)}M

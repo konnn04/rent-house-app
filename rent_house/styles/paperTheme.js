@@ -2,14 +2,12 @@ import { DarkTheme as NavigationDarkTheme, DefaultTheme as NavigationDefaultThem
 import { MD3DarkTheme, MD3LightTheme, adaptNavigationTheme } from 'react-native-paper';
 import Colors from '../constants/Colors';
 
-// Adapt navigation theme to work with react-native-paper
 const { LightTheme: NavigationLightThemeAdapted, DarkTheme: NavigationDarkThemeAdapted } 
   = adaptNavigationTheme({
     reactNavigationLight: NavigationDefaultTheme,
     reactNavigationDark: NavigationDarkTheme,
   });
 
-// Define custom fonts with all required variants
 const customFonts = {
   regular: {
     fontFamily: 'System',
@@ -29,7 +27,6 @@ const customFonts = {
   },
 };
 
-// Create combined themes for React Navigation + React Native Paper
 export const paperThemes = {
   light: {
     ...MD3LightTheme,
@@ -61,7 +58,6 @@ export const paperThemes = {
       onSurfaceVariant: Colors.light.textSecondary,
       outline: Colors.light.borderColor,
       outlineVariant: '#dadce0',
-      // Custom colors that can be used with components directly
       text: Colors.light.textPrimary,
       textSecondary: Colors.light.textSecondary,
       accent: Colors.light.accentColor,
@@ -70,11 +66,9 @@ export const paperThemes = {
       warning: Colors.light.warningColor,
       info: Colors.light.infoColor,
     },
-    // Fix for typography variants
     fonts: {
       ...MD3LightTheme.fonts,
       ...customFonts,
-      // Add missing Paper typography variants
       displayLarge: { ...customFonts.regular, fontSize: 57, lineHeight: 64 },
       displayMedium: { ...customFonts.regular, fontSize: 45, lineHeight: 52 },
       displaySmall: { ...customFonts.regular, fontSize: 36, lineHeight: 44 },
@@ -91,7 +85,6 @@ export const paperThemes = {
       labelMedium: { ...customFonts.medium, fontSize: 12, lineHeight: 16 },
       labelSmall: { ...customFonts.medium, fontSize: 11, lineHeight: 16 },
     },
-    // Add custom properties for your app's specific needs
     custom: {
       statusBarStyle: 'dark-content',
     }
@@ -126,7 +119,6 @@ export const paperThemes = {
       onSurfaceVariant: Colors.dark.textSecondary,
       outline: Colors.dark.borderColor,
       outlineVariant: '#444450',
-      // Custom colors
       text: Colors.dark.textPrimary,
       textSecondary: Colors.dark.textSecondary,
       accent: Colors.dark.accentColor,
@@ -135,11 +127,9 @@ export const paperThemes = {
       warning: Colors.dark.warningColor,
       info: Colors.dark.infoColor,
     },
-    // Fix for typography variants
     fonts: {
       ...MD3DarkTheme.fonts,
       ...customFonts,
-      // Add missing Paper typography variants
       displayLarge: { ...customFonts.regular, fontSize: 57, lineHeight: 64 },
       displayMedium: { ...customFonts.regular, fontSize: 45, lineHeight: 52 },
       displaySmall: { ...customFonts.regular, fontSize: 36, lineHeight: 44 },
@@ -156,7 +146,6 @@ export const paperThemes = {
       labelMedium: { ...customFonts.medium, fontSize: 12, lineHeight: 16 },
       labelSmall: { ...customFonts.medium, fontSize: 11, lineHeight: 16 },
     },
-    // Add custom properties for your app's specific needs
     custom: {
       statusBarStyle: 'light-content',
     }

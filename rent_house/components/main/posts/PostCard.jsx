@@ -1,8 +1,6 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import { useEffect, useState } from "react";
-import { useRoute } from "@react-navigation/native";
-import { useUser } from "../../../contexts/UserContext";
 import {
   ActivityIndicator,
   Alert,
@@ -13,21 +11,20 @@ import {
   View,
 } from "react-native";
 import { useTheme } from "../../../contexts/ThemeContext";
+import { useUser } from "../../../contexts/UserContext";
 import {
-  interactWithPostService,
   deletePostService,
+  interactWithPostService,
 } from "../../../services/postService";
 import { truncateText } from "../../../utils/Tools";
 import { ImageGallery } from "../../common/ImageGallery";
 import { CommentsModal } from "./components/CommentsModal";
 
-// House attachment component to display house information
 const HouseAttachment = ({ house, colors, onPress }) => {
   const route = useRoute();
 
   if (!house) return null;
 
-  // Format price to display with commas
   const formatPrice = (price) => {
     return parseFloat(price).toLocaleString("vi-VN");
   };
@@ -91,24 +88,21 @@ export const PostCard = ({ post, onPostDeleted }) => {
 
   const [interaction, setInteraction] = useState({
     like_count: post.like_count || 0,
-    type: post.interaction?.type || "none", // Sử dụng 'none' là giá trị mặc định
+    type: post.interaction?.type || "none", 
   });
   const route = useRoute();
 
   const isCurrentUser = userData?.id === post.author?.id;
-  console.log(isCurrentUser, userData?.id, post.author.id);
 
   const navigation = useNavigation();
 
   const [commentModalVisible, setCommentModalVisible] = useState(false);
   const [isContentExpanded, setIsContentExpanded] = useState(false);
 
-  // Kiểm tra xem nội dung có cần cắt ngắn không
   const MAX_CONTENT_LENGTH = 1000;
   const shouldTruncate =
     post.content && post.content.length > MAX_CONTENT_LENGTH;
 
-  // Hàm định dạng ngày tháng
   const formatDate = (dateString) => {
     if (!dateString) return "";
     const date = new Date(dateString);
@@ -121,7 +115,6 @@ export const PostCard = ({ post, onPostDeleted }) => {
     });
   };
 
-  // Khởi tạo state từ dữ liệu ban đầu
   useEffect(() => {
     setInteraction({
       like_count: post.like_count || 0,
@@ -137,19 +130,14 @@ export const PostCard = ({ post, onPostDeleted }) => {
     }
   };
 
-  // Hàm xử lý tương tác mới
   const handleInteraction = async (type) => {
     try {
-      // Hiển thị trạng thái tức thì cho UX tốt hơn
-      // Nếu đang ở trạng thái giống với type được click -> chuyển sang 'none'
-      // Nếu không -> chuyển sang type mới
       const newType = interaction.type === type ? "none" : type;
       setInteraction((prev) => ({
         ...prev,
         type: newType,
       }));
 
-      // Gọi API
       const data = await interactWithPostService(post.id, newType);
 
       if (data) {
@@ -170,10 +158,10 @@ export const PostCard = ({ post, onPostDeleted }) => {
   const handleDeletePost = async () => {
     try {
       setIsDeleting(true);
-      await deletePostService(post.id); // Gọi service trực tiếp
+      await deletePostService(post.id); 
 
       if (onPostDeleted) {
-        onPostDeleted(post.id); // Callback để update UI ở component cha
+        onPostDeleted(post.id); 
       }
 
       if (route.name === "PostDetail") {
@@ -192,7 +180,6 @@ export const PostCard = ({ post, onPostDeleted }) => {
     }
   };
 
-  // Thay thế các hàm handleLike và handleDislike
   const handleLike = () => handleInteraction("like");
   const handleDislike = () => handleInteraction("dislike");
 
@@ -213,22 +200,18 @@ export const PostCard = ({ post, onPostDeleted }) => {
   };
 
   const handleImageError = (index) => {
-    //setImageLoadError(prev => ({ ...prev, [index]: true }));
     setImageLoading((prev) => ({ ...prev, [index]: false }));
     console.error(`Failed to load image at index ${index}`);
   };
 
-  // Handle "See more" button click
   const toggleContentExpansion = () => {
     setIsContentExpanded(!isContentExpanded);
   };
 
-  // Safety check for null/undefined post
   if (!post) {
     return null;
   }
 
-  // Determine whether to show truncated or full content
   const displayContent =
     shouldTruncate && !isContentExpanded
       ? truncateText(post.content, MAX_CONTENT_LENGTH)
@@ -241,7 +224,6 @@ export const PostCard = ({ post, onPostDeleted }) => {
         { backgroundColor: colors.backgroundSecondary },
       ]}
     >
-      {/* Header */}
       <View style={styles.postHeader}>
         <TouchableOpacity
           style={styles.postUserInfo}
@@ -295,7 +277,6 @@ export const PostCard = ({ post, onPostDeleted }) => {
                 { backgroundColor: colors.backgroundSecondary },
               ]}
             >
-              {/* Các tùy chọn cho tất cả người dùng */}
               <TouchableOpacity>
                 <Text style={{ color: colors.textPrimary, padding: 10 }}>
                   Ẩn bài viết
@@ -343,7 +324,6 @@ export const PostCard = ({ post, onPostDeleted }) => {
         </View>
       </View>
 
-      {/* Body */}
       <View style={styles.postBody}>
         {post.title && (
           <Text style={[styles.postTitle, { color: colors.accentColor }]}>
@@ -355,7 +335,6 @@ export const PostCard = ({ post, onPostDeleted }) => {
           {displayContent}
         </Text>
 
-        {/* "See more" button if content is truncated */}
         {shouldTruncate && (
           <TouchableOpacity onPress={toggleContentExpansion}>
             <Text style={[styles.seeMoreButton, { color: colors.accentColor }]}>
@@ -364,14 +343,10 @@ export const PostCard = ({ post, onPostDeleted }) => {
           </TouchableOpacity>
         )}
 
-        {/* House details attachment */}
 
-        {/* Thay thế phần Images bằng component ImageGallery */}
         {post.media && post.media.length > 0 && (
           <ImageGallery mediaItems={post.media} />
         )}
-
-        {/* Location info/House if available */}
 
         {post.address && !post.house_link && (
           <View style={styles.locationInfo}>
@@ -393,7 +368,6 @@ export const PostCard = ({ post, onPostDeleted }) => {
         )}
       </View>
 
-      {/* Footer - Cập nhật phần hiển thị nút tương tác */}
       <View style={styles.postFooter}>
         <View
           style={[
@@ -448,7 +422,6 @@ export const PostCard = ({ post, onPostDeleted }) => {
             />
           </TouchableOpacity>
 
-          {/* Comment button - Updated to open modal */}
           <TouchableOpacity
             style={styles.interactionButton}
             onPress={handleCommentClick}
@@ -476,7 +449,6 @@ export const PostCard = ({ post, onPostDeleted }) => {
         </View>
       </View>
 
-      {/* Comment Modal */}
       <CommentsModal
         visible={commentModalVisible}
         onClose={() => setCommentModalVisible(false)}
@@ -491,7 +463,6 @@ const styles = StyleSheet.create({
   postContainer: {
     borderRadius: 12,
     marginBottom: 15,
-    marginHorizontal: 10,
     padding: 15,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },

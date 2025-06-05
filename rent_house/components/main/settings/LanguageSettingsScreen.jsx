@@ -20,7 +20,6 @@ export const LanguageSettingsScreen = () => {
     setSelectedLanguage(languageCode);
     try {
       await AsyncStorage.setItem('appLanguage', languageCode);
-      // Trong ứng dụng thực tế, bạn sẽ thay đổi ngôn ngữ của ứng dụng tại đây
     } catch (error) {
       console.error('Error saving language setting:', error);
     }

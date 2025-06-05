@@ -44,7 +44,7 @@ class NotificationType(Enum):
     COMMENT = 'comment', 'Bình luận'
     FOLLOW = 'follow', 'Theo dõi'
     INTERACTION = 'interaction', 'Tương tác'
-    MESSAGE = 'message', 'Tin nhắn'
+    # MESSAGE = 'message', 'Tin nhắn'
     NEW_HOUSE = 'new_house', 'Nhà mới'
     RATING = 'rating', 'Đánh giá'
 

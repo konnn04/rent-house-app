@@ -1,8 +1,8 @@
 import {
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../../../../contexts/ThemeContext';
@@ -12,7 +12,6 @@ export const ChatHeader = ({ chatData, onBackPress, onInfoPress }) => {
   const { colors } = useTheme();
   const { userData } = useUser();
   
-  // Get display name for the chat
   const getDisplayName = () => {
     if (!chatData) return '';
     
@@ -20,13 +19,11 @@ export const ChatHeader = ({ chatData, onBackPress, onInfoPress }) => {
       return chatData.name || 'Nhóm chat';
     }
     
-    // For direct chat, show the other person's name
     return chatData.members_summary?.find(member => 
       member.id !== userData?.id
     )?.full_name || 'Chat';
   };
   
-  // Get subtitle for header (member count for groups)
   const getSubtitle = () => {
     if (!chatData) return '';
     

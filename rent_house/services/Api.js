@@ -11,6 +11,11 @@ export const apiClient = axios.create({
   },
 });
 
+let signOutRef = null;
+export const setSignOutHandler = (handler) => {
+  signOutRef = handler;
+};
+
 export const checkStatusFromServer = async () => {
   try {
     const response = await apiClient.get('/api/ping/');
@@ -100,6 +105,11 @@ apiClient.interceptors.response.use(
         return Promise.reject(err);
       } finally {
         isRefreshing = false;
+      }
+    }
+    if (error.response && error.response.status === 401) {
+      if (signOutRef) {
+        signOutRef(); // Call signOut if available
       }
     }
     return Promise.reject(error);

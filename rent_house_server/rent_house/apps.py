@@ -9,7 +9,6 @@ class RentHouseConfig(AppConfig):
     name = 'rent_house'
 
     def ready(self):
-        # Khởi tạo kênh báo Telegram 
         from django.conf import settings
         if getattr(settings, 'TELEGRAM_DEBUG_ENABLED', False):
             from rent_house.telegram_utils import send_telegram_message

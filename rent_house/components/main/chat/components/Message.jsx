@@ -1,4 +1,5 @@
 import { useNavigation } from '@react-navigation/native';
+import React from 'react';
 import {
   Dimensions,
   Image,
@@ -11,7 +12,7 @@ import { Card, Divider } from 'react-native-paper';
 import { useTheme } from '../../../../contexts/ThemeContext';
 import { ImageGallery } from '../../../common/ImageGallery';
 
-export const Message = ({ message, currentUserId, onLongPress }) => {
+export const Message = React.memo(({ message, currentUserId, onLongPress }) => {
   const { colors } = useTheme();
   const isCurrentUser = message.sender.id === currentUserId;
   const screenWidth = Dimensions.get('window').width;
@@ -123,7 +124,7 @@ export const Message = ({ message, currentUserId, onLongPress }) => {
       </Card>
     </TouchableOpacity>
   );
-};
+});
 
 const styles = StyleSheet.create({
   messageWrapper: {

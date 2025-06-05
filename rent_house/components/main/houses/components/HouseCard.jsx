@@ -1,13 +1,13 @@
+import React from 'react';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Chip } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../../../../contexts/ThemeContext';
 import { formatCurrency } from '../../../../utils/Tools';
 
-export const HouseCard = ({ house, onPress }) => {
+export const HouseCard = React.memo(({ house, onPress }) => {
   const { colors } = useTheme();
 
-  // Map house types to readable text
   const getHouseTypeText = (type) => {
     const types = {
       'house': 'Nhà riêng',
@@ -24,7 +24,6 @@ export const HouseCard = ({ house, onPress }) => {
     dormitory: "school",
     room: "bed",
   };
-  // Map house types to icons
   const format_houses_Type = (house) => {
       if (house.type === "house" || house.type === "apartment") {
         return (
@@ -35,9 +34,9 @@ export const HouseCard = ({ house, onPress }) => {
                 size={16}
                 color={colors.accentColor}
               />
-              <Text style={[styles.statText, { color: colors.dangerColor }]}>
+              <Text style={[styles.statText, { color: house.is_renting ? colors.dangerColor : colors.successColor }]}>
                 {" "}
-                {house.available_rooms > 0 ? "Còn trống" : "Đã cho thuê"}
+                {!house.is_renting ? "Còn trống" : "Đã cho thuê"}
               </Text>
             </View>
             <View style={styles.stat}>
@@ -60,7 +59,7 @@ export const HouseCard = ({ house, onPress }) => {
                 color={colors.accentColor}
               />
               <Text style={[styles.statText, { color: colors.textSecondary }]}>
-                <Text style={[styles.statText, { color: colors.dangerColor }]}>
+                <Text style={[styles.statText, { color: house.max_rooms - house.current_rooms > 0 ? colors.dangerColor : colors.successColor }]}>
                   {" "}
                   {house.max_rooms - house.current_rooms > 0
                     ? "Còn"
@@ -88,7 +87,6 @@ export const HouseCard = ({ house, onPress }) => {
       onPress={onPress}
       activeOpacity={0.9}
     >
-      {/* House image with price badge */}
       <View style={styles.imageContainer}>
         <Image
           source={{ uri: house.thumbnail || 'https://via.placeholder.com/400x300' }}
@@ -109,7 +107,6 @@ export const HouseCard = ({ house, onPress }) => {
         )}
       </View>
 
-      {/* House details */}
       <View style={styles.detailsContainer}>
         <Text
           style={[styles.title, { color: colors.textPrimary }]}
@@ -154,7 +151,7 @@ export const HouseCard = ({ house, onPress }) => {
       </View>
     </TouchableOpacity>
   );
-};
+});
 
 
 

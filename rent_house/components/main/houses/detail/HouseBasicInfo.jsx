@@ -13,13 +13,11 @@ import { formatCurrency } from "../../../../utils/Tools";
 export const HouseBasicInfo = ({ house }) => {
   const { colors } = useTheme();
 
-  // Handle open maps
   const handleOpenMaps = () => {
     const url = `https://www.google.com/maps/search/?api=1&query=${house.latitude},${house.longitude}`;
     Linking.openURL(url);
   };
 
-  // Map house type to readable text
   const getHouseTypeText = (type) => {
     const types = {
       house: "Nhà riêng",
@@ -46,8 +44,8 @@ export const HouseBasicInfo = ({ house }) => {
               size={16}
               color={colors.accentColor}
             />
-            <Text style={[styles.statText, { color: colors.dangerColor }]}>
-              {house.available_rooms > 0 ? "Còn trống" : "Đã thuê"}
+            <Text style={[styles.statText, { color: house.is_renting ? colors.dangerColor : colors.successColor }]}>
+              {!house.is_renting ? "Trống" : "Đã thuê"}
             </Text>
           </View>
           <View style={styles.stat}>
@@ -68,8 +66,8 @@ export const HouseBasicInfo = ({ house }) => {
               size={16}
               color={colors.accentColor}
             />
-            <Text style={[styles.statText, { color: colors.dangerColor }]}>
-              {house.max_rooms - house.current_rooms > 0 ? "Còn " : "Hết " || 0}{" "}
+            <Text style={[styles.statText, { color: house.max_rooms > house.current_rooms  ?  colors.successColor :  colors.dangerColor}]}>
+              {house.max_rooms > house.current_rooms ? `Còn ${house.max_rooms - house.current_rooms}` : "Hết " || 0}{" "}
               phòng
             </Text>
           </View>
@@ -91,7 +89,6 @@ export const HouseBasicInfo = ({ house }) => {
         { backgroundColor: colors.backgroundSecondary },
       ]}
     >
-      {/* Title and verified badge */}
       <View style={styles.titleContainer}>
         <Text style={[styles.title, { color: colors.textPrimary }]}>
           {house.title}
@@ -108,7 +105,6 @@ export const HouseBasicInfo = ({ house }) => {
         )}
       </View>
 
-      {/* Type and price */}
       <View style={styles.typeAndPriceContainer}>
         <Chip icon="home" mode="outlined" style={styles.typeChip}>
           {getHouseTypeText(house.type)}
@@ -123,7 +119,6 @@ export const HouseBasicInfo = ({ house }) => {
         style={[styles.divider, { backgroundColor: colors.borderColor }]}
       />
 
-      {/* Address */}
       <TouchableOpacity
         style={styles.addressContainer}
         onPress={handleOpenMaps}
@@ -140,7 +135,6 @@ export const HouseBasicInfo = ({ house }) => {
         />
       </TouchableOpacity>
 
-      {/* Quick stats */}
       <View style={styles.statsContainer}>
         {format_houses_Type(house)}
 

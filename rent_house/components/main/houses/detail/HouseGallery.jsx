@@ -12,23 +12,20 @@ import { useTheme } from '../../../../contexts/ThemeContext';
 import { ImageViewer } from '../../../common/ImageViewer';
 
 const { width } = Dimensions.get('window');
-const imageHeight = width * 0.7; // Aspect ratio for main image
+const imageHeight = width * 0.7; 
 
 export const HouseGallery = ({ media = [] }) => {
   const { colors } = useTheme();
   const [fullscreenVisible, setFullscreenVisible] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   
-  // Filter only image media
   const images = media?.filter(item => item.type === 'image') || [];
   
-  // Open fullscreen gallery
   const openFullscreen = (index) => {
     setSelectedImageIndex(index);
     setFullscreenVisible(true);
   };
   
-  // Render main image
   const renderMainImage = () => {
     if (images.length === 0) {
       return (
@@ -51,9 +48,7 @@ export const HouseGallery = ({ media = [] }) => {
     );
   };
   
-  // Render thumbnail
   const renderThumbnail = ({ item, index }) => {
-    // Skip first image as it's shown as main image
     if (index === 0) return null;
     
     return (
@@ -72,13 +67,11 @@ export const HouseGallery = ({ media = [] }) => {
   
   return (
     <View style={styles.container}>
-      {/* Main image */}
       {renderMainImage()}
       
-      {/* Thumbnails */}
       {images.length > 1 && (
         <FlatList
-          data={images.slice(0, 5)} // Show max 5 thumbnails
+          data={images.slice(0, 5)} 
           renderItem={renderThumbnail}
           keyExtractor={(item, index) => `thumbnail-${item.id || index}`}
           horizontal
@@ -87,7 +80,6 @@ export const HouseGallery = ({ media = [] }) => {
         />
       )}
       
-      {/* Image counter */}
       {images.length > 0 && (
         <View style={[styles.imageCounter, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
           <Text style={styles.imageCounterText}>

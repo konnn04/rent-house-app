@@ -1,21 +1,25 @@
-import { useEffect, useState } from "react";
+import { useNavigation } from "@react-navigation/native";
+import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
   Image,
   RefreshControl,
+  StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from "react-native";
+import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { useTheme } from "../../../contexts/ThemeContext";
 import { getFeedService } from "../../../services/feedService";
 import { homeStyles, styles } from "../../../styles/style";
 import { NewPostSample } from "../posts/NewPostSample";
 import { PostCard } from "../posts/PostCard";
-import { deletePostService } from "../../../services/postService";
 
 export const FeedList = () => {
   const { colors } = useTheme();
+  const navigation = useNavigation();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -65,9 +69,18 @@ export const FeedList = () => {
   };
 
   const handlePostDeleted = (deletedPostId) => {
-  // Chỉ cần update state, không cần gọi service
-  setPosts(prevPosts => prevPosts.filter(post => post.id !== deletedPostId));
-};
+    setPosts((prevPosts) => prevPosts.filter((post) => post.id !== deletedPostId));
+  };
+
+  const handleSearchPress = () => {
+    navigation.navigate("SearchScreen");
+  };
+
+  const getItemLayout = (data, index) => ({
+    length: 400,
+    offset: 400 * index,
+    index,
+  });
 
   const renderFooter = () => {
     if (!loadingMore) return null;
@@ -94,6 +107,12 @@ export const FeedList = () => {
           <Text style={[homeStyles.title, { color: colors.textPrimary }]}>
             Trang chủ
           </Text>
+          <TouchableOpacity
+            style={homeStyles.searchButton}
+            onPress={handleSearchPress}
+          >
+            <Icon name="magnify" size={28} color={colors.textPrimary} />
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -107,17 +126,14 @@ export const FeedList = () => {
       ) : (
         <FlatList
           data={posts || []}
-          keyExtractor={(item) =>
-            item?.id?.toString() || Math.random().toString()
-          }
+          keyExtractor={(item, index) => item.id.toString() + index}
           renderItem={({ item }) => (
             <PostCard
               post={item}
-              key={item.id}
               onPostDeleted={handlePostDeleted}
             />
           )}
-          contentContainerStyle={homeStyles.postsList}
+          contentContainerStyle={[homeStyles.postsList, { paddingHorizontal:8 }]}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -140,8 +156,15 @@ export const FeedList = () => {
             </View>
           }
           style={homeStyles.postsList}
+          getItemLayout={getItemLayout}
+          initialNumToRender={5}
+          windowSize={7}
+          maxToRenderPerBatch={7}
+          removeClippedSubviews={true}
         />
       )}
     </View>
   );
 };
+
+

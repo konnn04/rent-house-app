@@ -161,6 +161,7 @@ class HouseViewSet(viewsets.ModelViewSet):
             house = serializer.save(owner=self.request.user)
             self.handle_images(house)
 
+            # Tạo thông báo
             try:
                 from rent_house.services.notification_service import house_notification
                 house_notification(self.request.user, house)

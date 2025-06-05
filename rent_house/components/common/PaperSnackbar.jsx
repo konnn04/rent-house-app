@@ -25,6 +25,6 @@ export const PaperSnackbar = ({
 const styles = StyleSheet.create({
   snackbar: {
     borderRadius: 4,
-    marginBottom: 70, // To position above bottom navigation
+    marginBottom: 70, 
   },
 });

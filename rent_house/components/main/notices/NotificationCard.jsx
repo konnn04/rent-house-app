@@ -29,7 +29,7 @@ export const NotificationCard = memo(({ item, onPress, onMenuPress }) => {
                 styles.notificationContainer,
                 { borderBottomColor: colors.borderColor || '#E0E0E0' },
                 isUnread && {
-                    backgroundColor: colors.infoColor + '43' || colors.accentColor + '10' // Sử dụng màu accent với độ trong suốt
+                    backgroundColor: colors.infoColor + '43' || colors.accentColor + '10' 
                 }
             ]}
             onPress={() => onPress(item)}
@@ -98,7 +98,6 @@ export const NotificationCard = memo(({ item, onPress, onMenuPress }) => {
         </TouchableOpacity>
     );
 }, (prevProps, nextProps) => {
-    // Tối ưu: chỉ re-render khi dữ liệu quan trọng thay đổi
     return (
         prevProps.item.id === nextProps.item.id &&
         prevProps.item.is_read === nextProps.item.is_read &&

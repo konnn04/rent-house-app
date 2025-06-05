@@ -11,7 +11,6 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../../../../contexts/ThemeContext';
 import { ImageGallery } from '../../../common/ImageGallery';
 
-// Helper to format dates
 const formatDate = (dateString) => {
   if (!dateString) return '';
   const date = new Date(dateString);
@@ -22,13 +21,11 @@ const formatDate = (dateString) => {
   });
 };
 
-// Individual rating item component
 const RatingItem = ({ rating }) => {
   const { colors } = useTheme();
   
   return (
     <View style={styles.ratingItem}>
-      {/* User info and rating */}
       <View style={styles.ratingHeader}>
         <Image 
           source={{ uri: rating.user?.avatar_thumbnail || 'https://via.placeholder.com/40' }} 
@@ -57,12 +54,10 @@ const RatingItem = ({ rating }) => {
         </View>
       </View>
       
-      {/* Rating comment */}
       <Text style={[styles.ratingComment, { color: colors.textPrimary }]}>
         {rating.comment}
       </Text>
       
-      {/* Rating images if available */}
       {rating.images && rating.images.length > 0 && (
         <View style={styles.imagesContainer}>
           <ImageGallery mediaItems={rating.images} />
@@ -86,7 +81,6 @@ export const RatingsList = ({ ratings = [], useScrollView = false }) => {
     );
   }
   
-  // Use View with mapped items instead of FlatList when useScrollView is true
   if (useScrollView) {
     return (
       <View style={styles.listContainer}>
@@ -102,7 +96,6 @@ export const RatingsList = ({ ratings = [], useScrollView = false }) => {
     );
   }
   
-  // Otherwise use FlatList (for standalone screens)
   return (
     <FlatList
       data={ratings}

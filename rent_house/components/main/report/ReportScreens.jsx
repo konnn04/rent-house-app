@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
   ScrollView,
+  StyleSheet,
+  Text,
   TextInput,
   TouchableOpacity,
+  View,
 } from "react-native";
 
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
@@ -24,7 +24,7 @@ export const ReportScreen = ({ route, navigation }) => {
   const { colors } = useTheme();
   const { reportedUserId, url_tag } = route.params;
   const [selectedType, setSelectedType] = useState("");
-  const [description, setDescription] = useState(""); // New required field
+  const [description, setDescription] = useState("");  
 
   const handleSubmit = async () => {
     try {
@@ -57,7 +57,6 @@ export const ReportScreen = ({ route, navigation }) => {
     <View
       style={[styles.container, { backgroundColor: colors.backgroundPrimary }]}
     >
-      {/* Header with close button */}
       <View style={[styles.header]}>
         <TouchableOpacity
           style={styles.closeButton}
@@ -68,7 +67,7 @@ export const ReportScreen = ({ route, navigation }) => {
         <Text style={[styles.title, { color: colors.textPrimary }]}>
           Báo cáo người dùng
         </Text>
-        <View style={{ width: 24 }} /> {/* Spacer for alignment */}
+        <View style={{ width: 24 }} />
       </View>
 
       <ScrollView style={styles.content}>
@@ -104,7 +103,6 @@ export const ReportScreen = ({ route, navigation }) => {
           </TouchableOpacity>
         ))}
 
-        {/* Required description field */}
         <Text style={[styles.subtitle, { color: colors.textPrimary }]}>
           Mô tả chi tiết: 
         </Text>

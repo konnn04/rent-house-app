@@ -4,7 +4,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { AvatarChatBox } from './components/AvatarChatBox';
 
-export const ChatListItem = ({ chat }) => {
+export const ChatListItem = React.memo(({ chat }) => {
   const navigation = useNavigation();
   const { colors } = useTheme();
   
@@ -49,7 +49,7 @@ export const ChatListItem = ({ chat }) => {
       </View>
     </TouchableOpacity>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {

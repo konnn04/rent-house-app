@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useContext, useEffect, useState } from 'react';
+import { setSignOutHandler } from '../services/Api';
 import { loginService, preRegisterService, registerService, verifyTokenService } from "../services/authService";
 
 const AuthContext = createContext();
@@ -10,6 +11,11 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     checkToken();
+  }, []);
+
+  useEffect(() => {
+    setSignOutHandler(signOut);
+    return () => setSignOutHandler(null);
   }, []);
 
   const signIn = async (username, password) => {

@@ -6,7 +6,6 @@ from rent_house.views.report import ReportViewSet
 router = DefaultRouter()
 router.register(r'users', views.UserViewSet, basename='user')
 # Home page
-router.register(r'', views.NewFeedViewSet, basename='new-feed')
 router.register(r'houses', views.HouseViewSet, basename='house')
 router.register(r'posts', views.PostViewSet, basename='post')
 router.register(r'comments', views.CommentViewSet, basename='comment')

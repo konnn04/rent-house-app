@@ -3,13 +3,10 @@ import time
 from datetime import datetime
 
 def ping_view(request):
-    """Simple ping view that returns 'pong' with processing latency"""
     start_time = time.time()
     
-    # Any processing would happen here
-    
     end_time = time.time()
-    latency_ms = (end_time - start_time) * 1000  # Convert to milliseconds
+    latency_ms = (end_time - start_time) * 1000  
     
     response_data = {
         "message": "pong",

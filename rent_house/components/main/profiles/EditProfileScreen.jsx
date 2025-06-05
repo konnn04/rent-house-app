@@ -21,7 +21,6 @@ export const EditProfileScreen = () => {
   });
   const [errors, setErrors] = useState({});
   
-  // Load user data when component mounts or userData changes
   useEffect(() => {
     if (userData) {
       setFormData({
@@ -78,7 +77,6 @@ export const EditProfileScreen = () => {
         [{ text: 'OK', onPress: () => navigation.goBack() }]
       );
     } else {
-      // Handle validation errors from server
       if (result.error) {
         setErrors(result.error);
       } else {

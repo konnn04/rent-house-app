@@ -1,8 +1,8 @@
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useCallback, useEffect, useState } from 'react';
 import {
-    ActivityIndicator, Alert, Platform, RefreshControl, ScrollView,
-    Share, StatusBar, StyleSheet, Text, View
+    ActivityIndicator, Platform, RefreshControl, ScrollView,
+    StatusBar, StyleSheet, Text, View
 } from 'react-native';
 import { IconButton } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -10,8 +10,8 @@ import { useTheme } from '../../../../contexts/ThemeContext';
 import { useUser } from '../../../../contexts/UserContext';
 import { getDetailHouseService } from '../../../../services/houseService';
 import { createDirectChat } from "../../../../utils/ChatUtils";
+import { PaperDialog } from '../../../common/PaperDialog';
 
-// Import components
 import { ContactSection } from './ContactSection';
 import { DescriptionSection } from './DescriptionSection';
 import { HouseBasicInfo } from './HouseBasicInfo';
@@ -32,10 +32,11 @@ export const HouseDetailScreen = () => {
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState(null);
-    const [activeTab, setActiveTab] = useState('info'); // 'info', 'reviews'
+    const [activeTab, setActiveTab] = useState('info'); 
     const [contactLoading, setContactLoading] = useState(false);
+    const [dialogVisible, setDialogVisible] = useState(false);
+    const [dialogContent, setDialogContent] = useState({ title: '', message: '', actions: [] });
 
-    // Fetch house details
     const fetchHouseDetails = useCallback(async () => {
         if (!houseId) {
             setError('Không tìm thấy ID nhà');
@@ -63,7 +64,6 @@ export const HouseDetailScreen = () => {
         fetchHouseDetails();
     }, [fetchHouseDetails]);
 
-    // Handle refresh
     const handleRefresh = () => {
         setRefreshing(true);
         fetchHouseDetails();
@@ -71,10 +71,14 @@ export const HouseDetailScreen = () => {
 
     const handleContactOwner = async () => {
         if (!house.owner.id || !house.owner.username) {
-            Alert.alert('Lỗi', 'Không thể liên hệ với chủ nhà.');
+            setDialogContent({
+                title: 'Lỗi',
+                message: 'Không thể liên hệ với chủ nhà.',
+                actions: [{ label: 'OK', onPress: () => setDialogVisible(false) }]
+            });
+            setDialogVisible(true);
             return;
         }
-        
         setContactLoading(true);
         try {
             await createDirectChat(
@@ -86,35 +90,40 @@ export const HouseDetailScreen = () => {
         } catch (error) {
             console.error('Error creating chat:', error);
             setContactLoading(false);
-            Alert.alert('Lỗi', 'Không thể tạo cuộc trò chuyện với chủ nhà.');
-        }
-    };
-
-    // Handle share
-    const handleShare = async () => {
-        if (!house) return;
-
-        try {
-            await Share.share({
-                message: `Xem nhà "${house.title}" ở địa chỉ: ${house.address} với giá ${house.base_price.toLocaleString('vi-VN')} VNĐ/tháng`,
-                title: house.title,
+            setDialogContent({
+                title: 'Lỗi',
+                message: 'Không thể tạo cuộc trò chuyện với chủ nhà.',
+                actions: [{ label: 'OK', onPress: () => setDialogVisible(false) }]
             });
-        } catch (error) {
-            Alert.alert('Lỗi', 'Không thể chia sẻ nhà này.');
+            setDialogVisible(true);
         }
     };
 
-    // Handle edit house (for owners)
+    // const handleShare = async () => {
+    //     if (!house) return;
+    //     try {
+    //         await Share.share({
+    //             message: `Xem nhà "${house.title}" ở địa chỉ: ${house.address} với giá ${house.base_price.toLocaleString('vi-VN')} VNĐ/tháng`,
+    //             title: house.title,
+    //         });
+    //     } catch (error) {
+    //         setDialogContent({
+    //             title: 'Lỗi',
+    //             message: 'Không thể chia sẻ nhà này.',
+    //             actions: [{ label: 'OK', onPress: () => setDialogVisible(false) }]
+    //         });
+    //         setDialogVisible(true);
+    //     }
+    // };
+
     const handleEditHouse = () => {
         navigation.navigate('EditHouse', { houseId: house.id });
     };
 
-    // Go back
     const handleGoBack = () => {
         navigation.goBack();
     };
 
-    // Render loading state
     if (loading && !refreshing) {
         return (
             <SafeAreaView style={[styles.container, { backgroundColor: colors.backgroundPrimary }]} edges={['top']}>
@@ -160,14 +169,12 @@ export const HouseDetailScreen = () => {
         );
     }
 
-    // Check if user is the owner
     const isOwner = userData?.id === house?.owner?.id;
 
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.backgroundPrimary }]} edges={['top']}>
         <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
 
-        {/* Header */}
         <View style={styles.header}>
           <IconButton
               icon="arrow-left"
@@ -178,13 +185,13 @@ export const HouseDetailScreen = () => {
           />
 
           <View style={styles.headerActions}>
-              <IconButton
+              {/* <IconButton
                   icon="share-variant"
                   iconColor="white"
                   size={24}
                   style={styles.actionButton}
                   onPress={handleShare}
-              />
+              /> */}
 
               {isOwner && (
                   <IconButton
@@ -198,10 +205,8 @@ export const HouseDetailScreen = () => {
           </View>
         </View>
 
-        {/* Main Content */}
         {house && (
           <View style={styles.contentContainer}>
-              {/* Gallery and Basic Info */}
               <ScrollView
                   refreshControl={
                       <RefreshControl
@@ -215,13 +220,10 @@ export const HouseDetailScreen = () => {
                   contentContainerStyle={styles.scrollViewContent}
                   showsVerticalScrollIndicator={false}
               >
-                  {/* Gallery */}
                   <HouseGallery media={house.media} />
 
-                  {/* Basic Info */}
                   <HouseBasicInfo house={house} />
 
-                  {/* Tab Navigation */}
                   <View style={[styles.tabContainer, { backgroundColor: colors.backgroundSecondary }]}>
                       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                           <Text
@@ -247,7 +249,6 @@ export const HouseDetailScreen = () => {
                       </ScrollView>
                   </View>
                   
-                  {/* Tab Content */}
                   {activeTab === 'info' && (
                       <View style={styles.tabContent}>
                           <OwnerInfo owner={house.owner} />
@@ -263,7 +264,6 @@ export const HouseDetailScreen = () => {
                   )}
               </ScrollView>
 
-              {/* Contact Section - only show if user is not the owner */}
               {!isOwner && house && (
                   <ContactSection 
                       house={house} 
@@ -273,6 +273,14 @@ export const HouseDetailScreen = () => {
               )}
           </View>
         )}
+
+        <PaperDialog
+          visible={dialogVisible}
+          title={dialogContent.title}
+          message={dialogContent.message}
+          actions={dialogContent.actions}
+          onDismiss={() => setDialogVisible(false)}
+        />
       </SafeAreaView>
     );
 };
@@ -289,7 +297,7 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     scrollViewContent: {
-        paddingBottom: 100, // Extra space for contact section
+        paddingBottom: 100, 
     },
     header: {
         position: 'absolute',

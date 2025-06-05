@@ -3,10 +3,8 @@ from rent_house.models import Role
 
 class IsOwnerOrReadOnly(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
-        # Kiểm tra phương thức 
         if request.method in permissions.SAFE_METHODS:
             return True
-        # Kiểm tra cùng người
         return obj.author == request.user
 
 class IsOwnerOrAdminOrReadOnly(permissions.BasePermission):

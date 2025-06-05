@@ -13,9 +13,7 @@ export const LookupScreen = () => {
   const [activeTab, setActiveTab] = useState('list'); 
   const [searchQuery, setSearchQuery] = useState('');
   
-  // Danh sách nhà cho chế độ danh sách
   const [listHouses, setListHouses] = useState([]);
-  // Danh sách nhà cho chế độ bản đồ (tách biệt)
   const [mapHouses, setMapHouses] = useState([]);
   
   const [loading, setLoading] = useState(true);
@@ -27,7 +25,6 @@ export const LookupScreen = () => {
   const [loadingMore, setLoadingMore] = useState(false);
   const [nextUrl, setNextUrl] = useState(null);
   
-  // Filter state cho cả 2 chế độ (list và map)
   const [listFilters, setListFilters] = useState({
     type: '',
     min_price: '',
@@ -44,11 +41,10 @@ export const LookupScreen = () => {
     min_price: '',
     max_price: '',
     is_verified: true,
-    is_renting: true,
+    is_renting: false,
     is_blank: ''
   });
 
-  // Fetch houses with search and filters cho chế độ danh sách
   const fetchListHouses = useCallback(async (isRefresh = false, newQuery = null, newFilters = null, customNextUrl = null) => {
     try {
       const actualQuery = newQuery !== null ? newQuery : searchQuery;
@@ -68,10 +64,8 @@ export const LookupScreen = () => {
 
       let data;
       if (useNextUrl) {
-        // Lazy load: chỉ cần nextUrl
         data = await getHousesService({ nextUrl: useNextUrl });
       } else {
-        // Trang đầu: truyền filter
         data = await getHousesService({
           search: actualQuery,
           type: actualFilters.type,
@@ -93,7 +87,7 @@ export const LookupScreen = () => {
 
       if (isRefresh) {
         setListHouses(newHouses);
-        setPage(2); // next page sẽ là 2
+        setPage(2); 
       } else {
         setListHouses(prev => [...prev, ...newHouses]);
         setPage(prev => prev + 1);
@@ -110,19 +104,16 @@ export const LookupScreen = () => {
     }
   }, [searchQuery, listFilters, page, nextUrl]);
 
-  // Initial fetch
   useEffect(() => {
     fetchListHouses(true);
   }, []);
 
-  // Handle search submit
   const handleSearch = () => {
     if (activeTab === 'list') {
       setPage(1);
       setNextUrl(null);
       fetchListHouses(true, searchQuery);
     } else {
-      // Khi tìm kiếm trong chế độ map, cập nhật mapFilters với query mới
       setMapFilters({
         ...mapFilters,
         query: searchQuery
@@ -130,7 +121,6 @@ export const LookupScreen = () => {
     }
   };
 
-  // Handle filter application cho chế độ danh sách
   const handleListFilterApply = (newFilters) => {
     setListFilters(newFilters);
     setShowFilters(false);
@@ -139,27 +129,23 @@ export const LookupScreen = () => {
     fetchListHouses(true, null, newFilters);
   };
   
-  // Handle filter application cho chế độ bản đồ
   const handleMapFilterApply = (newFilters) => {
     setMapFilters(newFilters);
     setShowFilters(false);
   };
 
-  // Handle refresh
   const handleRefresh = () => {
     setPage(1);
     setNextUrl(null);
     fetchListHouses(true);
   };
 
-  // Handle pagination (load more)
   const handleLoadMore = () => {
     if (hasMore && !loadingMore && nextUrl) {
       fetchListHouses(false, null, null, nextUrl);
     }
   };
   
-  // Xử lý khi chuyển đổi tab
   const handleTabChange = (tab) => {
     setActiveTab(tab);
     if (tab === 'list' && listHouses.length === 0) {
@@ -167,7 +153,6 @@ export const LookupScreen = () => {
     }
   };
 
-  // Render header with search and filter
   const renderHeader = () => (
     <View style={[styles.header, { backgroundColor: colors.backgroundSecondary }]}>
       <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Tìm nhà</Text>
@@ -241,7 +226,6 @@ export const LookupScreen = () => {
     </View>
   );
 
-  // Main render
   return (
     <View style={[styles.container, { backgroundColor: colors.backgroundPrimary }]}>
       {renderHeader()}

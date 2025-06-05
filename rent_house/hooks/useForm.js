@@ -7,7 +7,6 @@ export const useForm = (initialValues = {}, validateFn = null) => {
 
   const handleChange = (name, value) => {
     setValues(prev => ({ ...prev, [name]: value }));
-    // Clear error when field is modified
     if (errors[name]) {
       setErrors(prev => {
         const newErrors = { ...prev };
@@ -20,7 +19,6 @@ export const useForm = (initialValues = {}, validateFn = null) => {
   const handleSubmit = async (submitFn) => {
     setIsSubmitting(true);
     
-    // Validate if validation function provided
     if (validateFn) {
       const validationErrors = validateFn(values);
       if (Object.keys(validationErrors).length > 0) {
@@ -34,7 +32,6 @@ export const useForm = (initialValues = {}, validateFn = null) => {
       await submitFn(values);
       return true;
     } catch (error) {
-      // Handle API errors if they're field-specific
       if (error.response?.data) {
         setErrors(error.response.data);
       }

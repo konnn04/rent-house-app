@@ -12,10 +12,6 @@ import {
 import { useTheme } from '../../contexts/ThemeContext';
 import { ImageViewer } from './ImageViewer';
 
-/**
- * A reusable image gallery component that displays images in a grid with preview
- * functionality and supports opening them in a fullscreen viewer.
- */
 export const ImageGallery = ({ mediaItems = [], containerWidth }) => {
   const { colors } = useTheme();
   const [imageLoadError, setImageLoadError] = useState({});
@@ -23,9 +19,8 @@ export const ImageGallery = ({ mediaItems = [], containerWidth }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   
-  // Use container width if provided, otherwise use screen width minus padding
   const screenWidth = Dimensions.get('window').width;
-  const actualWidth = containerWidth || screenWidth - 40; // Default padding
+  const actualWidth = containerWidth || screenWidth - 40; 
   
   const handleImageLoadStart = (index) => {
     setImageLoading(prev => ({ ...prev, [index]: true }));
@@ -46,7 +41,6 @@ export const ImageGallery = ({ mediaItems = [], containerWidth }) => {
     setModalVisible(true);
   };
   
-  // Render overlays (loading, error)
   const renderOverlays = (index) => {
     return (
       <>
@@ -65,10 +59,8 @@ export const ImageGallery = ({ mediaItems = [], containerWidth }) => {
     );
   };
   
-  // Render ảnh đơn full width
   const renderSingleImage = (item, index) => {
-    // Calculate aspect ratio based on image dimensions if available
-    const aspectRatio = 1.5; // Default aspect ratio if not specified
+    const aspectRatio = 1.5; 
     
     return (
       <View style={[styles.mediaContainer, { width: actualWidth }]}>
@@ -89,11 +81,9 @@ export const ImageGallery = ({ mediaItems = [], containerWidth }) => {
     );
   };
   
-  // Render ảnh trong grid
   const renderGridImage = (item, index, width) => {
     if (!item) return null;
     
-    // Calculate actual pixel width
     const widthInPixels = typeof width === 'string' && width.endsWith('%') 
       ? (parseFloat(width) / 100) * actualWidth
       : parseFloat(width);
@@ -117,18 +107,15 @@ export const ImageGallery = ({ mediaItems = [], containerWidth }) => {
     );
   };
   
-  // Tạo grid hiển thị tùy theo số lượng ảnh
   const renderPreviewGrid = () => {
     if (!mediaItems || mediaItems.length === 0) return null;
     
     const totalImages = mediaItems.length;
     
-    // 1 ảnh
     if (totalImages === 1) {
       return renderSingleImage(mediaItems[0], 0);
     }
     
-    // 2 ảnh
     if (totalImages === 2) {
       return (
         <View style={[styles.rowContainer, { width: actualWidth }]}>
@@ -138,7 +125,6 @@ export const ImageGallery = ({ mediaItems = [], containerWidth }) => {
       );
     }
     
-    // 3 ảnh
     if (totalImages === 3) {
       return (
         <View style={{ width: actualWidth }}>
@@ -153,7 +139,6 @@ export const ImageGallery = ({ mediaItems = [], containerWidth }) => {
       );
     }
     
-    // 4 ảnh (2x2)
     if (totalImages === 4) {
       return (
         <View style={{ width: actualWidth }}>
@@ -169,7 +154,6 @@ export const ImageGallery = ({ mediaItems = [], containerWidth }) => {
       );
     }
     
-    // 5+ ảnh: hiển thị 4 ảnh và thêm chỉ báo "+X ảnh"
     return (
       <View style={{ width: actualWidth }}>
         <View style={[styles.rowContainer, { width: actualWidth }]}>
@@ -210,7 +194,7 @@ export const ImageGallery = ({ mediaItems = [], containerWidth }) => {
 const styles = StyleSheet.create({
   container: {
     marginBottom: 12,
-    width: '100%', // Make sure container takes full width
+    width: '100%', 
   },
   rowContainer: {
     flexDirection: 'row',
