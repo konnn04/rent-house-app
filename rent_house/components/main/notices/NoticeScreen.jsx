@@ -259,7 +259,9 @@ export const NoticeScreen = () => {
                     visible={menuVisible}
                     onDismiss={() => setMenuVisible(false)}
                     anchor={
-                        <TouchableOpacity onPress={() => setMenuVisible(true)}>
+                        <TouchableOpacity onPress={() => setMenuVisible(true)}
+                            onDismiss={() => setMenuVisible(false)}
+                        >
                             <Icon name="dots-horizontal" size={24} color={colors.textPrimary} />
                         </TouchableOpacity>
                     }

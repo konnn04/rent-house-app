@@ -187,6 +187,7 @@ export const LookupScreen = () => {
           style={[styles.filterButton, { backgroundColor: colors.accentColor }]}
           onPress={() => setShowFilters(true)}
         >
+          
           <Icon name="filter-variant" size={24} color="#fff" />
         </TouchableOpacity>
       </View>

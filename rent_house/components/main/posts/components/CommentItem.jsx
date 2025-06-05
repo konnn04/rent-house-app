@@ -84,17 +84,6 @@ export const CommentItem = ({ comment, onReply, colors, postId, onDelete }) => {
   // Check if the comment is from the current user
   const isCurrentUser = userData?.id === comment.author.id;
 
-//   const handleDeleteComment = useCallback(async (commentId) => {
-//     if (!commentId) return;
-//     try {
-//         await deletePostCommentService(commentId);
-//         setComments(prev => prev.filter(item => item.id !== commentId));
-//         // Nếu có menu, đóng menu ở đây nếu cần
-//     } catch (error) {
-//         console.error('Error deleting comment:', error);
-//     }
-// }, []);
-
   return (
     <PaperProvider>
       <View style={styles.commentContainer}>

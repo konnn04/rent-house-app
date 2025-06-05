@@ -17,43 +17,69 @@ export const HouseCard = ({ house, onPress }) => {
     };
     return types[type] || 'Nhà';
   };
+
+  const icons = {
+    house: "home",
+    apartment: "home-city",
+    dormitory: "school",
+    room: "bed",
+  };
   // Map house types to icons
   const format_houses_Type = (house) => {
-    const icons = {
-      'house': 'home',
-      'apartment': 'home-city',
-      'dormitory': 'school',
-      'room': 'bed',
+      if (house.type === "house" || house.type === "apartment") {
+        return (
+          <View style={styles.statsContainer}>
+            <View style={styles.stat}>
+              <Icon
+                name={icons[house.type]}
+                size={16}
+                color={colors.accentColor}
+              />
+              <Text style={[styles.statText, { color: colors.dangerColor }]}>
+                {" "}
+                {house.available_rooms > 0 ? "Còn trống" : "Đã cho thuê"}
+              </Text>
+            </View>
+            <View style={styles.stat}>
+              <Icon name="account-group" size={16} color={colors.successColor} />
+              <Text style={[styles.statText, { color: colors.textSecondary }]}>
+                {" "}
+                {house.max_people || 0} người
+              </Text>
+            </View>
+          </View>
+        );
+      }
+      if (house.type === "dormitory" || house.type === "room") {
+        return (
+          <View style={styles.statsContainer}>
+            <View style={styles.stat}>
+              <Icon
+                name={icons[house.type]}
+                size={16}
+                color={colors.accentColor}
+              />
+              <Text style={[styles.statText, { color: colors.textSecondary }]}>
+                <Text style={[styles.statText, { color: colors.dangerColor }]}>
+                  {" "}
+                  {house.max_rooms - house.current_rooms > 0
+                    ? "Còn"
+                    : "Hết" || 0}{" "}
+                  phòng
+                </Text>
+              </Text>
+            </View>
+            <View style={styles.stat}>
+              <Icon name="account-group" size={16} color={colors.successColor} />
+              <Text style={[styles.statText, { color: colors.textSecondary }]}>
+                {" "}
+                {house.max_people || 0} người
+              </Text>
+            </View>
+          </View>
+        );
+      }
     };
-    if (house.type === 'house' || house.type === 'apartment') {
-      return (
-        <View style={styles.stat}>
-          <Icon name={icons[house.type]} size={16} color={colors.accentColor} />
-          <Text style={[styles.statText, { color: colors.dangerColor }]}>
-            {house.available_rooms > 0 ? "Còn trống" : "Đã thuê"}
-          </Text>
-        </View>
-      );
-    }
-    if (house.type === 'dormitory' || house.type === 'room') {
-      return (
-        <View style={styles.statsContainer}>
-          <View style={styles.stat}>
-            <Icon name={icons[house.type]} size={16} color={colors.accentColor} />
-            <Text style={[styles.statText, { color: colors.successColor }]}>
-              {house.current_rooms || 0} phòng
-            </Text>
-          </View>
-          <View style={styles.stat}>
-            <Icon name="door-open" size={16} color={colors.successColor} />
-            <Text style={[styles.statText, { color: colors.textSecondary }]}>
-              {house.available_rooms || 0} phòng trống
-            </Text>
-          </View>
-        </View>
-      );
-    }
-  }
 
 
   return (

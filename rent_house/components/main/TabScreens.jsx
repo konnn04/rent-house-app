@@ -10,7 +10,7 @@ import { ChatListScreen } from './chat/ChatListScreen';
 import { FeedScreen } from './feeds/FeedScreen';
 import { ManageHouse } from './houses/manage/ManageHouse';
 import { LookupScreen } from './lookup/LookupScreen';
-import { NoticeScreen } from './notices/NoiceScreen';
+import { NoticeScreen } from './notices/NoticeScreen';
 import { ProfileScreen } from './profiles/ProfileScreen';
 
 const Tab = createBottomTabNavigator();
