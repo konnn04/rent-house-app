@@ -55,6 +55,16 @@ export const createHouseService = async (formData) => {
   }
 }
 
+export const deleteHouseService = async (houseId) => {
+  try {
+    const response = await apiClient.delete(`/api/houses/${houseId}/`);
+    return response.data;
+  } catch (error) {
+    console.error('Error deleting house:', error);
+    throw error;
+  }
+}
+
 // Lấy danh sách nhà với filter và phân trang (lazy loading)
 export const getHousesService = async ({
   search = '',
