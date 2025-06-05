@@ -15,7 +15,6 @@ import { RegistrationAvatar } from './RegistrationAvatar';
 
 export function Register() {
   const { register, preRegister } = useAuth();
-  // User information
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [username, setUsername] = useState('');
@@ -33,7 +32,6 @@ export function Register() {
   const [countdown, setCountdown] = useState(0);
   const countdownRef = useRef(null);
   
-  // UI state
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -41,7 +39,6 @@ export function Register() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   
-  // Field-specific errors
   const [fieldErrors, setFieldErrors] = useState({
     firstName: '',
     lastName: '',
@@ -57,7 +54,6 @@ export function Register() {
   const navigation = useNavigation();
   const { colors } = useTheme();
 
-  // Đếm ngược khi gửi mã xác thực
   useEffect(() => {
     if (countdown > 0) {
       countdownRef.current = setTimeout(() => setCountdown(countdown - 1), 1000);
@@ -67,7 +63,6 @@ export function Register() {
     return () => clearTimeout(countdownRef.current);
   }, [countdown]);
 
-  // Handle avatar change
   const handleAvatarChange = (avatarData) => {
     setAvatar(avatarData);
     if (fieldErrors.avatar) {
@@ -75,7 +70,6 @@ export function Register() {
     }
   };
 
-  // Gửi mã xác thực đến email
   const handleSendCode = async () => {
     if (isSendingCode || countdown > 0) return;
     setCodeMessage('');
@@ -107,7 +101,6 @@ export function Register() {
     }
   };
 
-  // Gửi lại mã xác thực
   const handleResendCode = async () => {
     if (isSendingCode || countdown > 0) return;
     setCodeMessage('');
@@ -134,19 +127,15 @@ export function Register() {
     }
   };
 
-  // Field change handlers with error clearing
   const handleFieldChange = (field, value) => {
-    // Clear error for this field when user types
     if (fieldErrors[field]) {
       setFieldErrors(prev => ({ ...prev, [field]: '' }));
     }
     
-    // Clear general error as well
     if (error) {
       setError('');
     }
     
-    // Update field value using dynamic approach
     switch (field) {
       case 'firstName': setFirstName(value); break;
       case 'lastName': setLastName(value); break;
@@ -162,7 +151,6 @@ export function Register() {
   const handleRegister = async () => {
     if (isLoading) return;
     
-    // Reset all error states
     setError('');
     setFieldErrors({
       firstName: '',
@@ -176,7 +164,6 @@ export function Register() {
       avatar: ''
     });
     
-    // Client-side validation
     let hasValidationErrors = false;
     const newFieldErrors = { ...fieldErrors };
     
@@ -241,7 +228,6 @@ export function Register() {
     setIsLoading(true);
     
     try {
-      // Create form data for registration with avatar
       const formData = new FormData();
       formData.append('username', username);
       formData.append('password', password);
@@ -253,7 +239,6 @@ export function Register() {
       formData.append('role', role);
       formData.append('verification_code', verificationCode);
       
-      // Properly append avatar as a file object
       if (avatar) {
         formData.append('avatar', {
           uri: avatar.uri,
@@ -262,15 +247,12 @@ export function Register() {
         });
       }
       
-      // Attempt registration with formData
       const result = await register(formData);
       
-      // Đăng ký thành công - hiển thị thông báo thành công
       if (result && result.message) {
         setIsSuccess(true);
         setSuccessMessage(result.message || 'Đăng ký thành công! Bạn có thể đăng nhập ngay bây giờ.');
         
-        // Reset form fields
         setFirstName('');
         setLastName('');
         setUsername('');
@@ -285,16 +267,13 @@ export function Register() {
     } catch (error) {
       console.error('Registration error:', error);
       
-      // Handle field-specific errors from API
       if (error.response && error.response.data) {
         const errorData = error.response.data;
         const newFieldErrors = { ...fieldErrors };
         let hasFieldErrors = false;
         
-        // Process each field error from the API response
         Object.keys(errorData).forEach(field => {
           if (Array.isArray(errorData[field])) {
-            // Map API field to UI field
             let uiField = field;
             if (field === 'phone_number') uiField = 'phone';
             if (field === 'verification_code') uiField = 'verificationCode';
@@ -312,11 +291,9 @@ export function Register() {
         if (hasFieldErrors) {
           setFieldErrors(newFieldErrors);
         } else {
-          // If it's not a field-specific error, show a general error
           setError(errorData.detail || errorData.message || 'Đăng ký thất bại');
         }
       } else {
-        // Handle generic error
         setError(error.message || 'Đăng ký thất bại, vui lòng thử lại sau');
       }
     } finally {
@@ -324,7 +301,6 @@ export function Register() {
     }
   };
 
-  // Hiển thị thông báo thành công nếu đăng ký thành công
   if (isSuccess) {
     return (
       <View style={[styles.container, { backgroundColor: colors.backgroundPrimary, padding: 20 }]}>
@@ -376,15 +352,11 @@ export function Register() {
       
       <Text style={[styles.title, { color: colors.textPrimary }]}>RENT HOUSE</Text>
       <Text style={[styles.subtitle, { color: colors.textPrimary }]}>Đăng ký tài khoản mới</Text>
-      
-      {/* Form Container */}
       <View style={styles.formContainer}>
-        {/* Add Avatar Picker */}
         <RegistrationAvatar 
           onAvatarChange={handleAvatarChange}
           error={fieldErrors.avatar}
         />
-        {/* Role Selection */}
         <Text style={[styles.sectionLabel, { color: colors.textPrimary }]}>Bạn là:</Text>
         <SegmentedButtons
           value={role}
@@ -402,7 +374,6 @@ export function Register() {
           ]}
         />
  
-        {/* Name Row */}
         <View style={styles.rowContainer}>
           <View style={styles.halfInputContainer}>
             <TextInput
@@ -435,7 +406,6 @@ export function Register() {
           </View>
         </View>
         
-        {/* Username */}
         <TextInput
           label="Tên đăng nhập"
           value={username}
@@ -450,7 +420,6 @@ export function Register() {
           </HelperText>
         ) : null}
         
-        {/* Email */}
         <TextInput
           label="Email"
           value={email}
@@ -467,7 +436,6 @@ export function Register() {
           </HelperText>
         ) : null}
 
-        {/* Mã xác thực + Gửi/Gửi lại mã */}
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
           <View style={{ flex: 2 }}>
             <TextInput
@@ -512,7 +480,6 @@ export function Register() {
           </HelperText>
         ) : null}
 
-        {/* Phone */}
         <TextInput
           label="Số điện thoại"
           value={phone}
@@ -528,7 +495,6 @@ export function Register() {
           </HelperText>
         ) : null}
         
-        {/* Password */}
         <TextInput
           label="Mật khẩu"
           value={password}
@@ -549,7 +515,6 @@ export function Register() {
           </HelperText>
         ) : null}
         
-        {/* Confirm Password */}
         <TextInput
           label="Xác nhận mật khẩu"
           value={confirmPassword}
@@ -573,7 +538,6 @@ export function Register() {
         
       </View>
       
-      {/* Terms and Conditions */}
       <View style={styles.termsContainer}>
         <Checkbox
           status={termsAccepted ? 'checked' : 'unchecked'}
@@ -587,7 +551,7 @@ export function Register() {
           Tôi đồng ý với{' '}
           <Text 
             style={styles.termsLink}
-            onPress={() => {/* Navigate to Terms */}}
+            onPress={() => {/* Chính sách gì gì đó */}}
           >
             Điều khoản sử dụng
           </Text>{' '}
@@ -595,14 +559,12 @@ export function Register() {
         </Text>
       </View>
       
-      {/* General error message */}
       {error ? (
         <HelperText type="error" visible={true} style={styles.errorText}>
           {error}
         </HelperText>
       ) : null}
       
-      {/* Register Button */}
       <Button
         mode="contained"
         onPress={handleRegister}
@@ -614,7 +576,6 @@ export function Register() {
         {isLoading ? 'Đang đăng ký...' : 'Đăng ký'}
       </Button>
       
-      {/* Login Link */}
       <Button
         mode="text"
         onPress={() => navigation.navigate('Login')}

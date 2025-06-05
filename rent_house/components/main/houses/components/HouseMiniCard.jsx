@@ -1,19 +1,17 @@
+import React from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { useTheme } from "../../../../contexts/ThemeContext";
 import { formatCurrency } from "../../../../utils/Tools";
 
-export const HouseMiniCard = ({ house, onPress }) => {
+export const HouseMiniCard = React.memo(({ house, onPress }) => {
   const { colors } = useTheme();
 
-  // Kiểm tra có ảnh thumbnail hay không
   const thumbnail = house.thumbnail || "https://via.placeholder.com/150";
 
-  // Kiểm tra còn phòng trống hay không
   const hasAvailableRooms =
     house.max_rooms && house.current_rooms < house.max_rooms;
 
-  // Map house type to readable text
   const getHouseTypeText = (type) => {
     const types = {
       house: "Nhà riêng",
@@ -41,9 +39,9 @@ export const HouseMiniCard = ({ house, onPress }) => {
               size={16}
               color={colors.accentColor}
             />
-            <Text style={[styles.statText, { color: colors.dangerColor }]}>
+            <Text style={[styles.statText, { color: house.is_renting ? colors.dangerColor : colors.successColor }]}>
               {" "}
-              {house.available_rooms > 0 ? "Còn trống" : "Đã thuê"}
+              {!house.is_renting ? "Còn trống" : "Đã cho thuê"}
             </Text>
           </View>
           <View style={styles.stat}>
@@ -66,9 +64,9 @@ export const HouseMiniCard = ({ house, onPress }) => {
               color={colors.accentColor}
             />
             <Text style={[styles.statText, { color: colors.textSecondary }]}>
-              <Text style={[styles.statText, { color: colors.dangerColor }]}>
+              <Text style={[styles.statText, { color: house.max_rooms > house.current_rooms  ?  colors.successColor :  colors.dangerColor}]}>
                 {" "}
-                {house.max_rooms - house.current_rooms > 0
+                {house.max_rooms > house.current_rooms 
                   ? "Còn"
                   : "Hết" || 0}{" "}
                 phòng
@@ -99,7 +97,6 @@ export const HouseMiniCard = ({ house, onPress }) => {
       <View style={styles.imageContainer}>
         <Image source={{ uri: thumbnail }} style={styles.image} />
 
-        {/* Verified badge */}
         {house.is_verified && (
           <View
             style={[
@@ -112,7 +109,6 @@ export const HouseMiniCard = ({ house, onPress }) => {
           </View>
         )}
 
-        {/* Price badge */}
         <View
           style={[styles.priceBadge, { backgroundColor: colors.accentColor }]}
         >
@@ -176,7 +172,7 @@ export const HouseMiniCard = ({ house, onPress }) => {
       </View>
     </TouchableOpacity>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {

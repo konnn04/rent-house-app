@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Text, View } from 'react-native';
 
 import { useNotificationCount } from '../../contexts/NotificationCountContext';
@@ -15,7 +15,6 @@ import { ProfileScreen } from './profiles/ProfileScreen';
 
 const Tab = createBottomTabNavigator();
 
-// Tab configuration object
 const TAB_CONFIG = {
   'Trang chủ': {
     activeIcon: 'home',
@@ -58,7 +57,6 @@ const TAB_CONFIG = {
   }
 };
 
-// Badge component
 const TabBadge = ({ count }) => {
   const { colors } = useTheme();
   
@@ -91,7 +89,6 @@ const TabBadge = ({ count }) => {
   );
 };
 
-// Tab screens with notification count integration
 export const TabScreens = () => {
   const { colors } = useTheme();
   const { userData } = useUser();
@@ -102,24 +99,20 @@ export const TabScreens = () => {
     refreshCounts 
   } = useNotificationCount();
   
-  // Refresh counts periodically
-  useEffect(() => {
-    // Initial fetch
-    refreshCounts();
+  // useEffect(() => {
+  //   refreshCounts();
     
-    // Set up interval to refresh counts
-    const intervalId = setInterval(() => {
-      refreshCounts();
-    }, 60000); // Refresh every minute
+  //   const intervalId = setInterval(() => {
+  //     refreshCounts();
+  //   }, 60000); 
     
-    return () => clearInterval(intervalId);
-  }, [refreshCounts]);
+  //   return () => clearInterval(intervalId);
+  // }, [refreshCounts]);
 
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
-          // Get icon configuration for this route
           const config = TAB_CONFIG[route.name] || TAB_CONFIG['Trang chủ'];
           const iconName = focused ? config.activeIcon : config.inactiveIcon;
 
@@ -146,9 +139,7 @@ export const TabScreens = () => {
         },
       })}
     >
-      {/* Dynamically render tabs based on configuration */}
       {Object.entries(TAB_CONFIG).map(([name, config]) => {
-        // Skip owner-only tabs for non-owners
         if (config.ownerOnly && !isOwner) return null;
         
         return (
@@ -159,7 +150,6 @@ export const TabScreens = () => {
             options={{ headerShown: false }}
             listeners={({ navigation }) => ({
               tabPress: () => {
-                // Refresh counts when notification/message tabs are pressed
                 if (config.badgeType) {
                   refreshCounts();
                 }

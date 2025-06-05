@@ -10,10 +10,8 @@ export const DescriptionSection = ({ description }) => {
   const { width } = useWindowDimensions();
   const [expanded, setExpanded] = useState(false);
   
-  // Max number of lines when collapsed
   const MAX_LINES = 5;
   
-  // Handle toggle description expansion
   const toggleExpand = () => {
     setExpanded(!expanded);
   };
@@ -26,7 +24,6 @@ export const DescriptionSection = ({ description }) => {
       <Divider style={[styles.divider, { backgroundColor: colors.borderColor }]} />
       
       <View style={styles.descriptionContainer}>
-        {/* Render HTML content if it's HTML, otherwise plain text */}
         {description.includes('<') && description.includes('>') ? (
           <HTML 
             source={{ html: expanded ? description : description.split('\n').slice(0, MAX_LINES).join('\n') }}
@@ -42,7 +39,6 @@ export const DescriptionSection = ({ description }) => {
           </Text>
         )}
         
-        {/* Show "Read more" button if text is long */}
         {description.split('\n').length > MAX_LINES && (
           <TouchableOpacity style={styles.expandButton} onPress={toggleExpand}>
             <Text style={[styles.expandButtonText, { color: colors.accentColor }]}>

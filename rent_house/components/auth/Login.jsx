@@ -20,7 +20,6 @@ export function Login() {
     const { colors } = useTheme();
     const { signIn } = useAuth();
 
-    // Handle login with spam prevention and loading state
     const handleLogin = async () => {
         if (isLoading) return;
         setMessage('');

@@ -1,24 +1,24 @@
 import * as ImagePicker from 'expo-image-picker';
 import { useEffect, useState } from 'react';
 import {
-    Alert,
-    Image,
-    Modal,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  Image,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import {
-    Button,
-    Divider,
-    IconButton,
-    MD2Colors,
-    TextInput
+  Button,
+  Divider,
+  IconButton,
+  MD2Colors,
+  TextInput
 } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../../../../contexts/ThemeContext';
+import { PaperDialog } from '../../../common/PaperDialog';
 
 export const AddRatingModal = ({
   visible,
@@ -32,16 +32,15 @@ export const AddRatingModal = ({
   const [comment, setComment] = useState(initialData?.comment || '');
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(false);
-  
-  // Reset form when visibility changes
+  const [dialogVisible, setDialogVisible] = useState(false);
+  const [dialogContent, setDialogContent] = useState({ title: '', message: '', actions: [] });
+
   useEffect(() => {
     if (visible) {
-      // If editing, load initial data
       if (isEdit && initialData) {
         setRating(initialData.star || 5);
         setComment(initialData.comment || '');
         
-        // Load existing images if available
         if (initialData.images && initialData.images.length > 0) {
           setImages(
             initialData.images.map(img => ({
@@ -54,7 +53,6 @@ export const AddRatingModal = ({
           setImages([]);
         }
       } else {
-        // Reset form for new rating
         setRating(5);
         setComment('');
         setImages([]);
@@ -64,15 +62,19 @@ export const AddRatingModal = ({
   
   const handleSubmit = () => {
     if (!comment.trim()) {
-      Alert.alert('Lỗi', 'Vui lòng nhập đánh giá của bạn');
+      setDialogContent({
+        title: 'Lỗi',
+        message: 'Vui lòng nhập đánh giá của bạn',
+        actions: [{ label: 'OK', onPress: () => setDialogVisible(false) }]
+      });
+      setDialogVisible(true);
       return;
     }
     
-    // Prepare data for submission
     const formData = {
       rating,
       comment,
-      images: images.filter(img => !img.isExisting), // Only include new images
+      images: images.filter(img => !img.isExisting), 
     };
     
     setLoading(true);
@@ -82,24 +84,26 @@ export const AddRatingModal = ({
   
   const handlePickImage = async () => {
     try {
-      // Check permissions
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Lỗi', 'Cần quyền truy cập thư viện ảnh để chọn ảnh');
+        setDialogContent({
+          title: 'Lỗi',
+          message: 'Cần quyền truy cập thư viện ảnh để chọn ảnh',
+          actions: [{ label: 'OK', onPress: () => setDialogVisible(false) }]
+        });
+        setDialogVisible(true);
         return;
       }
       
-      // Launch image picker
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: false,
         allowsMultipleSelection: true,
         quality: 0.8,
-        selectionLimit: 5 - images.length, // Limit total to 5 images
+        selectionLimit: 5 - images.length, 
       });
       
       if (!result.canceled && result.assets && result.assets.length > 0) {
-        // Add selected images
         const newImages = result.assets.map(img => ({
           uri: img.uri,
           type: 'image/jpeg',
@@ -110,7 +114,12 @@ export const AddRatingModal = ({
       }
     } catch (error) {
       console.error('Error picking images:', error);
-      Alert.alert('Lỗi', 'Không thể chọn ảnh. Vui lòng thử lại sau.');
+      setDialogContent({
+        title: 'Lỗi',
+        message: 'Không thể chọn ảnh. Vui lòng thử lại sau.',
+        actions: [{ label: 'OK', onPress: () => setDialogVisible(false) }]
+      });
+      setDialogVisible(true);
     }
   };
   
@@ -118,7 +127,6 @@ export const AddRatingModal = ({
     setImages(prev => prev.filter((_, i) => i !== index));
   };
   
-  // Render star rating selector
   const renderStarRating = () => {
     return (
       <View style={styles.starContainer}>
@@ -139,7 +147,6 @@ export const AddRatingModal = ({
     );
   };
   
-  // Render image picker and preview
   const renderImageSection = () => {
     return (
       <View style={styles.imageSection}>
@@ -152,7 +159,6 @@ export const AddRatingModal = ({
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.imagesContainer}
         >
-          {/* Image previews */}
           {images.map((image, index) => (
             <View key={index} style={styles.imagePreviewContainer}>
               <Image
@@ -169,7 +175,6 @@ export const AddRatingModal = ({
             </View>
           ))}
           
-          {/* Add image button */}
           {images.length < 5 && (
             <TouchableOpacity
               style={[styles.addImageButton, { borderColor: colors.accentColor }]}
@@ -192,7 +197,6 @@ export const AddRatingModal = ({
     >
       <View style={styles.modalContainer}>
         <View style={[styles.modalContent, { backgroundColor: colors.backgroundPrimary }]}>
-          {/* Header */}
           <View style={styles.modalHeader}>
             <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
               {isEdit ? 'Chỉnh sửa đánh giá' : 'Thêm đánh giá mới'}
@@ -207,7 +211,6 @@ export const AddRatingModal = ({
           <Divider style={{ backgroundColor: colors.borderColor }} />
           
           <ScrollView style={styles.formContainer}>
-            {/* Star Rating */}
             <View style={styles.formGroup}>
               <Text style={[styles.sectionLabel, { color: colors.textPrimary }]}>
                 Đánh giá của bạn
@@ -220,7 +223,6 @@ export const AddRatingModal = ({
             
             <Divider style={{ backgroundColor: colors.borderColor, marginVertical: 10 }} />
             
-            {/* Comment */}
             <View style={styles.formGroup}>
               <Text style={[styles.sectionLabel, { color: colors.textPrimary }]}>
                 Nhận xét của bạn
@@ -240,13 +242,11 @@ export const AddRatingModal = ({
             
             <Divider style={{ backgroundColor: colors.borderColor, marginVertical: 10 }} />
             
-            {/* Images */}
             {renderImageSection()}
           </ScrollView>
           
           <Divider style={{ backgroundColor: colors.borderColor }} />
           
-          {/* Actions */}
           <View style={styles.actionButtons}>
             <Button
               mode="outlined"
@@ -266,6 +266,14 @@ export const AddRatingModal = ({
               {isEdit ? 'Cập nhật' : 'Gửi đánh giá'}
             </Button>
           </View>
+          
+          <PaperDialog
+            visible={dialogVisible}
+            title={dialogContent.title}
+            message={dialogContent.message}
+            actions={dialogContent.actions}
+            onDismiss={() => setDialogVisible(false)}
+          />
         </View>
       </View>
     </Modal>

@@ -4,7 +4,7 @@ import { apiClient } from './Api';
 export const getFeedService = async (nextUrl = null, type = null) => {
   try {
     if (!nextUrl) {
-      nextUrl = '/api/new-feed/';
+      nextUrl = '/api/posts/';
     }
     const response = await apiClient.get(nextUrl);
     return response.data;

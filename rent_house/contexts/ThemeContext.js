@@ -9,16 +9,14 @@ const ThemeContext = createContext();
 export const ThemeProvider = ({ children }) => {
   const systemTheme = useColorScheme();
   const [theme, setTheme] = useState('light');
-  const [userPreferSystemTheme, setUserPreferSystemTheme] = useState(true); // Mặc định là true
+  const [userPreferSystemTheme, setUserPreferSystemTheme] = useState(true); 
   
   useEffect(() => {
     loadTheme();
   }, []);
 
-  // Consider listening to system theme changes
   useEffect(() => {
     const subscription = ThemeManager.listenToSystemThemeChanges(newTheme => {
-      // Optional: automatically follow system theme changes
       if (userPreferSystemTheme) {
         setTheme(newTheme);
         ThemeManager.setTheme(newTheme);
@@ -39,7 +37,6 @@ export const ThemeProvider = ({ children }) => {
     setTheme(newTheme);
   };
   
-  // Use useMemo to optimize re-renders
   const contextValue = useMemo(() => ({
     theme,
     toggleTheme,

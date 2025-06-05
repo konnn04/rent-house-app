@@ -1,21 +1,25 @@
+import { useNavigation } from "@react-navigation/native";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
   Image,
   RefreshControl,
+  StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from "react-native";
+import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { useTheme } from "../../../contexts/ThemeContext";
 import { getFeedService } from "../../../services/feedService";
 import { homeStyles, styles } from "../../../styles/style";
 import { NewPostSample } from "../posts/NewPostSample";
 import { PostCard } from "../posts/PostCard";
-import { deletePostService } from "../../../services/postService";
 
 export const FeedList = () => {
   const { colors } = useTheme();
+  const navigation = useNavigation();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -65,9 +69,18 @@ export const FeedList = () => {
   };
 
   const handlePostDeleted = (deletedPostId) => {
-  // Chỉ cần update state, không cần gọi service
-  setPosts(prevPosts => prevPosts.filter(post => post.id !== deletedPostId));
-};
+    setPosts((prevPosts) => prevPosts.filter((post) => post.id !== deletedPostId));
+  };
+
+  const handleSearchPress = () => {
+    navigation.navigate("SearchScreen");
+  };
+
+  const getItemLayout = (data, index) => ({
+    length: 400,
+    offset: 400 * index,
+    index,
+  });
 
   const renderFooter = () => {
     if (!loadingMore) return null;
@@ -94,6 +107,12 @@ export const FeedList = () => {
           <Text style={[homeStyles.title, { color: colors.textPrimary }]}>
             Trang chủ
           </Text>
+          <TouchableOpacity
+            style={homeStyles.searchButton}
+            onPress={handleSearchPress}
+          >
+            <Icon name="magnify" size={28} color={colors.textPrimary} />
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -140,8 +159,30 @@ export const FeedList = () => {
             </View>
           }
           style={homeStyles.postsList}
+          getItemLayout={getItemLayout}
+          initialNumToRender={5}
+          windowSize={7}
+          maxToRenderPerBatch={7}
+          removeClippedSubviews={true}
         />
       )}
     </View>
   );
 };
+
+// Add this to the existing homeStyles in styles.js file or define it inline here
+const additionalStyles = StyleSheet.create({
+  headerTop: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    width: "100%",
+    paddingHorizontal: 16,
+  },
+  searchButton: {
+    padding: 8,
+  },
+});
+
+// Merge the additionalStyles with existing homeStyles
+Object.assign(homeStyles, additionalStyles);

@@ -10,12 +10,10 @@ export const OwnerInfo = ({ owner }) => {
   
   if (!owner) return null;
   
-  // Handle visit profile
   const handleVisitProfile = () => {
     navigation.navigate('PublicProfile', { username: owner.username });
   };
   
-  // Handle contact owner
   const handleContactOwner = () => {
     navigation.navigate('Chat', {
       screen: 'ChatDetail',

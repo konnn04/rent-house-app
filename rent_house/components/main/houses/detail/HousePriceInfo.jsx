@@ -11,13 +11,11 @@ import { formatCurrency } from '../../../../utils/Tools';
 export const HousePriceInfo = ({ house }) => {
   const { colors } = useTheme();
   
-  // Get utility fees
   const utilityFees = [
-    { icon: 'flash', name: 'Điện', value: house.electricity_fee, unit: '/kWh' },
-    { icon: 'water', name: 'Nước', value: house.water_fee, unit: '/m³' },
-    { icon: 'wifi', name: 'Internet', value: house.internet_fee, unit: '/tháng' },
-    { icon: 'broom', name: 'Dịch vụ', value: house.service_fee, unit: '/tháng' },
-    { icon: 'delete-outline', name: 'Rác', value: house.trash_fee, unit: '/tháng' },
+    { icon: 'flash', name: 'Điện', value: house.electricity_price, unit: '/kWh' },
+    { icon: 'water', name: 'Nước', value: house.water_price, unit: '/m³' },
+    { icon: 'wifi', name: 'Internet', value: house.electricity_price, unit: '/tháng' },
+    { icon: 'delete-outline', name: 'Rác', value: house.trash_price, unit: '/tháng' },
   ];
   
   return (

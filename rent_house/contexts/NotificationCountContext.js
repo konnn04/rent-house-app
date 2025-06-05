@@ -2,7 +2,6 @@ import React, { createContext, useCallback, useContext, useEffect, useState } fr
 import { getUnreadChatsCount } from '../services/chatService';
 import { getUnreadNotificationsCount } from '../services/notificationService';
 
-// Create context
 const NotificationCountContext = createContext();
 
 export const NotificationCountProvider = ({ children }) => {
@@ -10,7 +9,6 @@ export const NotificationCountProvider = ({ children }) => {
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  // Fetch unread notification counts
   const fetchUnreadNotifications = useCallback(async () => {
     try {
       const count = await getUnreadNotificationsCount();
@@ -20,7 +18,6 @@ export const NotificationCountProvider = ({ children }) => {
     }
   }, []);
 
-  // Fetch unread message counts
   const fetchUnreadMessages = useCallback(async () => {
     try {
       const count = await getUnreadChatsCount();
@@ -30,7 +27,6 @@ export const NotificationCountProvider = ({ children }) => {
     }
   }, []);
 
-  // Fetch both counts
   const refreshCounts = useCallback(async () => {
     setLoading(true);
     await Promise.all([
@@ -40,17 +36,14 @@ export const NotificationCountProvider = ({ children }) => {
     setLoading(false);
   }, [fetchUnreadNotifications, fetchUnreadMessages]);
 
-  // Initial fetch
   useEffect(() => {
     refreshCounts();
   }, [refreshCounts]);
 
-  // Reset notification count
   const resetNotificationCount = useCallback(() => {
     setUnreadNotifications(0);
   }, []);
 
-  // Reset message count
   const resetMessageCount = useCallback(() => {
     setUnreadMessages(0);
   }, []);
@@ -83,7 +76,6 @@ export const NotificationCountProvider = ({ children }) => {
   );
 };
 
-// Custom hook to use the context
 export const useNotificationCount = () => {
   const context = useContext(NotificationCountContext);
   if (context === undefined) {

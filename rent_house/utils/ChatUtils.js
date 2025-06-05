@@ -1,23 +1,13 @@
 import { Alert } from 'react-native';
 import { createDirectChatService } from '../services/chatService';
 
-/**
- * Creates or gets an existing direct chat with a user and navigates to that chat
- * 
- * @param {number} userId - The ID of the user to chat with
- * @param {string} userName - Display name of the user (for the chat header)
- * @param {object} navigation - React Navigation object
- * @param {function} setLoading - Optional state setter for loading indicator
- * @returns {Promise<boolean>} Success status
- */
+
 export const createDirectChat = async (userId, userName, navigation, setLoading = null) => {
   try {
     if (setLoading) setLoading(true);
     
-    // Call the API to create or get existing direct chat
     const data = await createDirectChatService(userId);
 
-    // Navigate to chat with the received chat ID
     if (data && data.id) {
       navigation.navigate('Chat', {
         screen: 'ChatDetail',
@@ -43,14 +33,8 @@ export const createDirectChat = async (userId, userName, navigation, setLoading 
   }
 };
 
-/**
- * Get chat details from route params
- * 
- * @param {object} route - React Navigation route object
- * @returns {object} Chat details (chatId, chatName)
- */
+
 export const getChatDetailsFromRoute = (route) => {
-  // First check if params exist at the top level (direct navigation)
   if (route?.params?.chatId) {
     return {
       chatId: route.params.chatId,
@@ -59,7 +43,6 @@ export const getChatDetailsFromRoute = (route) => {
     };
   }
   
-  // Then check if params might be nested (stack navigation)
   if (route?.params?.params?.chatId) {
     return {
       chatId: route.params.params.chatId,

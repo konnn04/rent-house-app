@@ -5,7 +5,6 @@ import { formatCurrency } from '../../../../utils/Tools';
 export const HousePreviewModal = ({ visible, house, onClose, onViewDetail, colors }) => {
   if (!house) return null;
 
-  // Map house type to readable text
   const getHouseTypeText = (type) => {
     const types = {
       'house': 'Nhà riêng',
@@ -25,19 +24,16 @@ export const HousePreviewModal = ({ visible, house, onClose, onViewDetail, color
     >
       <View style={styles.modalContainer}>
         <View style={[styles.modalContent, { backgroundColor: colors.backgroundSecondary }]}>
-          {/* Close button */}
           <TouchableOpacity style={styles.closeButton} onPress={onClose}>
             <Icon name="close" size={24} color={colors.textPrimary} />
           </TouchableOpacity>
           
-          {/* House image */}
           <Image
             source={{ uri: house.thumbnail || 'https://via.placeholder.com/400x200' }}
             style={styles.image}
             defaultSource={require('@assets/images/default-house.png')}
           />
           
-          {/* House info */}
           <View style={styles.infoContainer}>
             <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={2}>
               {house.title}
@@ -81,7 +77,6 @@ export const HousePreviewModal = ({ visible, house, onClose, onViewDetail, color
             )}
           </View>
           
-          {/* View detail button */}
           <TouchableOpacity
             style={[styles.viewDetailButton, { backgroundColor: colors.accentColor }]}
             onPress={onViewDetail}

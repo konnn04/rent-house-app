@@ -12,7 +12,6 @@ export const getCurrentUserService = async () => {
 };
  
 
-// Cập nhật thông tin người dùng
 export const updateUserProfileService = async (formData) => {
   try {
     const response = await apiClient.patch('/api/users/current-user/', formData);
@@ -23,7 +22,6 @@ export const updateUserProfileService = async (formData) => {
   }
 };
 
-// Cập nhật avatar người dùng
 export const updateUserAvatarService = async (avatarFormData) => {
   try {
     const response = await apiClient.patch('/api/users/update-avatar/', avatarFormData, {
@@ -39,7 +37,6 @@ export const updateUserAvatarService = async (avatarFormData) => {
 };
 
 
-// Đổi mật khẩu người dùng
 export const changeUserPasswordService = async (currentPassword, newPassword) => {
   try {
     const formData = {
@@ -54,7 +51,6 @@ export const changeUserPasswordService = async (currentPassword, newPassword) =>
   }
 };
 
-// Gửi thông tin xác thực danh tính người dùng
 export const submitIdentityVerificationService = async (formData) => {
   try {
     const response = await apiClient.post('/api/identity-verification/', formData, {
@@ -69,13 +65,29 @@ export const submitIdentityVerificationService = async (formData) => {
   }
 };
 
-// Kiểm tra trạng thái xác thực danh tính
 export const checkIdentityVerificationStatusService = async () => {
   try {
     const response = await apiClient.get('/api/identity-verification/status/');
     return response.data;
   } catch (error) {
     console.error('Error checking identity verification status:', error);
+    throw error;
+  }
+};
+
+/**
+ * Tìm kiếm người dùng theo từ khóa
+ * @param {string} query - Từ khóa tìm kiếm
+ * @param {string} nextUrl - URL phân trang
+ * @returns {Promise<Object>} Kết quả tìm kiếm người dùng
+ */
+export const searchUsersService = async (query, nextUrl = null) => {
+  try {
+    let url = nextUrl || `/api/users/?search=${encodeURIComponent(query)}`;
+    const response = await apiClient.get(url);
+    return response.data;
+  } catch (error) {
+    console.error('Error searching users:', error);
     throw error;
   }
 };

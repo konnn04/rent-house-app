@@ -5,6 +5,7 @@ from rest_framework.pagination import PageNumberPagination
 from django.contrib.contenttypes.models import ContentType
 from math import cos, radians
 from django.db import transaction
+from django.db.models import Q
 
 from rent_house.models import Post, Media, Interaction
 from rent_house.serializers import PostSerializer, PostDetailSerializer
@@ -16,15 +17,11 @@ class PostViewSet(viewsets.ModelViewSet):
     parser_classes = [parsers.MultiPartParser, parsers.JSONParser]
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     pagination_class = PageNumberPagination
-    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['title', 'content', 'address']
+    filter_backends = [filters.OrderingFilter]  
     ordering_fields = ['created_at']
     ordering = ['-created_at']
 
     def get_permissions(self):
-        """
-        Instantiate and return the list of permissions that this view requires.
-        """
         if self.action in ['update', 'partial_update', 'destroy']:
             permission_classes = [IsOwnerOrAdminOrReadOnly]
         elif self.action == 'interact':
@@ -37,15 +34,23 @@ class PostViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = super().get_queryset()
 
-        # Lọc theo người dùng (username)
         author_username = self.request.query_params.get('author_username')
         if author_username:
             queryset = queryset.filter(author__username=author_username)
 
-        # Lọc theo loại bài viết
         post_type = self.request.query_params.get('type')
         if post_type:
             queryset = queryset.filter(type=post_type)
+
+        search = self.request.query_params.get('search')
+        if search:
+            queryset = queryset.filter(
+                Q(title__icontains=search) |
+                Q(content__icontains=search) |
+                Q(address__icontains=search) |
+                Q(author__username__icontains=search) |
+                Q(author__address__icontains=search)
+            )
 
         return queryset
 
@@ -87,11 +92,9 @@ class PostViewSet(viewsets.ModelViewSet):
 
         if images:
             for image in images:
-                # Upload to Cloudinary
                 logger.info(f"Uploading image: {image.name}, size: {image.size} bytes")
                 image_url = upload_image_to_cloudinary(image, folder="post_images")
                 if image_url:
-                    # Create Media object
                     Media.objects.create(
                         content_type=ContentType.objects.get_for_model(Post),
                         object_id=post.id,
@@ -214,37 +217,32 @@ class PostViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['get'])
     def my_posts(self, request):
-        """Get the current user's posts"""
         if not request.user.is_authenticated:
             return Response({"error": "Authentication required"}, status=401)
             
         posts = Post.objects.filter(author=request.user).order_by('-created_at')
         
-        # Apply pagination
         page = self.paginate_queryset(posts)
         serializer = self.get_serializer(page, many=True)
         return self.get_paginated_response(serializer.data)
     
     @action(detail=False, methods=['get'])
     def by_type(self, request):
-        """Filter posts by type"""
         post_type = request.query_params.get('type')
         if not post_type:
             return Response({"error": "type parameter is required"}, status=400)
             
         posts = Post.objects.filter(type=post_type, is_active=True).order_by('-created_at')
         
-        # Apply pagination
         page = self.paginate_queryset(posts)
         serializer = self.get_serializer(page, many=True)
         return self.get_paginated_response(serializer.data)
     
     @action(detail=False, methods=['get'])
     def by_location(self, request):
-        """Get posts near a location"""
         lat = request.query_params.get('lat')
         lng = request.query_params.get('lng')
-        radius = request.query_params.get('radius', 5)  # Default 5km radius
+        radius = request.query_params.get('radius', 5) 
         
         if not lat or not lng:
             return Response({"error": "lat and lng parameters are required"}, status=400)
@@ -254,9 +252,7 @@ class PostViewSet(viewsets.ModelViewSet):
             lng = float(lng)
             radius = float(radius)
             
-            # A simple approximation (not accurate for large distances)
-            # For better accuracy, use a geographic database or PostGIS
-            lat_range = radius / 111.0  # 1 degree latitude is approx 111km
+            lat_range = radius / 111.0  
             lng_range = radius / (111.0 * abs(cos(radians(lat))))
             
             posts = Post.objects.filter(
@@ -265,7 +261,6 @@ class PostViewSet(viewsets.ModelViewSet):
                 longitude__range=(lng - lng_range, lng + lng_range)
             ).order_by('-created_at')
             
-            # Apply pagination
             page = self.paginate_queryset(posts)
             serializer = self.get_serializer(page, many=True)
             return self.get_paginated_response(serializer.data)

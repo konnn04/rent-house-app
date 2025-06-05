@@ -2,7 +2,7 @@ import { useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import { useEffect, useState } from 'react';
 import {
-  ActivityIndicator, Alert, Image, KeyboardAvoidingView, Platform,
+  ActivityIndicator, Image, KeyboardAvoidingView, Platform,
   ScrollView, StyleSheet, Text, TouchableOpacity, View
 } from 'react-native';
 import { Button, HelperText, SegmentedButtons, Switch, TextInput } from 'react-native-paper';
@@ -14,6 +14,7 @@ import {
   getDetailHouseService,
   updateHouseService
 } from '../../../../services/houseService';
+import { PaperDialog } from '../../../common/PaperDialog';
 import { LocationPickerComponent } from '../../posts/components/LocationPickerComponent';
 import { ManageHeader } from './components/ManageHeader';
 
@@ -25,9 +26,9 @@ export const AddEditHouseScreen = ({ houseId, isEditing = false }) => {
   const [description, setDescription] = useState('');
   const [address, setAddress] = useState('');
   const [basePrice, setBasePrice] = useState('');
-  const [area, setArea] = useState(''); // New field for house area
-  const [deposit, setDeposit] = useState(''); // New field for deposit
-  const [isRenting, setIsRenting] = useState(false); // New flag for rental status
+  const [area, setArea] = useState(''); 
+  const [deposit, setDeposit] = useState(''); 
+  const [isRenting, setIsRenting] = useState(false); 
   const [waterPrice, setWaterPrice] = useState('');
   const [electricityPrice, setElectricityPrice] = useState('');
   const [internetPrice, setInternetPrice] = useState('');
@@ -36,7 +37,7 @@ export const AddEditHouseScreen = ({ houseId, isEditing = false }) => {
   const [latitude, setLatitude] = useState('');
   const [longitude, setLongitude] = useState('');
   const [maxRooms, setMaxRooms] = useState('');
-  const [currentRooms, setCurrentRooms] = useState(''); // For tracking rooms currently rented
+  const [currentRooms, setCurrentRooms] = useState('');
   const [maxPeople, setMaxPeople] = useState('');
   const [images, setImages] = useState([]);
   const [showLocationPicker, setShowLocationPicker] = useState(false);
@@ -44,6 +45,8 @@ export const AddEditHouseScreen = ({ houseId, isEditing = false }) => {
   const [loading, setLoading] = useState(isEditing);
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
+  const [dialogVisible, setDialogVisible] = useState(false);
+  const [dialogContent, setDialogContent] = useState({ title: '', message: '', actions: [] });
   
   useEffect(() => {
     if (isEditing && houseId) {
@@ -56,14 +59,13 @@ export const AddEditHouseScreen = ({ houseId, isEditing = false }) => {
       setLoading(true);
       const house = await getDetailHouseService(houseId);
 
-      // Populate form fields
       setTitle(house.title || '');
       setDescription(house.description || '');
       setAddress(house.address || '');
       setBasePrice(house.base_price?.toString() || '');
-      setArea(house.area?.toString() || ''); // Add area field
-      setDeposit(house.deposit?.toString() || ''); // Add deposit field
-      setIsRenting(house.is_renting || false); // Add rental status
+      setArea(house.area?.toString() || ''); 
+      setDeposit(house.deposit?.toString() || ''); 
+      setIsRenting(house.is_renting || false); 
       setWaterPrice(house.water_price?.toString() || '');
       setElectricityPrice(house.electricity_price?.toString() || '');
       setInternetPrice(house.internet_price?.toString() || '');
@@ -72,10 +74,9 @@ export const AddEditHouseScreen = ({ houseId, isEditing = false }) => {
       setLatitude(house.latitude?.toString() || '');
       setLongitude(house.longitude?.toString() || '');
       setMaxRooms(house.max_rooms?.toString() || '');
-      setCurrentRooms(house.current_rooms?.toString() || ''); // Add current rooms
+      setCurrentRooms(house.current_rooms?.toString() || ''); 
       setMaxPeople(house.max_people?.toString() || '');
       
-      // Convert media to the format needed for our image picker
       if (house.media && house.media.length > 0) {
         const formattedImages = house.media.map(media => ({
           uri: media.url,
@@ -86,8 +87,12 @@ export const AddEditHouseScreen = ({ houseId, isEditing = false }) => {
       
     } catch (error) {
       console.error('Error fetching house details:', error);
-      Alert.alert('Lỗi', 'Không thể tải thông tin nhà. Vui lòng thử lại sau.');
-      navigation.goBack();
+      setDialogContent({
+        title: 'Lỗi',
+        message: 'Không thể tải thông tin nhà. Vui lòng thử lại sau.',
+        actions: [{ label: 'OK', onPress: () => { setDialogVisible(false); navigation.goBack(); } }]
+      });
+      setDialogVisible(true);
     } finally {
       setLoading(false);
     }
@@ -98,7 +103,12 @@ export const AddEditHouseScreen = ({ houseId, isEditing = false }) => {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       
       if (status !== 'granted') {
-        Alert.alert('Cần quyền truy cập', 'Ứng dụng cần quyền truy cập thư viện ảnh');
+        setDialogContent({
+          title: 'Cần quyền truy cập',
+          message: 'Ứng dụng cần quyền truy cập thư viện ảnh',
+          actions: [{ label: 'OK', onPress: () => setDialogVisible(false) }]
+        });
+        setDialogVisible(true);
         return;
       }
       
@@ -110,13 +120,17 @@ export const AddEditHouseScreen = ({ houseId, isEditing = false }) => {
       });
       
       if (!result.canceled && result.assets && result.assets.length > 0) {
-        // Add new images to existing ones
         const newImages = result.assets.map(asset => ({ uri: asset.uri }));
         setImages([...images, ...newImages]);
       }
     } catch (error) {
       console.error('Error picking images:', error);
-      Alert.alert('Lỗi', 'Không thể chọn ảnh. Vui lòng thử lại.');
+      setDialogContent({
+        title: 'Lỗi',
+        message: 'Không thể chọn ảnh. Vui lòng thử lại.',
+        actions: [{ label: 'OK', onPress: () => setDialogVisible(false) }]
+      });
+      setDialogVisible(true);
     }
   };
   
@@ -147,14 +161,12 @@ export const AddEditHouseScreen = ({ houseId, isEditing = false }) => {
       newErrors.basePrice = 'Giá cơ bản phải là số dương';
     }
     
-    // Validate area field
     if (!area.trim()) {
       newErrors.area = 'Vui lòng nhập diện tích';
     } else if (isNaN(area) || Number(area) <= 0) {
       newErrors.area = 'Diện tích phải là số dương';
     }
     
-    // Validate deposit field
     if (deposit.trim() && (isNaN(deposit) || Number(deposit) < 0)) {
       newErrors.deposit = 'Tiền cọc phải là số dương hoặc 0';
     }
@@ -179,7 +191,6 @@ export const AddEditHouseScreen = ({ houseId, isEditing = false }) => {
       newErrors.type = 'Vui lòng chọn loại nhà';
     }
     
-    // Validate max_rooms and current_rooms only for dormitory and room types
     if (type === 'dormitory' || type === 'room') {
       if (!maxRooms.trim() || isNaN(maxRooms) || Number(maxRooms) <= 0) {
         newErrors.maxRooms = 'Vui lòng nhập số phòng tối đa (lớn hơn 0)';
@@ -194,7 +205,6 @@ export const AddEditHouseScreen = ({ houseId, isEditing = false }) => {
       }
     }
     
-    // Always validate max_people
     if (!maxPeople.trim() || isNaN(maxPeople) || Number(maxPeople) <= 0) {
       newErrors.maxPeople = 'Vui lòng nhập số người tối đa (lớn hơn 0)';
     }
@@ -218,9 +228,9 @@ export const AddEditHouseScreen = ({ houseId, isEditing = false }) => {
       formData.append('description', description);
       formData.append('address', address);
       formData.append('base_price', basePrice);
-      formData.append('area', area); // Add area field
-      formData.append('is_renting', isRenting ? 'true' : 'false'); // Add rental status
-      if (deposit) formData.append('deposit', deposit); // Add deposit field
+      formData.append('area', area); 
+      formData.append('is_renting', isRenting ? 'true' : 'false');
+      if (deposit) formData.append('deposit', deposit); 
       formData.append('type', type);
       
       if (waterPrice) formData.append('water_price', waterPrice);
@@ -230,16 +240,13 @@ export const AddEditHouseScreen = ({ houseId, isEditing = false }) => {
       if (latitude) formData.append('latitude', latitude);
       if (longitude) formData.append('longitude', longitude);
       
-      // Always add max_people
       formData.append('max_people', maxPeople);
       
-      // Add max_rooms and current_rooms only for dormitory and room types
       if (type === 'dormitory' || type === 'room') {
         formData.append('max_rooms', maxRooms);
         if (currentRooms) formData.append('current_rooms', currentRooms);
       }
       
-      // Add new images (not the ones already in the database)
       const newImages = images.filter(img => !img.id);
       newImages.forEach((image, index) => {
         const uriParts = image.uri.split('.');
@@ -255,45 +262,36 @@ export const AddEditHouseScreen = ({ houseId, isEditing = false }) => {
       let data;
       
       if (isEditing) {
-        // Update existing house
         data = await updateHouseService(houseId, formData);
       } else {
-        // Create new house
         data = await createHouseService(formData);
       }
 
-      Alert.alert(
-        isEditing ? 'Cập nhật thành công' : 'Tạo thành công',
-        isEditing ? 'Thông tin nhà đã được cập nhật.' : 'Nhà đã được tạo thành công.',
-        [
-          {
-            text: 'OK',
-            onPress: () => {
-              navigation.goBack();
-            }
-          }
-        ]
-      );
+      setDialogContent({
+        title: isEditing ? 'Cập nhật thành công' : 'Tạo thành công',
+        message: isEditing ? 'Thông tin nhà đã được cập nhật.' : 'Nhà đã được tạo thành công.',
+        actions: [{
+          label: 'OK',
+          onPress: () => { setDialogVisible(false); navigation.goBack(); }
+        }]
+      });
+      setDialogVisible(true);
       
     } catch (error) {
       console.error('Error submitting house:', error);
-      Alert.alert(
-        'Lỗi',
-        isEditing ? (error?.response?.data?.error|| 'Không thể cập nhật thông tin nhà. Vui lòng thử lại.') :
+      setDialogContent({
+        title: 'Lỗi',
+        message: isEditing ? (error?.response?.data?.error|| 'Không thể cập nhật thông tin nhà. Vui lòng thử lại.') :
           (error?.response?.data?.error || 'Không thể tạo nhà mới. Vui lòng thử lại.'),
-        [
-          {
-            text: 'OK',
-          }
-        ]
-      );
+        actions: [{ label: 'OK', onPress: () => setDialogVisible(false) }]
+      });
+      setDialogVisible(true);
       setErrors({ submit: 'Không thể lưu thông tin nhà. Vui lòng thử lại.' });
     } finally {
       setSubmitting(false);
     }
   };
   
-  // Handle location selection from map
   const handleLocationSelected = (selectedAddress, lat, lng) => {
     setAddress(selectedAddress);
     setLatitude(lat.toString());
@@ -465,7 +463,6 @@ export const AddEditHouseScreen = ({ houseId, isEditing = false }) => {
             </HelperText>
           )}
           
-          {/* Area field - always visible */}
           <TextInput
             label="Diện tích (m²)"
             value={area}
@@ -480,9 +477,8 @@ export const AddEditHouseScreen = ({ houseId, isEditing = false }) => {
             </HelperText>
           )}
           
-          {/* Is renting switch */}
           <View style={styles.switchContainer}>
-            <Text style={[styles.switchLabel, { color: colors.textPrimary }]}>Đang cho thuê</Text>
+            <Text style={[styles.switchLabel, { color: colors.textPrimary }]}>Đã có người thuê</Text>
             <Switch
               value={isRenting}
               onValueChange={setIsRenting}
@@ -490,7 +486,6 @@ export const AddEditHouseScreen = ({ houseId, isEditing = false }) => {
             />
           </View>
           
-          {/* Max people field - always visible */}
           <TextInput
             label="Số người tối đa"
             value={maxPeople}
@@ -505,7 +500,6 @@ export const AddEditHouseScreen = ({ houseId, isEditing = false }) => {
             </HelperText>
           )}
           
-          {/* Max rooms and current rooms - only for dormitory and room types */}
           {(type === 'dormitory' || type === 'room') && (
             <>
               <View style={styles.row}>
@@ -560,7 +554,6 @@ export const AddEditHouseScreen = ({ houseId, isEditing = false }) => {
             </HelperText>
           )}
           
-          {/* Deposit field */}
           <TextInput
             label="Tiền cọc (VNĐ)"
             value={deposit}
@@ -687,6 +680,14 @@ export const AddEditHouseScreen = ({ houseId, isEditing = false }) => {
           </Button>
         </ScrollView>
       </KeyboardAvoidingView>
+      
+      <PaperDialog
+        visible={dialogVisible}
+        title={dialogContent.title}
+        message={dialogContent.message}
+        actions={dialogContent.actions}
+        onDismiss={() => setDialogVisible(false)}
+      />
     </View>
   );
 };
@@ -697,7 +698,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 16,
-    paddingBottom: Platform.OS === 'ios' ? 40 : 80, // Increased bottom padding for Android
+    paddingBottom: Platform.OS === 'ios' ? 40 : 80, 
   },
   loadingContainer: {
     flex: 1,

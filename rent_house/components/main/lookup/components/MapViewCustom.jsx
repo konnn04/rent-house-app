@@ -8,7 +8,7 @@ import {
   Text,
   View
 } from 'react-native';
-import MapView, { PROVIDER_GOOGLE } from 'react-native-maps';
+import MapView, { UrlTile } from 'react-native-maps';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../../../../contexts/ThemeContext';
 import { getHousesByMapService } from '../../../../services/houseService';
@@ -46,6 +46,8 @@ export const MapViewCustom = ({
     actions: []
   });
 
+  const [locationPermissionStatus, setLocationPermissionStatus] = useState(null); 
+
   const defaultRegion = {
     latitude: 10.7769,
     longitude: 106.7009,
@@ -55,25 +57,54 @@ export const MapViewCustom = ({
 
   const searchTimeoutRef = useRef(null);
 
+  const requestLocationPermissionOnce = async () => {
+    try {
+      setLoadingLocation(true);
+      setLocationError(null);
+
+      if (locationPermissionStatus === 'granted') {
+        return true;
+      }
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      setLocationPermissionStatus(status);
+
+      if (status !== 'granted') {
+        setLocationError('Bạn cần cấp quyền truy cập vị trí để sử dụng tính năng này.');
+        setDialogProps({
+          title: 'Lỗi vị trí',
+          content: 'Bạn cần cấp quyền truy cập vị trí để sử dụng tính năng này. Vui lòng vào cài đặt để cấp quyền.',
+          actions: [
+            { label: 'Đóng', onPress: () => setDialogVisible(false) }
+          ]
+        });
+        setDialogVisible(true);
+        return false;
+      }
+      return true;
+    } catch (error) {
+      setLocationError('Không thể xin quyền vị trí');
+      setDialogProps({
+        title: 'Lỗi vị trí',
+        content: 'Không thể xin quyền vị trí. Vui lòng thử lại hoặc kiểm tra cài đặt.',
+        actions: [
+          { label: 'Đóng', onPress: () => setDialogVisible(false) }
+        ]
+      });
+      setDialogVisible(true);
+      return false;
+    } finally {
+      setLoadingLocation(false);
+    }
+  };
+
   const getUserLocation = async (forceRequest = false) => {
     try {
       setLoadingLocation(true);
       setLocationError(null);
 
-      let status;
-      if (!askedLocationPermission || forceRequest) {
-        const { status: permissionStatus } = await Location.requestForegroundPermissionsAsync();
-        status = permissionStatus;
-        setAskedLocationPermission(true);
-      } else {
-        const { status: permissionStatus } = await Location.getForegroundPermissionsAsync();
-        status = permissionStatus;
-      }
-
-      if (status !== 'granted') {
-        setLocationError('Cần quyền truy cập vị trí để hiển thị vị trí của bạn');
-        setLoadingLocation(false);
-        return;
+      if (locationPermissionStatus !== 'granted' || forceRequest) {
+        const ok = await requestLocationPermissionOnce();
+        if (!ok) return;
       }
 
       const location = await Location.getCurrentPositionAsync({
@@ -96,8 +127,15 @@ export const MapViewCustom = ({
       
       searchHousesNearLocation(location.coords.latitude, location.coords.longitude);
     } catch (error) {
-      console.error('Error getting location:', error);
       setLocationError('Không thể lấy vị trí hiện tại');
+      setDialogProps({
+        title: 'Lỗi vị trí',
+        content: 'Không thể lấy vị trí hiện tại. Vui lòng thử lại hoặc kiểm tra cài đặt.',
+        actions: [
+          { label: 'Đóng', onPress: () => setDialogVisible(false) }
+        ]
+      });
+      setDialogVisible(true);
     } finally {
       setLoadingLocation(false);
     }
@@ -152,8 +190,10 @@ export const MapViewCustom = ({
   };
 
   useEffect(() => {
-    getUserLocation();
-    
+    requestLocationPermissionOnce().then((ok) => {
+      if (ok) getUserLocation();
+    });
+
     return () => {
       if (searchTimeoutRef.current) {
         clearTimeout(searchTimeoutRef.current);
@@ -169,28 +209,13 @@ export const MapViewCustom = ({
   }, [mapFilters, searchQuery]);
 
   const handleLocateMe = () => {
-    if (locationError) {
-      setDialogProps({
-        title: 'Lỗi vị trí',
-        content: 'Bạn cần cấp quyền truy cập vị trí để sử dụng tính năng này. Bạn có muốn cấp quyền không?',
-        actions: [
-          { label: 'Hủy', onPress: () => setDialogVisible(false) },
-          { 
-            label: 'Đồng ý', 
-            onPress: () => {
-              setDialogVisible(false);
-              getUserLocation(true);
-            },
-            mode: 'contained',
-            color: colors.accentColor
-          }
-        ]
-      });
-      setDialogVisible(true);
+    if (locationPermissionStatus === 'granted') {
+      getUserLocation();
       return;
     }
-
-    getUserLocation();
+    requestLocationPermissionOnce().then((ok) => {
+      if (ok) getUserLocation();
+    });
   };
 
   const handleMarkerPress = (houseId) => {
@@ -213,7 +238,6 @@ export const MapViewCustom = ({
       <MapView
         ref={mapRef}
         style={styles.map}
-        provider={PROVIDER_GOOGLE}
         initialRegion={userLocation || defaultRegion}
         showsUserLocation={true}
         showsMyLocationButton={false}
@@ -223,6 +247,13 @@ export const MapViewCustom = ({
         loadingIndicatorColor={colors.accentColor}
         onRegionChangeComplete={handleRegionChangeComplete}
       >
+        <UrlTile
+          urlTemplate="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          maximumZ={19}
+          flipY={false}
+          tileSize={256}
+          zIndex={-1}
+        />
         {mapHouses.map((house) => (
           <HouseMarker
             key={house.id}

@@ -45,7 +45,6 @@ export const SearchFilters = ({
     }
   }, [visible, initialFilters]);
 
-  // Handle reset filters
   const handleReset = () => {
     if (mode === 'list') {
       setFilters({
@@ -182,7 +181,6 @@ export const SearchFilters = ({
                 />
               </View>
               
-              {/* Quick price selection */}
               <View style={styles.priceChipsContainer}>
                 <Chip 
                   mode="outlined" 
@@ -221,7 +219,6 @@ export const SearchFilters = ({
             
             <Divider style={{ backgroundColor: colors.borderColor, marginVertical: 10 }} />
             
-            {/* Verified Filter */}
             <View style={styles.filterSection}>
               <View style={styles.switchContainer}>
                 <Text style={[styles.filterTitle, { color: colors.textPrimary }]}>
@@ -237,7 +234,6 @@ export const SearchFilters = ({
             
             <Divider style={{ backgroundColor: colors.borderColor, marginVertical: 10 }} />
             
-            {/* Available for rent Filter */}
             <View style={styles.filterSection}>
               <View style={styles.switchContainer}>
                 <Text style={[styles.filterTitle, { color: colors.textPrimary }]}>
@@ -253,7 +249,6 @@ export const SearchFilters = ({
             
             <Divider style={{ backgroundColor: colors.borderColor, marginVertical: 10 }} />
             
-            {/* Available Rooms Filter */}
             <View style={styles.filterSection}>
               <View style={styles.switchContainer}>
                 <Text style={[styles.filterTitle, { color: colors.textPrimary }]}>
@@ -267,7 +262,6 @@ export const SearchFilters = ({
               </View>
             </View>
             
-            {/* Sorting - chỉ hiển thị trong chế độ danh sách */}
             {mode === 'list' && (
               <>
                 <Divider style={{ backgroundColor: colors.borderColor, marginVertical: 10 }} />

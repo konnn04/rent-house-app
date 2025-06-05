@@ -12,14 +12,12 @@ export const RegistrationAvatar = ({ onAvatarChange, error }) => {
   
   const handleSelectAvatar = async () => {
     try {
-      // Request media library permissions
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
         Alert.alert('Lỗi', 'Cần quyền truy cập thư viện ảnh để chọn avatar');
         return;
       }
       
-      // Open image picker
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
@@ -28,19 +26,15 @@ export const RegistrationAvatar = ({ onAvatarChange, error }) => {
       });
       
       if (!result.canceled && result.assets && result.assets.length > 0) {
-        // Get selected image URI
         const imageUri = result.assets[0].uri;
         const filename = imageUri.split('/').pop();
         const match = /\.(\w+)$/.exec(filename);
         const type = match ? `image/${match[1]}` : 'image/jpeg';
         
-        // Show loading indicator
         setAvatarLoading(true);
         
-        // Update local state
         setAvatarUri(imageUri);
         
-        // Call the callback with properly formatted image object
         if (onAvatarChange) {
           onAvatarChange({
             uri: imageUri,

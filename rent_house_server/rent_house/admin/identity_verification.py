@@ -39,7 +39,6 @@ class IdentityVerificationAdmin(ModelAdmin):
         if object_id:
             IdentityVerification.objects.filter(id=object_id).update(is_verified=True)
             messages.success(request, f"Định danh tính #{object_id} đã được phê duyệt thành công")
-        # Return to the changelist view after action
         return HttpResponseRedirect(reverse('admin:rent_house_identityverification_changelist'))
     
     @action(description="Reject Request")
@@ -47,7 +46,6 @@ class IdentityVerificationAdmin(ModelAdmin):
         if object_id:
             IdentityVerification.objects.filter(id=object_id).update(is_verified=False)
             messages.success(request, f"Định danh tính #{object_id} đã bị từ chối")
-        # Return to the changelist view after action
         return HttpResponseRedirect(reverse('admin:rent_house_identityverification_changelist'))
     
     

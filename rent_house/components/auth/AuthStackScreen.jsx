@@ -5,7 +5,6 @@ import { ForgetPassword } from './ForgetPassword';
 import { Login } from './Login';
 import { Register } from './Register';
 
-// Create stack navigator for authentication screens
 const AuthStack = createNativeStackNavigator();
 
 export const AuthStackScreen = () => {

@@ -1,15 +1,13 @@
-import { Appearance } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Appearance } from 'react-native';
 
 const THEME_KEY = '@theme_mode';
 
 export const ThemeManager = {
-  // Lấy theme từ storage hoặc hệ thống
   getTheme: async () => {
     try {
       const savedTheme = await AsyncStorage.getItem(THEME_KEY);
       if (savedTheme === null) {
-        // Nếu chưa có theme được lưu, lấy theo hệ thống
         return Appearance.getColorScheme();
       }
       return savedTheme;
@@ -19,7 +17,6 @@ export const ThemeManager = {
     }
   },
 
-  // Lưu theme mới
   setTheme: async (theme) => {
     try {
       await AsyncStorage.setItem(THEME_KEY, theme);
@@ -30,7 +27,6 @@ export const ThemeManager = {
     }
   },
 
-  // Theo dõi sự thay đổi theme của hệ thống
   listenToSystemThemeChanges: (callback) => {
     const subscription = Appearance.addChangeListener(({ colorScheme }) => {
       callback(colorScheme);

@@ -22,10 +22,9 @@ export const ProfileScreen = () => {
     updateAvatar(formData);
   };
   
-  // Handle logout
   const handleLogout = async () => {
-    await clearUserData(); // Xóa dữ liệu user trước
-    signOut(); // Sau đó đăng xuất
+    await clearUserData(); 
+    signOut(); 
   };
 
   useEffect(() => {
@@ -34,7 +33,6 @@ export const ProfileScreen = () => {
     }
   }, [userData]);
 
-  // Render profile information
   const renderProfileInfo = () => {
     if (loading && !userData) {
       return (

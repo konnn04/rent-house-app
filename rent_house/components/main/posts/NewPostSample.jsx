@@ -9,12 +9,10 @@ export const NewPostSample = () => {
     const { userData } = useUser();
     const navigation = useNavigation();
     
-    // Xử lý khi người dùng nhấn vào component để tạo bài đăng mới
     const handlePress = () => {
         navigation.navigate('CreatePost')
     };
     
-    // Hiển thị tên người dùng hoặc mặc định
     const displayName = userData?.first_name 
         ? `${userData.first_name} ${userData.last_name || ''}`
         : 'Bạn';
@@ -26,7 +24,6 @@ export const NewPostSample = () => {
             activeOpacity={0.7}
         >
             <View style={styles.headerRow}>
-                {/* Avatar người dùng */}
                 {userData?.avatar ? (
                     <Image 
                         source={{ uri: userData.avatar }} 
@@ -40,7 +37,6 @@ export const NewPostSample = () => {
                     </View>
                 )}
                 
-                {/* Vùng nhập bài đăng */}
                 <View style={[styles.inputField, { backgroundColor: colors.backgroundTertiary }]}>
                     <Text style={{ color: colors.textSecondary }}>
                         {`${displayName} ơi, bạn đang nghĩ gì?`}

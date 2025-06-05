@@ -34,7 +34,6 @@ export const CommentsModal = ({ visible, onClose, postId, colors }) => {
   const [replyingTo, setReplyingTo] = useState(null);
   const [selectedImages, setSelectedImages] = useState([]);
   
-  // Fetch comments for the post
   const fetchComments = useCallback(async (pageNum = 1, loadMore = false) => {
     if (!postId) return;
     
@@ -66,27 +65,23 @@ export const CommentsModal = ({ visible, onClose, postId, colors }) => {
     }
   }, [postId]);
   
-  // Load comments when modal opens
   useEffect(() => {
     if (visible && postId) {
       fetchComments();
     }
   }, [visible, postId, fetchComments]);
   
-  // Handle refresh (pull to refresh)
   const handleRefresh = () => {
     setRefreshing(true);
     fetchComments(1, false);
   };
   
-  // Load more comments when scrolling
   const handleLoadMore = () => {
     if (hasMorePages && !loadingMore) {
       fetchComments(page + 1, true);
     }
   };
   
-  // Handle posting a new comment
   const handlePostComment = async () => {
     if ((!newComment.trim() && selectedImages.length === 0) || submitting) return;
     
@@ -101,7 +96,6 @@ export const CommentsModal = ({ visible, onClose, postId, colors }) => {
         formData.append('parent', replyingTo.id);
       }
       
-      // Add images if any
       selectedImages.forEach((image, index) => {
         const uriParts = image.uri.split('.');
         const fileType = uriParts[uriParts.length - 1];
@@ -115,9 +109,7 @@ export const CommentsModal = ({ visible, onClose, postId, colors }) => {
       
       const data = await createPostCommentService(formData);
       
-      // Add new comment to the list
       if (replyingTo) {
-        // Update the reply count for the parent comment
         setComments(prev => 
           prev.map(comment => 
             comment.id === replyingTo.id 
@@ -126,11 +118,9 @@ export const CommentsModal = ({ visible, onClose, postId, colors }) => {
           )
         );
       } else {
-        // Add to beginning of the list if it's a top-level comment
         setComments(prev => [data, ...prev]);
       }
       
-      // Clear input
       setNewComment('');
       setSelectedImages([]);
       setReplyingTo(null);
@@ -142,17 +132,14 @@ export const CommentsModal = ({ visible, onClose, postId, colors }) => {
     }
   };
   
-  // Handle replying to a comment
   const handleReply = (comment) => {
     setReplyingTo(comment);
   };
   
-  // Cancel replying
   const handleCancelReply = () => {
     setReplyingTo(null);
   };
   
-  // Pick images from gallery
   const pickImages = async () => {
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -169,11 +156,10 @@ export const CommentsModal = ({ visible, onClose, postId, colors }) => {
       });
       
       if (!result.canceled && result.assets && result.assets.length > 0) {
-        // Only add up to 5 images total
         const newImages = result.assets.map(asset => ({ uri: asset.uri }));
         setSelectedImages(prev => {
           const combined = [...prev, ...newImages];
-          return combined.slice(0, 5); // Limit to 5 images
+          return combined.slice(0, 5); 
         });
       }
     } catch (error) {
@@ -181,12 +167,10 @@ export const CommentsModal = ({ visible, onClose, postId, colors }) => {
     }
   };
   
-  // Remove an image
   const removeImage = (index) => {
     setSelectedImages(prev => prev.filter((_, i) => i !== index));
   };
   
-  // Render the thumbnail previews of selected images
   const renderImagePreviews = () => {
     if (selectedImages.length === 0) return null;
     
@@ -207,7 +191,6 @@ export const CommentsModal = ({ visible, onClose, postId, colors }) => {
     );
   };
 
-  // Handle deleting a comment
   const handleDeleteComment = async (commentId) => {
     try {
       await deletePostCommentService(commentId);
@@ -231,7 +214,6 @@ export const CommentsModal = ({ visible, onClose, postId, colors }) => {
             style={styles.keyboardAvoidingView}
           >
             <View style={[styles.modalContent, { backgroundColor: colors.backgroundPrimary }]}>
-              {/* Header */}
               <View style={[styles.modalHeader, { borderBottomColor: colors.borderColor }]}>
                 <TouchableOpacity onPress={onClose} style={styles.closeButton}>
                   <Ionicons name="close" size={24} color={colors.textPrimary} />
@@ -240,7 +222,6 @@ export const CommentsModal = ({ visible, onClose, postId, colors }) => {
                 <View style={{ width: 24 }} />
               </View>
               
-              {/* Comments List */}
               {loading ? (
                 <View style={styles.loadingContainer}>
                   <ActivityIndicator size="large" color={colors.accentColor} />
@@ -284,7 +265,6 @@ export const CommentsModal = ({ visible, onClose, postId, colors }) => {
                 />
               )}
               
-              {/* Reply indicator */}
               {replyingTo && (
                 <View style={[styles.replyingContainer, { backgroundColor: colors.backgroundSecondary }]}>
                   <Text style={{ color: colors.textSecondary }}>
@@ -296,10 +276,8 @@ export const CommentsModal = ({ visible, onClose, postId, colors }) => {
                 </View>
               )}
               
-              {/* Selected images preview */}
               {renderImagePreviews()}
               
-              {/* Comment input */}
               <View style={[styles.inputContainer, { backgroundColor: colors.backgroundSecondary }]}>
                 <TouchableOpacity onPress={pickImages} style={styles.addImageButton}>
                   <Ionicons name="image" size={24} color={colors.accentColor} />
@@ -404,7 +382,7 @@ const styles = StyleSheet.create({
     padding: 10,
     borderTopWidth: 1,
     borderTopColor: 'rgba(0,0,0,0.1)',
-    paddingBottom: Platform.OS === 'ios' ? 30 : 10, // Extra padding for iOS
+    paddingBottom: Platform.OS === 'ios' ? 30 : 10, 
   },
   addImageButton: {
     padding: 8,

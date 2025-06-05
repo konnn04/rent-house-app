@@ -50,7 +50,6 @@ export const CommentItem = ({ comment, onReply, colors, postId, onDelete }) => {
     }
   }, [comment.id, postId]);
 
-  // Toggle showing replies
   const toggleReplies = () => {
     const newState = !showReplies;
     setShowReplies(newState);
@@ -60,14 +59,12 @@ export const CommentItem = ({ comment, onReply, colors, postId, onDelete }) => {
     }
   };
 
-  // Load more replies
   const loadMoreReplies = () => {
     if (hasMoreReplies && !loadingReplies) {
       fetchReplies(page + 1, true);
     }
   };
 
-  // Reload replies if the reply count changes
   useEffect(() => {
     if (showReplies && comment.reply_count > replies.length) {
       fetchReplies();
@@ -106,7 +103,6 @@ export const CommentItem = ({ comment, onReply, colors, postId, onDelete }) => {
                 {comment.content}
               </Text>
 
-              {/* Show images if any */}
               {comment.media && comment.media.length > 0 && (
                 <View style={styles.mediaContainer}>
                   <ImageGallery mediaItems={comment.media} containerWidth={250} />
@@ -163,7 +159,6 @@ export const CommentItem = ({ comment, onReply, colors, postId, onDelete }) => {
           </View>
         </View>
 
-        {/* Replies section */}
         {comment.reply_count > 0 && (
           <TouchableOpacity
             style={styles.viewRepliesButton}
@@ -182,7 +177,6 @@ export const CommentItem = ({ comment, onReply, colors, postId, onDelete }) => {
           </TouchableOpacity>
         )}
 
-        {/* Show replies if expanded */}
         {showReplies && (
           <View style={styles.repliesContainer}>
             {replies.map(reply => (
@@ -207,7 +201,6 @@ export const CommentItem = ({ comment, onReply, colors, postId, onDelete }) => {
                       {reply.content}
                     </Text>
 
-                    {/* Show images if any */}
                     {reply.media && reply.media.length > 0 && (
                       <View style={styles.mediaContainer}>
                         <ImageGallery mediaItems={reply.media} containerWidth={220} />
@@ -239,14 +232,12 @@ export const CommentItem = ({ comment, onReply, colors, postId, onDelete }) => {
               </View>
             ))}
 
-            {/* Loading indicator for more replies */}
             {loadingReplies && (
               <View style={styles.loadingContainer}>
                 <ActivityIndicator size="small" color={colors.accentColor} />
               </View>
             )}
 
-            {/* Load more replies button */}
             {hasMoreReplies && !loadingReplies && (
               <TouchableOpacity
                 style={styles.loadMoreButton}

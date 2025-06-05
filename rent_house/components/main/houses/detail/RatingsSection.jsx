@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   StyleSheet,
   Text,
   View
@@ -14,8 +13,8 @@ import {
   createHouseRatingService,
   getHouseRatingsService
 } from '../../../../services/houseService';
+import { PaperDialog } from '../../../common/PaperDialog';
 
-// Import rating components
 import { AddRatingModal } from '../rating/AddRatingModal';
 import { RateFilterOptions } from '../rating/RateFilterOptions';
 import { RatingsList } from '../rating/RatingsList';
@@ -27,12 +26,13 @@ export const RatingsSection = ({ houseId, avgRating = 0, insideScrollView = fals
   const [ratings, setRatings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [filter, setFilter] = useState(0); // 0 = all, 1-5 = star filter
+  const [filter, setFilter] = useState(0); // 0 = all, 1-5 = 
   const [addModalVisible, setAddModalVisible] = useState(false);
   const [userHasRated, setUserHasRated] = useState(false);
   const [userRating, setUserRating] = useState(null);
+  const [dialogVisible, setDialogVisible] = useState(false);
+  const [dialogContent, setDialogContent] = useState({ title: '', message: '', actions: [] });
   
-  // Fetch ratings
   const fetchRatings = useCallback(async (minStar = 0) => {
     try {
       setLoading(true);
@@ -40,7 +40,6 @@ export const RatingsSection = ({ houseId, avgRating = 0, insideScrollView = fals
       const data = await getHouseRatingsService(houseId, null, minStar);
       setRatings(data.results || []);
 
-      // Check if user has already rated
       if (userData) {
         const userRating = data.results.find(
           rating => rating.user.id === userData.id
@@ -67,12 +66,10 @@ export const RatingsSection = ({ houseId, avgRating = 0, insideScrollView = fals
     fetchRatings(filter);
   }, [fetchRatings, filter]);
   
-  // Apply filter
   const handleFilterChange = (value) => {
     setFilter(value);
   };
   
-  // Handle add rating
   const handleAddRating = async (data) => {
     try {
       const formData = new FormData();
@@ -80,7 +77,6 @@ export const RatingsSection = ({ houseId, avgRating = 0, insideScrollView = fals
       formData.append('star', data.rating);
       formData.append('comment', data.comment);
       
-      // Add images if any
       if (data.images && data.images.length > 0) {
         data.images.forEach((image, index) => {
           formData.append('images', {
@@ -92,24 +88,31 @@ export const RatingsSection = ({ houseId, avgRating = 0, insideScrollView = fals
       }
       
       await createHouseRatingService(formData);
-      Alert.alert('Thành công', 'Đánh giá của bạn đã được thêm thành công.');
+      setDialogContent({
+        title: 'Thành công',
+        message: 'Đánh giá của bạn đã được thêm thành công.',
+        actions: [{ label: 'OK', onPress: () => setDialogVisible(false) }]
+      });
+      setDialogVisible(true);
       
-      // Refresh ratings
       fetchRatings(filter);
       setAddModalVisible(false);
       
     } catch (error) {
       console.error('Error adding rating:', error);
-      Alert.alert('Lỗi', 'Không thể thêm đánh giá. Vui lòng thử lại sau.');
+      setDialogContent({
+        title: 'Lỗi',
+        message: 'Không thể thêm đánh giá. Vui lòng thử lại sau.',
+        actions: [{ label: 'OK', onPress: () => setDialogVisible(false) }]
+      });
+      setDialogVisible(true);
     }
   };
   
-  // Handle edit rating
   const handleEditRating = () => {
     setAddModalVisible(true);
   };
   
-  // Render rating summary
   const renderRatingSummary = () => (
     <View style={[styles.summaryContainer, { backgroundColor: colors.backgroundSecondary }]}>
       <View style={styles.ratingValueContainer}>
@@ -154,7 +157,6 @@ export const RatingsSection = ({ houseId, avgRating = 0, insideScrollView = fals
     </View>
   );
   
-  // Render loading state
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -166,7 +168,6 @@ export const RatingsSection = ({ houseId, avgRating = 0, insideScrollView = fals
     );
   }
   
-  // Render error state
   if (error) {
     return (
       <View style={styles.errorContainer}>
@@ -184,10 +185,8 @@ export const RatingsSection = ({ houseId, avgRating = 0, insideScrollView = fals
   
   return (
     <View style={styles.container}>
-      {/* Rating summary */}
       {renderRatingSummary()}
       
-      {/* Filter options */}
       <RateFilterOptions
         selectedFilter={filter}
         onFilterChange={handleFilterChange}
@@ -195,16 +194,22 @@ export const RatingsSection = ({ houseId, avgRating = 0, insideScrollView = fals
       
       <Divider style={[styles.divider, { backgroundColor: colors.borderColor }]} />
       
-      {/* Ratings list - use useScrollView=true when inside another ScrollView */}
       <RatingsList ratings={ratings} useScrollView={insideScrollView} />
       
-      {/* Add/Edit rating modal */}
       <AddRatingModal
         visible={addModalVisible}
         onClose={() => setAddModalVisible(false)}
         onSubmit={handleAddRating}
         initialData={userRating}
         isEdit={userHasRated}
+      />
+      
+      <PaperDialog
+        visible={dialogVisible}
+        title={dialogContent.title}
+        message={dialogContent.message}
+        actions={dialogContent.actions}
+        onDismiss={() => setDialogVisible(false)}
       />
     </View>
   );

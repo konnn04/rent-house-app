@@ -9,32 +9,31 @@ export const PostTypeSelector = ({ selectedType, onSelectType, colors, isOwner }
       title: 'Thông tin chung',
       icon: 'information',
       description: 'Thông tin chung về nhà hoặc phòng',
-      available: true, // Available for all users
+      available: true, 
     },
     {
       id: 'search_listing',
       title: 'Tìm kiếm',
       icon: 'magnify',
       description: 'Tìm kiếm nhà hoặc phòng',
-      available: true, // Available for all users
+      available: true, 
     },
     {
       id: 'roommate',
       title: 'Tìm bạn cùng phòng',
       icon: 'account-group',
       description: 'Tìm kiếm bạn cùng phòng',
-      available: true, // Available for all users
+      available: true, 
     },
     {
       id: 'rental_listing',
       title: 'Cho thuê',
       icon: 'home',
       description: 'Đăng tin cho thuê nhà hoặc phòng',
-      available: isOwner, // Only available for owners
+      available: isOwner,
     },
   ];
 
-  // Filter post types based on availability
   const availablePostTypes = postTypes.filter((type) => type.available);
 
   return (

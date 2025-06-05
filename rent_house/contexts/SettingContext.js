@@ -15,7 +15,6 @@ export const SettingsProvider = ({ children }) => {
     appUpdates: true,
   });
   
-  // Load settings from storage on mount
   useEffect(() => {
     const loadSettings = async () => {
       try {
@@ -32,7 +31,6 @@ export const SettingsProvider = ({ children }) => {
     loadSettings();
   }, []);
   
-  // Save settings to storage whenever they change
   useEffect(() => {
     const saveSettings = async () => {
       try {
@@ -46,12 +44,10 @@ export const SettingsProvider = ({ children }) => {
     saveSettings();
   }, [language, notifications]);
   
-  // Update language setting
   const changeLanguage = async (newLanguage) => {
     setLanguage(newLanguage);
   };
   
-  // Update notification settings
   const updateNotificationSettings = (key, value) => {
     setNotifications(prev => ({
       ...prev,

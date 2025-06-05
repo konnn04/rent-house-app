@@ -5,9 +5,7 @@ import { Divider } from 'react-native-paper';
 import { useTheme } from '../../../contexts/ThemeContext';
 import PackageInfo from '../../../package.json';
 
-// Tập trung tất cả dữ liệu vào một đối tượng
  const appData = {
-  // Thông tin ứng dụng
   app: {
     name: 'Rent House',
     version: PackageInfo.version || '1.0.0',
@@ -16,7 +14,6 @@ import PackageInfo from '../../../package.json';
     description: 'ỨNG DỤNG PHỤC VỤ CHO BÀI TẬP LỚN MÔN HỌC "CÁC CÔNG NGHỆ LẬP TRÌNH HIỆN ĐẠI" CỦA NHÓM SINH VIÊN KHOA CNTT TRƯỜNG ĐH MỞ TP.HCM.\nỨng dụng thuê và cho thuê nhà trọ, căn hộ với nhiều tính năng tiện ích.'
   },
   
-  // Đội ngũ phát triển
   developers: [
     { 
       name: 'Nguyễn Thanh Triều', 
@@ -32,46 +29,26 @@ import PackageInfo from '../../../package.json';
     }
   ],
   
-  // Công nghệ sử dụng
   technologies: [
     { name: 'React Native', version: '0.71.0', icon: 'logo-react' },
     { name: 'Expo', version: '48.0.0', icon: 'layers-outline' },
     { name: 'Django REST Framework', version: '3.14.0', icon: 'server-outline' }
   ],
   
-  // Liên kết
   links: [
     {
       title: 'Mã nguồn GitHub',
       url: 'https://github.com/konnn04/rent-house-app',
       icon: 'logo-github'
     }
-    // Có thể thêm các liên kết khác (đã bị comment) vào đây
-    // { title: 'Chính sách bảo mật', url: 'https://example.com/privacy', icon: 'shield-checkmark-outline' },
-    // { title: 'Điều khoản sử dụng', url: 'https://example.com/terms', icon: 'document-text-outline' },
-    // { title: 'Trợ giúp & Hỗ trợ', url: 'https://example.com/help', icon: 'help-circle-outline' }
   ],
   
-  // Lịch sử phiên bản
   changelog: [
     {
       version: '1.0.0',
       date: '13/05/2025',
       changes: [
-        'Ra mắt phiên bản chính thức',
-        'Tính năng đăng ký, đăng nhập',
-        'Tìm kiếm, xem chi tiết nhà trọ',
-        'Đặt lịch xem nhà',
-        'Đánh giá và bình luận'
-      ]
-    },
-    {
-      version: '0.9.5',
-      date: '01/05/2025',
-      changes: [
-        'Phiên bản thử nghiệm cuối cùng',
-        'Sửa lỗi giao diện',
-        'Cải thiện hiệu suất'
+        'Ehehehehehe'
       ]
     }
   ],

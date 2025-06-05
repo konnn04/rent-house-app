@@ -91,3 +91,33 @@ export const deletePostCommentService = async (commentId) => {
     throw error;
   }
 }
+
+
+export const searchPostsService = async (query, nextUrl = null, type = null) => {
+  try {
+    let url = nextUrl;
+    
+    if (!url) {
+      url = '/api/posts/';
+      const params = new URLSearchParams();
+      
+      if (query) {
+        params.append('search', query);
+      }
+      
+      if (type) {
+        params.append('type', type);
+      }
+      
+      if (params.toString()) {
+        url += `?${params.toString()}`;
+      }
+    }
+    
+    const response = await apiClient.get(url);
+    return response.data;
+  } catch (error) {
+    console.error('Error searching posts:', error);
+    throw error;
+  }
+};

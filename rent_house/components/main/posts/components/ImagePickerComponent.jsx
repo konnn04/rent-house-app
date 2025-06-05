@@ -1,16 +1,15 @@
 import * as ImagePicker from 'expo-image-picker';
 import {
-    FlatList,
-    Image,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  FlatList,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 export const ImagePickerComponent = ({ images = [], onImagesSelected, onRemoveImage, colors, maxImages = 10 }) => {
-  // Pick images from gallery
   const pickImages = async () => {
     try {
       if (images.length >= maxImages) {
@@ -26,14 +25,12 @@ export const ImagePickerComponent = ({ images = [], onImagesSelected, onRemoveIm
       });
       
       if (!result.canceled && result.assets) {
-        // Format images for display and upload
         const newImages = result.assets.map(asset => ({
           uri: asset.uri,
           type: 'image/jpeg',
           name: asset.uri.split('/').pop()
         }));
         
-        // Combine with existing images
         onImagesSelected([...images, ...newImages]);
       }
     } catch (error) {
@@ -42,14 +39,12 @@ export const ImagePickerComponent = ({ images = [], onImagesSelected, onRemoveIm
     }
   };
 
-  // Remove image at specified index
   const handleRemoveImage = (index) => {
     onRemoveImage(index);
   };
 
   return (
     <View style={styles.container}>
-      {/* Image preview list */}
       {images.length > 0 && (
         <FlatList
           data={images}
@@ -71,7 +66,6 @@ export const ImagePickerComponent = ({ images = [], onImagesSelected, onRemoveIm
         />
       )}
       
-      {/* Add image button */}
       <TouchableOpacity
         style={[
           styles.addButton,
@@ -85,7 +79,6 @@ export const ImagePickerComponent = ({ images = [], onImagesSelected, onRemoveIm
         </Text>
       </TouchableOpacity>
       
-      {/* Image count indicator */}
       {images.length > 0 && (
         <Text style={[styles.imageCount, { color: colors.textSecondary }]}>
           {images.length}/{maxImages} ảnh

@@ -25,7 +25,6 @@ export const ChatListScreen = () => {
   const { resetMessageCount, fetchUnreadMessages } = useNotificationCount();
   const isFocused = useIsFocused();
 
-  // Fetch chats with lazy loading
   const fetchChats = useCallback(async (isRefresh = false) => {
     try {
       setError(null);
@@ -67,7 +66,6 @@ export const ChatListScreen = () => {
     fetchChats(true);
   }, []);
 
-  // Khi đang xem component này, làm mới danh sách chat
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
       fetchChats(true);
@@ -75,21 +73,18 @@ export const ChatListScreen = () => {
     return unsubscribe;
   }, [navigation, fetchChats]);
 
-  // Reset message count when screen is focused
   useEffect(() => {
     if (isFocused) {
       resetMessageCount();
     }
   }, [isFocused, resetMessageCount]);
 
-  // Update count when the user refreshes
   const onRefresh = useCallback(() => {
     setNextPageUrl(null);
     fetchChats(true);
     resetMessageCount();
   }, [fetchChats, resetMessageCount]);
 
-  // Lazy load more
   const handleLoadMore = () => {
     if (loadingMore || !nextPageUrl) return;
     fetchChats(false);
@@ -104,21 +99,17 @@ export const ChatListScreen = () => {
       : [members[1].avatar_thumbnail];
   }
 
-  // Lọc danh sách chat theo từ khóa tìm kiếm
   const filteredChats = chats.filter(chat => {
-    if (!chat.last_message) return false; // Không hiển thị chat không có tin nhắn
+    if (!chat.last_message) return false;
 
-    // Với nhóm chat, tìm theo tên nhóm
     if (chat.is_group && chat.name) {
       return chat.name.toLowerCase().includes(searchQuery.toLowerCase());
     }
-    // Với chat 1-1, tìm theo tên thành viên
     return chat.members_summary.some(member => 
       member.full_name.toLowerCase().includes(searchQuery.toLowerCase())
     );
   });
 
-  // Lấy tên hiển thị cho chat
   const getChatDisplayName = (chat) => {
     if (chat.is_group && chat.name) {
       return chat.name;

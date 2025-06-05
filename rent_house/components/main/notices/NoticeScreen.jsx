@@ -38,15 +38,12 @@ export const NoticeScreen = () => {
     const isFocused = useIsFocused();
     const navigation = useNavigation();
     
-    // Fetch notifications - tối ưu để tránh gọi API liên tục
     const fetchNotifications = useCallback(async (isRefresh = false) => {
-        // Nếu đang tải, bỏ qua request mới
         if ((loading && !isRefresh) || (loadingMore && !isRefresh) || (refreshing && !isRefresh)) {
             return;
         }
         
         try {
-            // Cập nhật trạng thái loading phù hợp
             if (isRefresh) {
                 setRefreshing(true);
                 setNextPageUrl(null);
@@ -59,7 +56,6 @@ export const NoticeScreen = () => {
             
             setHasError(false);
             
-            // Gọi service với tham số phù hợp
             const response = await getNotificationsService(isRefresh ? null : nextPageUrl);
             
             if (response) {
@@ -70,7 +66,6 @@ export const NoticeScreen = () => {
                         if (isRefresh) {
                             return results;
                         } else {
-                            // Tránh trùng lặp khi thêm dữ liệu mới
                             const existingIds = new Set(prev.map(item => item.id));
                             const newItems = results.filter(item => !existingIds.has(item.id));
                             return [...prev, ...newItems];
@@ -95,7 +90,6 @@ export const NoticeScreen = () => {
         } catch (error) {
             console.error('Error fetching notifications:', error);
             if (!isRefresh) {
-                // Chỉ hiển thị lỗi khi refresh hoặc load ban đầu
                 setHasError(true);
             }
         } finally {
@@ -105,7 +99,6 @@ export const NoticeScreen = () => {
         }
     }, [loading, loadingMore, refreshing, nextPageUrl, page]);
     
-    // Chỉ gọi API khi component mount
     useEffect(() => {
         fetchNotifications(true);
     }, []);
@@ -118,7 +111,7 @@ export const NoticeScreen = () => {
 
     const redirectToTargetScreen = ((notification) => {
         console.log('Redirecting to:', notification);
-        type = notification.type;
+        type = notification?.type;
         switch (type) {
             case 'follow':
                 navigation.navigate('PublicProfile', { username: notification.sender.username });
@@ -164,7 +157,6 @@ export const NoticeScreen = () => {
         try {
             await markNotificationAsReadService(notification.id);
 
-            // Update local state
             setNotifications(prev =>
                 prev.map(item =>
                     item.id === notification.id
@@ -198,7 +190,6 @@ export const NoticeScreen = () => {
         }
     }, []);
 
-    // Delete notification
     const handleDeleteNotification = useCallback(async () => {
         if (!selectedNotification) return;
 
@@ -211,7 +202,6 @@ export const NoticeScreen = () => {
         }
     }, [selectedNotification]);
 
-    // Render error state
     const renderError = () => (
         <View style={styles.centerContainer}>
             <Icon name="alert-circle-outline" size={50} color={colors.dangerColor} />
@@ -230,7 +220,6 @@ export const NoticeScreen = () => {
         </View>
     );
 
-    // Render empty state
     const renderEmpty = () => (
         <View style={styles.centerContainer}>
             <Icon name="bell-off-outline" size={50} color={colors.textSecondary} />
@@ -240,7 +229,6 @@ export const NoticeScreen = () => {
         </View>
     );
 
-    // Render loading indicator
     const renderLoading = () => (
         <View style={styles.centerContainer}>
             <ActivityIndicator size="large" color={colors.accentColor} />
@@ -250,7 +238,6 @@ export const NoticeScreen = () => {
         </View>
     );
 
-    // Render loading footer
     const renderFooter = useCallback(() => {
         if (!loadingMore) return null;
 
@@ -266,7 +253,6 @@ export const NoticeScreen = () => {
 
     return (
         <View style={[styles.container, { backgroundColor: colors.backgroundPrimary }]}>
-            {/* Header */}
             <View style={styles.header}>
                 <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Thông báo</Text>
 
@@ -302,7 +288,6 @@ export const NoticeScreen = () => {
                 </Menu>
             </View>
 
-            {/* Content */}
             {loading ? (
                 renderLoading()
             ) : hasError ? (
@@ -334,9 +319,8 @@ export const NoticeScreen = () => {
                         />
                     }
                     onEndReached={handleLoadMore}
-                    onEndReachedThreshold={0.3} // Giảm ngưỡng để tránh gọi quá sớm
+                    onEndReachedThreshold={0.3} 
                     ListFooterComponent={renderFooter}
-                    // Tối ưu performance của FlatList
                     windowSize={3}
                     maxToRenderPerBatch={5}
                     updateCellsBatchingPeriod={100}

@@ -91,7 +91,6 @@ class CommentViewSet(viewsets.ModelViewSet):
                         public_id=image_url.split('/')[-1].split('.')[0]
                     )
     
-    # Chỉ có 2 bậc comment
     @action(detail=False, methods=['get'])
     def post_comments(self, request):
         post_id = request.query_params.get('post_id')

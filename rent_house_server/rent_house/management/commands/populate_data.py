@@ -295,6 +295,7 @@ class Command(BaseCommand):
                 max_rooms=max_rooms,
                 current_rooms=current_rooms,
                 max_people=max_people,
+                is_renting=False
             )
                 
             for k in range(num_images):
