@@ -8,34 +8,44 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { useUser } from '../../../contexts/UserContext';
+import { apiClient } from '../../../services/Api'; // Thêm dòng này để gọi API thêm thành viên
 import { getInfoChatService, leaveChatService } from '../../../services/chatService';
 import { getChatDetailsFromRoute } from '../../../utils/ChatUtils';
 // Component hiển thị thành viên
-const MemberItem = ({ member, isCurrentUser, isAdmin, onRemoveMember }) => {
+const MemberItem = ({ member, isCurrentUser, isAdmin, onRemoveMember, onViewProfile }) => {
   const { colors } = useTheme();
-  
+
   return (
     <View style={[styles.memberItem, { borderBottomColor: colors.borderColor }]}>
       <Image 
-        source={{ uri: member.user.avatar_thumbnail || 'https://via.placeholder.com/50' }} 
+        source={{ uri: member.avatar_thumbnail || 'https://via.placeholder.com/50' }} 
         style={styles.memberAvatar} 
       />
-      
       <View style={styles.memberInfo}>
         <Text style={[styles.memberName, { color: colors.textPrimary }]}>
-          {member.user.full_name}{isCurrentUser ? ' (Bạn)' : ''}
+          {member.full_name}{isCurrentUser ? ' (Bạn)' : ''}
         </Text>
         <Text style={[styles.memberRole, { color: colors.textSecondary }]}>
           {member.is_admin ? 'Quản trị viên' : 'Thành viên'}
         </Text>
       </View>
-      
+      {/* Nút chuyển đến trang cá nhân nếu không phải mình */}
+      {!isCurrentUser && (
+        <TouchableOpacity
+          style={styles.profileButton}
+          onPress={() => onViewProfile(member.username)}
+        >
+          <Icon name="account-circle-outline" size={24} color={colors.accentColor} />
+        </TouchableOpacity>
+      )}
+      {/* Nút xóa thành viên nếu là admin và không phải mình */}
       {!isCurrentUser && isAdmin && (
         <TouchableOpacity 
           style={styles.removeButton}
@@ -59,26 +69,27 @@ export const ChatInfoScreen = () => {
   const [chatData, setChatData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showAddMember, setShowAddMember] = useState(false);
+  const [addUsername, setAddUsername] = useState('');
+  const [addMemberLoading, setAddMemberLoading] = useState(false);
   
-  // Kiểm tra xem người dùng hiện tại có phải là admin không
   const isCurrentUserAdmin = useCallback(() => {
     if (!chatData || !userData) return false;
     
     const currentMembership = chatData.members?.find(
-      member => member.user.id === userData.id
+      member => member.id === userData.id
     );
     
     return currentMembership?.is_admin || false;
   }, [chatData, userData]);
   
-  // Fetch chat info
   const fetchChatInfo = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
       const infoChat = await getInfoChatService(chatId);
-      setChatData(infoChat.data);
+      setChatData(infoChat);
 
     } catch (err) {
       console.error('Error fetching chat info:', err);
@@ -96,7 +107,7 @@ export const ChatInfoScreen = () => {
   const handleRemoveMember = (member) => {
     Alert.alert(
       'Xóa thành viên',
-      `Bạn có chắc muốn xóa ${member.user.full_name} khỏi nhóm chat này?`,
+      `Bạn có chắc muốn xóa ${member.full_name} khỏi nhóm chat này?`,
       [
         { text: 'Hủy', style: 'cancel' },
         { 
@@ -105,7 +116,7 @@ export const ChatInfoScreen = () => {
           onPress: async () => {
             try {
               await api.post(`/chats/${chatId}/remove_member/`, {
-                user_id: member.user.id
+                user_id: member.id
               });
               
               // Refresh chat info
@@ -151,6 +162,30 @@ export const ChatInfoScreen = () => {
   // Handle add member
   const handleAddMember = () => {
     navigation.navigate('AddMembers', { chatId: chatId });
+  };
+
+  // Thêm hàm chuyển đến trang cá nhân
+  const handleViewProfile = (username) => {
+    navigation.navigate('PublicProfile', { username });
+  };
+
+  // Thêm thành viên qua username
+  const handleAddMemberByUsername = async () => {
+    if (!addUsername.trim()) return;
+    setAddMemberLoading(true);
+    try {
+      await apiClient.post(`/api/chats/${chatId}/add_member_by_username/`, {
+        username: addUsername.trim()
+      });
+      setAddUsername('');
+      setShowAddMember(false);
+      fetchChatInfo();
+      Alert.alert('Thành công', 'Đã thêm thành viên vào nhóm!');
+    } catch (err) {
+      Alert.alert('Lỗi', err?.response?.data?.detail || 'Không thể thêm thành viên. Kiểm tra username!');
+    } finally {
+      setAddMemberLoading(false);
+    }
   };
   
   // Render
@@ -203,7 +238,7 @@ export const ChatInfoScreen = () => {
       </View>
     );
   }
-  
+
   return (
     <View style={[styles.container, { backgroundColor: colors.backgroundPrimary }]}>
       <View style={styles.header}>
@@ -251,20 +286,21 @@ export const ChatInfoScreen = () => {
             {chatData?.is_group && isCurrentUserAdmin() && (
               <TouchableOpacity 
                 style={styles.addButton}
-                onPress={handleAddMember}
+                onPress={() => setShowAddMember(true)}
               >
                 <Icon name="account-plus" size={24} color={colors.accentColor} />
               </TouchableOpacity>
             )}
           </View>
           
-          {chatData?.members?.map(member => (
+          {chatData?.members_summary?.map(member => (
             <MemberItem 
               key={member.id}
               member={member}
-              isCurrentUser={member.user.id === userData?.id}
+              isCurrentUser={member.id === userData?.id}
               isAdmin={isCurrentUserAdmin()}
               onRemoveMember={handleRemoveMember}
+              onViewProfile={handleViewProfile}
             />
           ))}
         </View>
@@ -280,6 +316,40 @@ export const ChatInfoScreen = () => {
           </TouchableOpacity>
         )}
       </ScrollView>
+      {/* Modal thêm thành viên qua username */}
+      {showAddMember && (
+        <View style={[styles.addMemberModal, { backgroundColor: colors.backgroundSecondary }]}>
+          <Text style={{ color: colors.textPrimary, fontWeight: 'bold', marginBottom: 10 }}>Thêm thành viên bằng username</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <TextInput
+              value={addUsername}
+              onChangeText={setAddUsername}
+              placeholder="Nhập username"
+              style={[styles.addMemberInput, { color: colors.textPrimary, borderColor: colors.borderColor }]
+              }
+              placeholderTextColor={colors.textSecondary}
+              autoCapitalize="none"
+            />
+            <TouchableOpacity
+              style={[styles.addMemberBtn, { backgroundColor: colors.accentColor }]}
+              onPress={handleAddMemberByUsername}
+              disabled={addMemberLoading}
+            >
+              {addMemberLoading ? (
+                <ActivityIndicator color="#fff" size="small" />
+              ) : (
+                <Icon name="plus" size={22} color="#fff" />
+              )}
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.addMemberBtn, { backgroundColor: colors.dangerColor, marginLeft: 8 }]}
+              onPress={() => setShowAddMember(false)}
+            >
+              <Icon name="close" size={22} color="#fff" />
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
     </View>
   );
 };
@@ -398,5 +468,37 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
     marginLeft: 8,
+  },
+  profileButton: {
+    padding: 5,
+    marginRight: 5,
+  },
+  addMemberModal: {
+    position: 'absolute',
+    left: 20,
+    right: 20,
+    top: 120,
+    zIndex: 100,
+    borderRadius: 10,
+    padding: 16,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  addMemberInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 8,
+    marginRight: 8,
+    minWidth: 120,
+  },
+  addMemberBtn: {
+    padding: 8,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

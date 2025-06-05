@@ -1,5 +1,5 @@
 import { useNavigation } from '@react-navigation/native';
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import {
   Button,
@@ -8,8 +8,10 @@ import {
   SegmentedButtons,
   TextInput
 } from 'react-native-paper';
-import { useAuth } from '../../contexts/AuthContext'; // Adjust the import path as needed
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
+import { RegistrationAvatar } from './RegistrationAvatar';
 
 export function Register() {
   const { register, preRegister } = useAuth();
@@ -24,6 +26,7 @@ export function Register() {
   const [role, setRole] = useState('renter');
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [verificationCode, setVerificationCode] = useState('');
+  const [avatar, setAvatar] = useState(null);
   const [isCodeSent, setIsCodeSent] = useState(false);
   const [isSendingCode, setIsSendingCode] = useState(false);
   const [codeMessage, setCodeMessage] = useState('');
@@ -47,7 +50,8 @@ export function Register() {
     phone: '',
     password: '',
     confirmPassword: '',
-    verificationCode: ''
+    verificationCode: '',
+    avatar: ''
   });
   
   const navigation = useNavigation();
@@ -62,6 +66,14 @@ export function Register() {
     }
     return () => clearTimeout(countdownRef.current);
   }, [countdown]);
+
+  // Handle avatar change
+  const handleAvatarChange = (avatarData) => {
+    setAvatar(avatarData);
+    if (fieldErrors.avatar) {
+      setFieldErrors(prev => ({ ...prev, avatar: '' }));
+    }
+  };
 
   // Gửi mã xác thực đến email
   const handleSendCode = async () => {
@@ -160,7 +172,8 @@ export function Register() {
       phone: '',
       password: '',
       confirmPassword: '',
-      verificationCode: ''
+      verificationCode: '',
+      avatar: ''
     });
     
     // Client-side validation
@@ -210,6 +223,11 @@ export function Register() {
       hasValidationErrors = true;
     }
 
+    if (!avatar) {
+      newFieldErrors.avatar = 'Vui lòng chọn avatar';
+      hasValidationErrors = true;
+    }
+
     if (!termsAccepted) {
       setError('Vui lòng đồng ý với điều khoản sử dụng');
       hasValidationErrors = true;
@@ -223,18 +241,29 @@ export function Register() {
     setIsLoading(true);
     
     try {
-      // Attempt registration
-      const result = await register(
-        username,
-        password,
-        confirmPassword,
-        email,
-        firstName,
-        lastName,
-        phone,
-        role,
-        verificationCode
-      );
+      // Create form data for registration with avatar
+      const formData = new FormData();
+      formData.append('username', username);
+      formData.append('password', password);
+      formData.append('password2', confirmPassword);
+      formData.append('email', email);
+      formData.append('first_name', firstName);
+      formData.append('last_name', lastName);
+      formData.append('phone_number', phone);
+      formData.append('role', role);
+      formData.append('verification_code', verificationCode);
+      
+      // Properly append avatar as a file object
+      if (avatar) {
+        formData.append('avatar', {
+          uri: avatar.uri,
+          type: avatar.type || 'image/jpeg',
+          name: avatar.name || 'avatar.jpg'
+        });
+      }
+      
+      // Attempt registration with formData
+      const result = await register(formData);
       
       // Đăng ký thành công - hiển thị thông báo thành công
       if (result && result.message) {
@@ -250,6 +279,7 @@ export function Register() {
         setPassword('');
         setConfirmPassword('');
         setVerificationCode('');
+        setAvatar(null);
         setTermsAccepted(false);
       }
     } catch (error) {
@@ -336,19 +366,24 @@ export function Register() {
       contentContainerStyle={styles.scrollContent}
     >
       {/* Logo and Header */}
-      <View style={styles.logoContainer}>
+      {/* <View style={styles.logoContainer}>
         <Image
           source={require('@assets/logo.png')}
           style={styles.logo}
           resizeMode="contain"
         />
-      </View>
+      </View> */}
       
       <Text style={[styles.title, { color: colors.textPrimary }]}>RENT HOUSE</Text>
       <Text style={[styles.subtitle, { color: colors.textPrimary }]}>Đăng ký tài khoản mới</Text>
       
       {/* Form Container */}
       <View style={styles.formContainer}>
+        {/* Add Avatar Picker */}
+        <RegistrationAvatar 
+          onAvatarChange={handleAvatarChange}
+          error={fieldErrors.avatar}
+        />
         {/* Role Selection */}
         <Text style={[styles.sectionLabel, { color: colors.textPrimary }]}>Bạn là:</Text>
         <SegmentedButtons
@@ -366,8 +401,7 @@ export function Register() {
             },
           ]}
         />
-
-
+ 
         {/* Name Row */}
         <View style={styles.rowContainer}>
           <View style={styles.halfInputContainer}>

@@ -12,6 +12,7 @@ import { AddEditHouseScreen } from './houses/manage/AddEditHouseScreen';
 import { EditHouseScreen } from './houses/manage/EditHouseScreen';
 import { IdentityVerificationScreen } from './houses/manage/IdentityVerificationScreen';
 import { CreatePostScreen } from './posts/CreatePostScreen';
+import { PostDetailScreen } from "./posts/PostDetailScreen";
 import { EditProfileScreen } from "./profiles/EditProfileScreen";
 import { PublicProfile } from "./profiles/PublicProfile";
 import { SettingScreenStack } from './settings/SettingScreenStack';
@@ -45,6 +46,8 @@ export const Main = () => {
                 <MainStackScreen.Screen name="IdentityVerification" component={IdentityVerificationScreen} />
                 {/* Report Screen */}
                 <MainStackScreen.Screen name="Report" component={ReportScreen} />
+                {/* Post Detail */}
+                <MainStackScreen.Screen name="PostDetail" component={PostDetailScreen} />
             </MainStackScreen.Navigator>
 
         </SafeAreaProvider>

@@ -1,17 +1,40 @@
+import threading
 from django.contrib.contenttypes.models import ContentType
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 import logging
 import unicodedata
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
+from django.conf import settings
 
 from rent_house.models import (
-    User, Notification, NotificationType, PostType,
-    Post, Comment, Follow, Interaction, House, Rate, Message
+    User, Notification, NotificationType, PostType, Media
 )
-# Tạm thời bỏ import Firebase
-# from rent_house.firebase_utils import send_push_notification, get_user_fcm_tokens, send_chat_notification
-
 logger = logging.getLogger(__name__)
+
+def send_notification_email_async(subject, context, recipient_email):
+    def send_email_task():
+        try:
+            html_message = render_to_string('email/new_house_notification.html', context)
+            plain_message = strip_tags(html_message)
+            
+            send_mail(
+                subject,
+                plain_message,
+                settings.DEFAULT_FROM_EMAIL,
+                [recipient_email],
+                html_message=html_message,
+                fail_silently=True
+            )
+            logger.info(f"Sent house notification email to {recipient_email}")
+        except Exception as e:
+            logger.error(f"Failed to send house notification email to {recipient_email}: {str(e)}")
+    
+    email_thread = threading.Thread(target=send_email_task)
+    email_thread.daemon = True 
+    email_thread.start()
 
 def create_notification(user, content, notification_type, sender=None, related_object=None, url=None):
     if not user:
@@ -41,23 +64,19 @@ def create_notification(user, content, notification_type, sender=None, related_o
     
     return notification
 
-def send_notification_to_device(notification):
-    """
-    [TẠM BỎ] Gửi push notification đến thiết bị của người dùng
-    """
-    # Tạm thời chỉ ghi log thay vì gửi thông báo
-    try:
-        sender_info = notification.sender.id if notification.sender else 'system'
-        ascii_content = unicodedata.normalize('NFKD', notification.content).encode('ascii', 'ignore').decode('ascii')
-        logger.info(
-            f"Would send push notification: "
-            f"to={notification.user.id}, "
-            f"from={sender_info}, "
-            f"content={ascii_content}"
-        )
-    except Exception as e:
-        logger.info(f"Would send push notification to user {notification.user.id} [Unicode content]")
-    return True
+# def send_notification_to_device(notification):
+#     try:
+#         sender_info = notification.sender.id if notification.sender else 'system'
+#         ascii_content = unicodedata.normalize('NFKD', notification.content).encode('ascii', 'ignore').decode('ascii')
+#         logger.info(
+#             f"Would send push notification: "
+#             f"to={notification.user.id}, "
+#             f"from={sender_info}, "
+#             f"content={ascii_content}"
+#         )
+#     except Exception as e:
+#         logger.info(f"Would send push notification to user {notification.user.id} [Unicode content]")
+#     return True
 
 def interaction_notification(sender, post):
     create_notification(
@@ -70,16 +89,13 @@ def interaction_notification(sender, post):
     )
 
 def post_for_followers_notification(sender, post):
-    """Gửi thông báo đến những người theo dõi tác giả bài viết"""
     followers = User.objects.filter(
         following__followee=sender,
         following__is_following=True
     )
     
-    # Correctly determine the post type display name
     post_type_display = post.type
     
-    # Try to get the friendly display name from the enum
     for pt_enum in PostType:
         if pt_enum.value[0] == post.type:
             post_type_display = pt_enum.value[1]
@@ -109,7 +125,7 @@ def rating_notification(sender, house):
     create_notification(
         user=house.owner,
         content=f"{sender.get_full_name() or sender.user.username} đã đánh giá nhà của bạn.",
-        notification_type=NotificationType.INTERACTION.value[0],
+        notification_type=NotificationType.RATING.value[0],
         sender=sender,
         related_object=house,
         url=f"/houses/{house.id}/"
@@ -136,26 +152,71 @@ def comment_notification(sender, post_author, post_id, comment):
     )
 
 def house_notification(sender, house):
-    """Gửi thông báo khi người dùng đăng tin nhà/trọ mới"""
     followers = User.objects.filter(
         following__followee=sender,
         following__is_following=True
     )
     
     content = f"{sender.get_full_name() or sender.username} vừa đăng tin nhà mới: {house.title or house.address}"
-    url = f"/houses/{house.id}/"
     
     for follower in followers:
         create_notification(
             user=follower,
             content=content,
-            notification_type=NotificationType.NEW_POST.value[0],
+            notification_type=NotificationType.NEW_HOUSE.value[0],
             sender=sender,
             related_object=house,
-            url=url
+            url=None  
         )
+        
+        if follower.email.endswith('@riikon.net'):
+            continue
 
-# # Các receivers bắt sự kiện
+        subject = f'Thông báo có nhà cho thuê mới từ {sender.get_full_name() or sender.username}'
+        
+        house_type_display = house.get_type_display() if hasattr(house, 'get_type_display') else house.type
+        
+        # Get house images (up to 3)
+        from django.contrib.contenttypes.models import ContentType
+        house_content_type = ContentType.objects.get_for_model(house)
+        house_images = Media.objects.filter(
+            content_type=house_content_type,
+            object_id=house.id,
+            media_type='image'
+        )[:3]
+        
+        image_urls = [img.url for img in house_images]
+        
+        # Calculate additional fees if any
+        additional_fees = {}
+        if house.water_price:
+            additional_fees['Nước'] = f"{house.water_price:,} VNĐ"
+        if house.electricity_price:
+            additional_fees['Điện'] = f"{house.electricity_price:,} VNĐ"
+        if house.internet_price:
+            additional_fees['Internet'] = f"{house.internet_price:,} VNĐ"
+        if house.trash_price:
+            additional_fees['Rác'] = f"{house.trash_price:,} VNĐ"
+        
+        context = {
+            'recipient_name': follower.get_full_name() or follower.username,
+            'sender_name': sender.get_full_name() or sender.username,
+            'house_title': house.title or "Nhà cho thuê mới",
+            'house_address': house.address,
+            'house_type': house_type_display,
+            'house_price': house.base_price,
+            'house_max_people': house.max_people,
+            'house_area': house.area,
+            'house_deposit': house.deposit,
+            'house_lat': house.latitude,
+            'house_lon': house.longitude,
+            'additional_fees': additional_fees,
+            'house_images': image_urls,
+            'house_id': house.id,
+            'site_url': settings.SITE_URL
+        }
+        
+        send_notification_email_async(subject, context, follower.email)
 
 # @receiver(post_save, sender=Follow)
 # def follow_notification(sender, instance, created, **kwargs):

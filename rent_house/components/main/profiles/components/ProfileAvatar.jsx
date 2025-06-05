@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { ActivityIndicator, Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Avatar } from 'react-native-paper';
 import { useTheme } from '../../../../contexts/ThemeContext';
@@ -33,17 +33,17 @@ export const ProfileAvatar = ({ profile, onAvatarUpdate }) => {
         const imageUri = result.assets[0].uri;
         const filename = imageUri.split('/').pop();
         const match = /\.(\w+)$/.exec(filename);
-        const type = match ? `image/${match[1]}` : 'image';
+        const type = match ? `image/${match[1]}` : 'image/jpeg';
         
         // Show loading indicator
         setAvatarLoading(true);
         
-        // Call the callback with image info
+        // Call the callback with properly formatted image data
         if (onAvatarUpdate) {
           onAvatarUpdate({
             uri: imageUri,
-            name: filename,
-            type
+            type: type,
+            name: filename
           });
         }
       }

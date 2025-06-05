@@ -5,6 +5,7 @@ from django.db import transaction
 from django.db.models import Q
 
 from rent_house.models import User, VerificationCode, PasswordResetToken
+from rent_house.utils import upload_image_to_cloudinary
 
 class PreRegisterSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
@@ -18,11 +19,12 @@ class RegisterSerializer(serializers.ModelSerializer):
     password2 = serializers.CharField(write_only=True, required=True)
     email = serializers.EmailField(required=True)
     verification_code = serializers.CharField(write_only=True, required=True)
+    avatar = serializers.ImageField(required=True, write_only=True)
     
     class Meta:
         model = User
         fields = ('username', 'email', 'password', 'password2', 'first_name', 
-                 'last_name', 'phone_number', 'role', 'verification_code')
+                 'last_name', 'phone_number', 'role', 'verification_code', 'avatar')
         extra_kwargs = {
             'password': {'write_only': True},
             'first_name': {'required': True},
@@ -73,11 +75,14 @@ class RegisterSerializer(serializers.ModelSerializer):
     
     @transaction.atomic
     def create(self, validated_data):
-        # Xóa trường không cần thiết
-        validated_data.pop('password2')
-        validated_data.pop('verification_code')
+        password2 = validated_data.pop('password2')
+        verification_code = validated_data.pop('verification_code')
+        avatar_file = validated_data.pop('avatar')
         
-        # Tạo user và kích hoạt luôn
+        avatar_url = upload_image_to_cloudinary(avatar_file, folder="user_avatars")
+        if not avatar_url:
+            raise serializers.ValidationError({"avatar": "Không thể tải lên ảnh đại diện. Vui lòng thử lại."})
+        
         user = User.objects.create(
             username=validated_data['username'],
             email=validated_data['email'],
@@ -85,7 +90,8 @@ class RegisterSerializer(serializers.ModelSerializer):
             last_name=validated_data.get('last_name', ''),
             phone_number=validated_data.get('phone_number', ''),
             role=validated_data.get('role', 'renter'),
-            is_active=True 
+            is_active=True,
+            avatar=avatar_url 
         )
         
         user.set_password(validated_data['password'])
@@ -95,6 +101,18 @@ class RegisterSerializer(serializers.ModelSerializer):
         self.verification.is_used = True
         self.verification.user = user 
         self.verification.save()
+        
+        # Tạo bản ghi media cho ảnh đại diện
+        from django.contrib.contenttypes.models import ContentType
+        from rent_house.models import Media
+        
+        Media.objects.create(
+            content_type=ContentType.objects.get_for_model(User),
+            object_id=user.id,
+            url=avatar_url,
+            media_type='image',
+            purpose='avatar'
+        )
         
         return user
 
@@ -187,4 +205,4 @@ class PasswordResetSerializer(serializers.Serializer):
             
         attrs['reset_token'] = reset_token
         return attrs
-    
+

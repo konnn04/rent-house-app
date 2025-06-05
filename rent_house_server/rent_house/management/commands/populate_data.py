@@ -143,7 +143,7 @@ class Command(BaseCommand):
             }
         ]        
         owners = []
-        for i in range(16):
+        for i in range(20):
             owner = User.objects.create(
                 username=owner_data[i]['username'] if i < len(owner_data) else f'owner{i}',
                 email=f'{owner_data[i]["username"]}@riikon.net' if i < len(owner_data) else f'owner{i}@riikon.net',

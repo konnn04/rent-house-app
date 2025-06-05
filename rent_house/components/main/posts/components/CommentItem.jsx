@@ -1,24 +1,25 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Image,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-  Alert,
 } from 'react-native';
 import { Menu, PaperProvider } from 'react-native-paper';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useUser } from '../../../../contexts/UserContext';
-import { getPostCommentsService, deletePostCommentService } from '../../../../services/postService';
+import { getPostCommentsService } from '../../../../services/postService';
 import { timeAgo } from '../../../../utils/Tools';
 import { ImageGallery } from '../../../common/ImageGallery';
 
 export const CommentItem = ({ comment, onReply, colors, postId, onDelete }) => {
   const { userData } = useUser();
-
+  const navigation = useNavigation();
   const [showReplies, setShowReplies] = useState(false);
   const [replies, setReplies] = useState([]);
   const [loadingReplies, setLoadingReplies] = useState(false);
@@ -26,7 +27,6 @@ export const CommentItem = ({ comment, onReply, colors, postId, onDelete }) => {
   const [hasMoreReplies, setHasMoreReplies] = useState(true);
   const [menuVisible, setMenuVisible] = useState(false);
 
-  // Fetch replies for this comment
   const fetchReplies = useCallback(async (pageNum = 1, append = false) => {
     if (!comment.id || !postId) return;
 
@@ -74,26 +74,27 @@ export const CommentItem = ({ comment, onReply, colors, postId, onDelete }) => {
     }
   }, [comment.reply_count, showReplies]);
 
-  // Handle the reply button press
   const handleReplyPress = () => {
     if (onReply) {
       onReply(comment);
     }
   };
 
-  // Check if the comment is from the current user
   const isCurrentUser = userData?.id === comment.author.id;
 
   return (
     <PaperProvider>
       <View style={styles.commentContainer}>
-        {/* Main comment */}
         <View style={styles.commentContent}>
-          <Image
-            source={{ uri: comment.author.avatar_thumbnail || comment.author.avatar }}
-            style={styles.avatar}
-            defaultSource={require('@assets/images/default-avatar.png')}
-          />
+          <TouchableOpacity
+            onPress={() => navigation.navigate('PublicProfile', { username: comment.author.username })}
+          >
+            <Image
+              source={{ uri: comment.author.avatar_thumbnail || comment.author.avatar }}
+              style={styles.avatar}
+              defaultSource={require('@assets/images/default-avatar.png')}
+            />
+          </TouchableOpacity>
 
           <View style={styles.commentBody}>
             <View style={[styles.commentBubble, { backgroundColor: colors.backgroundSecondary }]}>
@@ -134,27 +135,27 @@ export const CommentItem = ({ comment, onReply, colors, postId, onDelete }) => {
                         <MaterialCommunityIcons name="dots-horizontal" size={20} color={colors.textSecondary} />
                       </TouchableOpacity>
                     }
-                    contentStyle={ [styles.menuContent , { backgroundColor: colors.backgroundSecondary} ]}
+                    contentStyle={[styles.menuContent, { backgroundColor: colors.backgroundSecondary }]}
                   >
-                      <Menu.Item
-                        comment ={comment}
-                        onDelete={() => setMenuVisible(false)}
-                        onPress={() => {
-                          setMenuVisible(false);
-                          Alert.alert(
-                            'Xác nhận',
-                            'Bạn có chắc muốn xóa bình luận này?',
-                            [
-                              { text: 'Hủy', style: 'cancel' },
-                              { text: 'Xóa', style: 'destructive', onPress: () => onDelete(comment.id) },
-                            ]
-                          );
-                        }}
-                        title="Xóa bình luận"
-                        titleStyle={{ color: colors.dangerColor }}
-                        leadingIcon="delete"
-                        leadingIconColor={colors.dangerColor}
-                      />
+                    <Menu.Item
+                      comment={comment}
+                      onDelete={() => setMenuVisible(false)}
+                      onPress={() => {
+                        setMenuVisible(false);
+                        Alert.alert(
+                          'Xác nhận',
+                          'Bạn có chắc muốn xóa bình luận này?',
+                          [
+                            { text: 'Hủy', style: 'cancel' },
+                            { text: 'Xóa', style: 'destructive', onPress: () => onDelete(comment.id) },
+                          ]
+                        );
+                      }}
+                      title="Xóa bình luận"
+                      titleStyle={{ color: colors.dangerColor }}
+                      leadingIcon="delete"
+                      leadingIconColor={colors.dangerColor}
+                    />
                   </Menu>
                 )}
               </View>
@@ -186,11 +187,15 @@ export const CommentItem = ({ comment, onReply, colors, postId, onDelete }) => {
           <View style={styles.repliesContainer}>
             {replies.map(reply => (
               <View key={reply.id} style={styles.replyContent}>
-                <Image
+                <TouchableOpacity
+                  onPress={() => navigation.navigate('PublicProfile', { username: reply.author.username })}
+                >
+                  <Image
                   source={{ uri: reply.author.avatar_thumbnail || reply.author.avatar }}
                   style={styles.replyAvatar}
                   defaultSource={require('@assets/images/default-avatar.png')}
                 />
+                </TouchableOpacity>
 
                 <View style={styles.replyBody}>
                   <View style={[styles.commentBubble, { backgroundColor: colors.backgroundSecondary }]}>
@@ -314,11 +319,11 @@ const styles = StyleSheet.create({
   },
   menuContent: {
     padding: 0,
-    position: 'relative', 
-    top: -170, 
+    position: 'relative',
+    top: -170,
     right: -16,
     borderWidth: 1,
-    zIndex: 1000, 
+    zIndex: 1000,
   },
   viewRepliesButton: {
     flexDirection: 'row',

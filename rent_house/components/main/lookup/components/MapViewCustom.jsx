@@ -34,14 +34,11 @@ export const MapViewCustom = ({
   const [loadingHouses, setLoadingHouses] = useState(false);
   const [lastSearchCenter, setLastSearchCenter] = useState(null);
   const [mapRegion, setMapRegion] = useState(null);
-  // Thêm biến để theo dõi đã xin quyền vị trí chưa
   const [askedLocationPermission, setAskedLocationPermission] = useState(false);
   
-  // State for house preview modal
   const [selectedHouse, setSelectedHouse] = useState(null);
   const [previewModalVisible, setPreviewModalVisible] = useState(false);
 
-  // State for dialog visibility
   const [dialogVisible, setDialogVisible] = useState(false);
   const [dialogProps, setDialogProps] = useState({
     title: '',
@@ -49,7 +46,6 @@ export const MapViewCustom = ({
     actions: []
   });
 
-  // Default region (Ho Chi Minh City center)
   const defaultRegion = {
     latitude: 10.7769,
     longitude: 106.7009,
@@ -57,16 +53,13 @@ export const MapViewCustom = ({
     longitudeDelta: 0.05,
   };
 
-  // Xử lý search timeout
   const searchTimeoutRef = useRef(null);
 
-  // Get user's current location
   const getUserLocation = async (forceRequest = false) => {
     try {
       setLoadingLocation(true);
       setLocationError(null);
 
-      // Kiểm tra xem đã xin quyền chưa, nếu đã xin rồi thì kiểm tra trạng thái quyền
       let status;
       if (!askedLocationPermission || forceRequest) {
         const { status: permissionStatus } = await Location.requestForegroundPermissionsAsync();
@@ -97,12 +90,10 @@ export const MapViewCustom = ({
       setUserLocation(userLoc);
       setMapRegion(userLoc);
       
-      // Move map to user location
       if (mapRef.current) {
         mapRef.current.animateToRegion(userLoc, 1000);
       }
       
-      // Tìm kiếm nhà xung quanh vị trí hiện tại
       searchHousesNearLocation(location.coords.latitude, location.coords.longitude);
     } catch (error) {
       console.error('Error getting location:', error);
@@ -112,9 +103,7 @@ export const MapViewCustom = ({
     }
   };
 
-  // Tìm kiếm nhà xung quanh vị trí
   const searchHousesNearLocation = useCallback(async (latitude, longitude) => {
-    // Nếu đã tìm kiếm gần đây ở vị trí này, bỏ qua
     if (lastSearchCenter && 
         Math.abs(lastSearchCenter.latitude - latitude) < 0.01 && 
         Math.abs(lastSearchCenter.longitude - longitude) < 0.01 &&
@@ -125,14 +114,12 @@ export const MapViewCustom = ({
     try {
       setLoadingHouses(true);
       
-      // Lưu vị trí tìm kiếm hiện tại
       setLastSearchCenter({ latitude, longitude });
       
-      // Lấy các tham số filter
       const { type, min_price, max_price, is_verified, is_renting, is_blank, query } = mapFilters || {};
       
       const houses = await getHousesByMapService({
-        query: query || searchQuery || '', // Sử dụng query từ mapFilters hoặc từ searchQuery
+        query: query || searchQuery || '', 
         lat: latitude,
         lon: longitude,
         type,
@@ -147,32 +134,26 @@ export const MapViewCustom = ({
       setMapHouses(houses.results || []);
     } catch (error) {
       console.error('Error searching houses:', error);
-      // Không hiển thị lỗi cho người dùng để tránh làm phiền
     } finally {
       setLoadingHouses(false);
     }
   }, [lastSearchCenter, mapFilters, setMapHouses, searchQuery]);
 
-  // Xử lý khi region thay đổi
   const handleRegionChangeComplete = (region) => {
     setMapRegion(region);
     
-    // Hủy timeout trước đó nếu có
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
     }
     
-    // Đặt timeout mới để tránh quá nhiều API calls
     searchTimeoutRef.current = setTimeout(() => {
       searchHousesNearLocation(region.latitude, region.longitude);
-    }, 1000); // 1 giây sau khi người dùng dừng di chuyển bản đồ
+    }, 1000); 
   };
 
-  // Initialize user location
   useEffect(() => {
     getUserLocation();
     
-    // Cleanup timeout khi unmount
     return () => {
       if (searchTimeoutRef.current) {
         clearTimeout(searchTimeoutRef.current);
@@ -180,16 +161,13 @@ export const MapViewCustom = ({
     };
   }, []);
 
-  // Khi filter hoặc searchQuery thay đổi, tìm kiếm lại
   useEffect(() => {
     if (mapRegion) {
-      // Reset lastSearchCenter để buộc tìm kiếm lại
       setLastSearchCenter(null);
       searchHousesNearLocation(mapRegion.latitude, mapRegion.longitude);
     }
   }, [mapFilters, searchQuery]);
 
-  // Handle "locate me" button press
   const handleLocateMe = () => {
     if (locationError) {
       setDialogProps({
@@ -215,9 +193,7 @@ export const MapViewCustom = ({
     getUserLocation();
   };
 
-  // Updated function to handle marker press
   const handleMarkerPress = (houseId) => {
-    // Find the house object from the mapHouses array
     const house = mapHouses.find(h => h.id === houseId);
     if (house) {
       setSelectedHouse(house);
@@ -225,7 +201,6 @@ export const MapViewCustom = ({
     }
   };
 
-  // Handle navigation to house detail from modal
   const handleViewHouseDetail = () => {
     if (selectedHouse) {
       navigation.navigate('HouseDetail', { houseId: selectedHouse.id });
@@ -257,7 +232,6 @@ export const MapViewCustom = ({
         ))}
       </MapView>
 
-      {/* Loading indicator */}
       {loadingHouses && (
         <View style={styles.loadingOverlay}>
           <ActivityIndicator size="small" color={colors.accentColor} />
@@ -265,7 +239,6 @@ export const MapViewCustom = ({
         </View>
       )}
 
-      {/* Search query indicator */}
       {(searchQuery || mapFilters.query) && (
         <View style={[styles.searchQueryBadge, { backgroundColor: colors.backgroundSecondary }]}>
           <Icon name="magnify" size={16} color={colors.accentColor} />
@@ -275,7 +248,6 @@ export const MapViewCustom = ({
         </View>
       )}
 
-      {/* Locate me button - replaced with PaperIconButton */}
       <View style={[styles.locateButton, { backgroundColor: colors.backgroundSecondary }]}>
         <PaperIconButton
           icon="crosshairs-gps"
@@ -294,12 +266,10 @@ export const MapViewCustom = ({
         )}
       </View>
 
-      {/* Houses count */}
       <View style={[styles.countBadge, { backgroundColor: colors.accentColor }]}>
         <Text style={styles.countText}>{mapHouses.length} nhà</Text>
       </View>
 
-      {/* House Preview Modal */}
       <HousePreviewModal
         visible={previewModalVisible}
         house={selectedHouse}
@@ -308,7 +278,6 @@ export const MapViewCustom = ({
         colors={colors}
       />
 
-      {/* Location Permission Dialog - using PaperDialog */}
       <PaperDialog
         visible={dialogVisible}
         onDismiss={() => setDialogVisible(false)}
