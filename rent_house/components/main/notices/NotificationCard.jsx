@@ -7,10 +7,9 @@ import {
     View
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { timeAgo } from '../../../utils/Tools';
 import { useTheme } from '../../../contexts/ThemeContext';
+import { timeAgo } from '../../../utils/Tools';
 
-// Map loại thông báo đến icon tương ứng
 const NOTIFICATION_TYPE_ICONS = {
     'comment': 'comment-text',
     'new_post': 'post',

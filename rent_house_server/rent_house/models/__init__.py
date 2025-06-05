@@ -45,6 +45,8 @@ class NotificationType(Enum):
     FOLLOW = 'follow', 'Theo dõi'
     INTERACTION = 'interaction', 'Tương tác'
     MESSAGE = 'message', 'Tin nhắn'
+    NEW_HOUSE = 'new_house', 'Nhà mới'
+    RATING = 'rating', 'Đánh giá'
 
 class InteractionType(Enum):
     LIKE = 'like', 'Thích'

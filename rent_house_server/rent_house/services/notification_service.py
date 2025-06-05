@@ -125,7 +125,7 @@ def rating_notification(sender, house):
     create_notification(
         user=house.owner,
         content=f"{sender.get_full_name() or sender.user.username} đã đánh giá nhà của bạn.",
-        notification_type=NotificationType.INTERACTION.value[0],
+        notification_type=NotificationType.RATING.value[0],
         sender=sender,
         related_object=house,
         url=f"/houses/{house.id}/"
@@ -163,7 +163,7 @@ def house_notification(sender, house):
         create_notification(
             user=follower,
             content=content,
-            notification_type=NotificationType.NEW_POST.value[0],
+            notification_type=NotificationType.NEW_HOUSE.value[0],
             sender=sender,
             related_object=house,
             url=None  

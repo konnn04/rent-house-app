@@ -14,12 +14,25 @@ from rent_house.utils import upload_image_to_cloudinary, delete_cloudinary_image
 class PostViewSet(viewsets.ModelViewSet):
     queryset = Post.objects.filter(is_active=True)
     parser_classes = [parsers.MultiPartParser, parsers.JSONParser]
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrAdminOrReadOnly]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     pagination_class = PageNumberPagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['title', 'content', 'address']
     ordering_fields = ['created_at']
     ordering = ['-created_at']
+
+    def get_permissions(self):
+        """
+        Instantiate and return the list of permissions that this view requires.
+        """
+        if self.action in ['update', 'partial_update', 'destroy']:
+            permission_classes = [IsOwnerOrAdminOrReadOnly]
+        elif self.action == 'interact':
+            permission_classes = [permissions.IsAuthenticated]
+        else:
+            permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+        
+        return [permission() for permission in permission_classes]
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -57,6 +70,8 @@ class PostViewSet(viewsets.ModelViewSet):
         
         return post
         
+    
+    @transaction.atomic
     def perform_update(self, serializer):
         post = serializer.save()
         self.handle_images(post)
@@ -102,7 +117,6 @@ class PostViewSet(viewsets.ModelViewSet):
             
             post = self.get_object()
             
-            # Sử dụng get_or_create thay vì filter + create/update riêng biệt
             interaction, created = Interaction.objects.get_or_create(
                 user=request.user,
                 post=post,
@@ -116,7 +130,6 @@ class PostViewSet(viewsets.ModelViewSet):
                     interaction.type = interaction_type
                 interaction.save()
             
-            # Tạo thông báo
             if created and interaction.type != 'none':
                 try:
                     from rent_house.services.notification_service import interaction_notification
@@ -259,4 +272,3 @@ class PostViewSet(viewsets.ModelViewSet):
             
         except ValueError:
             return Response({"error": "Invalid lat, lng, or radius values"}, status=400)
-

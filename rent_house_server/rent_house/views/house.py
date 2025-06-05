@@ -137,38 +137,46 @@ class HouseViewSet(viewsets.ModelViewSet):
 
     @transaction.atomic
     def perform_create(self, serializer):
-        images = self.request.FILES.getlist('images') if hasattr(self.request.FILES, 'getlist') else []
-        base64_images = self.request.data.get('base64_images', [])
-        if isinstance(base64_images, str):
-            import json
-            try:
-                base64_images = json.loads(base64_images)
-            except Exception:
-                base64_images = [base64_images]
-        if not isinstance(base64_images, list):
-            base64_images = [base64_images]
-        total_images = len(images) + len([img for img in base64_images if img])
-
-        if not self.request.user.can_create_house():
-            raise ValidationError({
-                "message": "Bạn cần xác thực danh tính trước khi đăng tin nhà mới"
-            })
-
-        if len(images) < 3:
-            raise ValidationError({"error": "Cần ít nhất 3 ảnh để đăng tin nhà mới"})
-        
-        house = serializer.save(owner=self.request.user)
-        self.handle_images(house)
-
         try:
-            from rent_house.services.notification_service import house_notification
-            house_notification(self.request.user, house)
+            images = self.request.FILES.getlist('images') if hasattr(self.request.FILES, 'getlist') else []
+            base64_images = self.request.data.get('base64_images', [])
+            if isinstance(base64_images, str):
+                import json
+                try:
+                    base64_images = json.loads(base64_images)
+                except Exception:
+                    base64_images = [base64_images]
+            if not isinstance(base64_images, list):
+                base64_images = [base64_images]
+            total_images = len(images) + len([img for img in base64_images if img])
+
+            if not self.request.user.can_create_house():
+                raise ValidationError({
+                    "message": "Bạn cần xác thực danh tính trước khi đăng tin nhà mới"
+                })
+
+            if len(images) < 3:
+                raise ValidationError({"error": "Cần ít nhất 3 ảnh để đăng tin nhà mới"})
+            
+            house = serializer.save(owner=self.request.user)
+            self.handle_images(house)
+
+            try:
+                from rent_house.services.notification_service import house_notification
+                house_notification(self.request.user, house)
+            except Exception as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Lỗi khi gửi thông báo có nhà mới: {str(e)}")
+
+            return house
+        except ValidationError as e:
+            raise e
         except Exception as e:
             import logging
             logger = logging.getLogger(__name__)
-            logger.error(f"Lỗi khi gửi thông báo có nhà mới: {str(e)}")
-
-        return house
+            logger.error(f"Lỗi khi tạo nhà mới: {str(e)}")
+            raise
 
     def perform_update(self, serializer):
         house = serializer.save()
