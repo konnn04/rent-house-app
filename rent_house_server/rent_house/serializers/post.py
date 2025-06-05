@@ -21,6 +21,26 @@ class PostSerializer(serializers.ModelSerializer):
         'is_followed_owner', 'comment_count', 'media', 'is_active', 'like_count', 'dislike_count')
         read_only_fields = ('id', 'created_at', 'updated_at')
 
+    def validate_content(self, value):
+        if not value or not value.strip():
+            raise serializers.ValidationError("Nội dung không được để trống.")
+        return value.strip()
+
+    def validate_title(self, value):
+        if not value or not value.strip():
+            raise serializers.ValidationError("Tiêu đề không được để trống.")
+        return value.strip()
+
+    def validate_latitude(self, value):
+        if value is not None and (value < -90 or value > 90):
+            raise serializers.ValidationError("Vĩ độ phải nằm trong khoảng -90 đến 90 độ.")
+        return value
+
+    def validate_longitude(self, value):
+        if value is not None and (value < -180 or value > 180):
+            raise serializers.ValidationError("Kinh độ phải nằm trong khoảng -180 đến 180 độ.")
+        return value
+
     def get_like_count(self, obj):
         return obj.interaction_set.filter(type='like').count()
     
@@ -31,7 +51,6 @@ class PostSerializer(serializers.ModelSerializer):
         return obj.comments.count()
     
     def get_interaction(self, obj):
-        """Get current user's interaction with this post if any"""
         request = self.context.get('request')
         if not request or not request.user.is_authenticated:
             return None
@@ -47,7 +66,6 @@ class PostSerializer(serializers.ModelSerializer):
         return None
     
     def get_is_followed_owner(self, obj):
-        """Check if current user is following the post author"""
         request = self.context.get('request')
         if not request or not request.user.is_authenticated:
             return False
@@ -59,7 +77,6 @@ class PostSerializer(serializers.ModelSerializer):
         ).exists()
     
     def get_media(self, obj):
-        """Get media attachments for this post"""
         media_items = []
         for media in obj.media_files.filter(media_type='image'):
             media_items.append({
@@ -72,7 +89,6 @@ class PostSerializer(serializers.ModelSerializer):
         return media_items
 
 class PostDetailSerializer(serializers.ModelSerializer):
-    comments = serializers.SerializerMethodField()
     interaction = serializers.SerializerMethodField()
     like_count = serializers.SerializerMethodField()
     dislike_count = serializers.SerializerMethodField()
@@ -85,15 +101,30 @@ class PostDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
         fields = ('id', 'author', 'type', 'title', 'content', 'address', 'latitude', 'longitude', 
-                 'created_at', 'updated_at', 'house_link', 'house_details', 'comments', 
+                 'created_at', 'updated_at', 'house_link', 'house_details', 
                  'like_count', 'dislike_count', 'interaction', 'is_followed_owner', 'comment_count', 
                  'media', 'is_active')
         read_only_fields = ('id', 'created_at', 'updated_at')
     
-    def get_comments(self, obj):
-        # Chỉ lấy comment bậc 1
-        comments = obj.comments.filter(parent=None).order_by('-created_at')
-        return CommentSerializer(comments, many=True, context=self.context).data
+    def validate_content(self, value):
+        if not value or not value.strip():
+            raise serializers.ValidationError("Nội dung không được để trống.")
+        return value.strip()
+
+    def validate_title(self, value):
+        if not value or not value.strip():
+            raise serializers.ValidationError("Tiêu đề không được để trống.")
+        return value.strip()
+
+    def validate_latitude(self, value):
+        if value is not None and (value < -90 or value > 90):
+            raise serializers.ValidationError("Vĩ độ phải nằm trong khoảng -90 đến 90 độ.")
+        return value
+
+    def validate_longitude(self, value):
+        if value is not None and (value < -180 or value > 180):
+            raise serializers.ValidationError("Kinh độ phải nằm trong khoảng -180 đến 180 độ.")
+        return value
     
     def get_house_details(self, obj):
         if not obj.house_link:

@@ -7,17 +7,14 @@ from rent_house.models import Follow, User
 from rent_house.serializers import FollowSerializer, UserSummarySerializer
 
 class FollowViewSet(viewsets.GenericViewSet):
-    """ViewSet cho quản lý theo dõi (Follow)"""
     serializer_class = FollowSerializer
     permission_classes = [permissions.IsAuthenticated]
-    lookup_field = 'pk'  # Sử dụng ID thay vì username
+    lookup_field = 'pk'
     
     def get_queryset(self):
-        """Mặc định: Lấy danh sách người mình đang follow"""
         return Follow.objects.filter(follower=self.request.user, is_following=True)
     
     def list(self, request):
-        """GET /api/follows/ - Lấy danh sách người mà user hiện tại đang follow"""
         queryset = self.get_queryset()
         page = self.paginate_queryset(queryset)
         
@@ -29,7 +26,6 @@ class FollowViewSet(viewsets.GenericViewSet):
         return Response(serializer.data)
     
     def retrieve(self, request, pk=None):
-        """GET /api/follows/{id}/ - Kiểm tra trạng thái follow"""
         target_user = get_object_or_404(User, id=pk)
         
         is_following = Follow.objects.filter(
@@ -47,7 +43,7 @@ class FollowViewSet(viewsets.GenericViewSet):
     def create(self, request):
         followee_id = request.data.get('followee')
         if not followee_id:
-            return Response({"error": "Vui lòng cung cấp ID người dùng cần follow"}, 
+            return Response({"error": "Vui lòng cung cấp ID người dùng cần theo dõi"}, 
                            status=status.HTTP_400_BAD_REQUEST)
             
         try:
@@ -55,8 +51,11 @@ class FollowViewSet(viewsets.GenericViewSet):
         except User.DoesNotExist:
             return Response({"error": "Người dùng không tồn tại"}, 
                            status=status.HTTP_404_NOT_FOUND)
+        
+        if target_user == request.user:
+            return Response({"error": "Bạn không thể theo dõi chính mình"}, 
+                           status=status.HTTP_400_BAD_REQUEST)
             
-        # Xử lý follow - luôn set is_following=True
         follow, created = Follow.objects.get_or_create(
             follower=request.user,
             followee=target_user,
@@ -75,7 +74,6 @@ class FollowViewSet(viewsets.GenericViewSet):
                 import logging
                 logger = logging.getLogger(__name__)
                 logger.error(f"Lỗi khi gửi thông báo có người theo dõi: {str(e)}")
-        
 
         return Response({
             "status": "success",
@@ -87,6 +85,11 @@ class FollowViewSet(viewsets.GenericViewSet):
     @action(detail=True, methods=['post'])
     def toggle(self, request, pk=None):
         target_user = get_object_or_404(User, id=pk)
+        
+        if target_user == request.user:
+            return Response({"error": "Bạn không thể theo dõi chính mình"}, 
+                           status=status.HTTP_400_BAD_REQUEST)
+        
         is_following = request.data.get('is_following', True)
         
         follow, created = Follow.objects.get_or_create(
@@ -108,10 +111,12 @@ class FollowViewSet(viewsets.GenericViewSet):
     
     @action(detail=True, methods=['post'])
     def unfollow(self, request, pk=None):
-        """POST /api/follows/{id}/unfollow/ - Unfollow một user cụ thể"""
         target_user = get_object_or_404(User, id=pk)
         
-        # Xử lý unfollow - luôn set is_following=False
+        if target_user == request.user:
+            return Response({"error": "Bạn không thể bỏ theo dõi chính mình"}, 
+                           status=status.HTTP_400_BAD_REQUEST)
+        
         follow, created = Follow.objects.get_or_create(
             follower=request.user,
             followee=target_user,
@@ -131,7 +136,6 @@ class FollowViewSet(viewsets.GenericViewSet):
     
     @action(detail=True, methods=['get'])
     def followers(self, request, pk=None):
-        """GET /api/follows/{id}/followers/ - Lấy danh sách người theo dõi user"""
         target_user = get_object_or_404(User, id=pk)
         
         followers = User.objects.filter(
@@ -149,7 +153,6 @@ class FollowViewSet(viewsets.GenericViewSet):
     
     @action(detail=True, methods=['get'])
     def following(self, request, pk=None):
-        """GET /api/follows/{id}/following/ - Lấy danh sách người user đang theo dõi"""
         target_user = get_object_or_404(User, id=pk)
         
         following = User.objects.filter(

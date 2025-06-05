@@ -1,0 +1,349 @@
+/* Dashboard general styles */
+.dashboard-container {
+    padding: 20px;
+    max-width: 1600px;
+    margin: 0 auto;
+}
+
+.dashboard-section {
+    margin-bottom: 30px;
+}
+
+.section-header {
+    font-size: 1.5rem;
+    margin-bottom: 15px;
+    font-weight: 500;
+}
+
+/* Stats cards */
+.dashboard-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 20px;
+}
+
+.stats-card {
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    background-color: white;
+}
+
+.stats-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.dark .stats-card {
+    background-color: #1f2937;
+    color: #f3f4f6;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.card-title {
+    font-size: 0.9rem;
+    color: #6b7280;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.dark .card-title {
+    color: #9ca3af;
+}
+
+.card-value {
+    font-size: 2rem;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.dark .card-value {
+    color: #f9fafb;
+}
+
+.card-context {
+    font-size: 0.85rem;
+    color: #6b7280;
+    margin-top: auto;
+}
+
+.dark .card-context {
+    color: #9ca3af;
+}
+
+.trend-up {
+    color: #10b981;
+}
+
+.trend-down {
+    color: #ef4444;
+}
+
+.dark .trend-up {
+    color: #34d399;
+}
+
+.dark .trend-down {
+    color: #f87171;
+}
+
+.user-card {
+    border-top: 4px solid #60a5fa;
+}
+
+.house-card {
+    border-top: 4px solid #f87171;
+}
+
+.post-card {
+    border-top: 4px solid #34d399;
+}
+
+.report-card {
+    border-top: 4px solid #fbbf24;
+}
+
+.panel {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.dark .panel {
+    background-color: #1f2937;
+    color: #f3f4f6;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.panel-title {
+    padding: 15px 20px;
+    font-size: 1rem;
+    font-weight: 500;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.dark .panel-title {
+    color: #f9fafb;
+}
+
+.panel-title-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.action-button {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+    border-radius: 4px;
+    background-color: #f3f4f6;
+    color: #374151;
+    text-decoration: none;
+    transition: background-color 0.2s;
+}
+
+.action-button:hover {
+    background-color: #e5e7eb;
+}
+
+.dark .action-button {
+    background-color: #374151;
+    color: #f3f4f6;
+}
+
+.dark .action-button:hover {
+    background-color: #4b5563;
+}
+
+#map {
+    height: 500px;
+    width: 100%;
+}
+
+.chart-container {
+    position: relative;
+    height: 400px;
+}
+
+.map-legend {
+    padding: 15px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.dark .map-legend {
+    background-color: #374151;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.85rem;
+}
+
+.legend-marker {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.legend-available {
+    background-color: #10b981;
+}
+
+.legend-rented {
+    background-color: #f59e0b;
+}
+
+.legend-maintenance {
+    background-color: #6366f1;
+}
+
+.legend-inactive {
+    background-color: #ef4444;
+}
+
+/* Make sure popups are readable in dark mode */
+.dark .leaflet-popup-content-wrapper {
+    background-color: #1f2937;
+    color: #f3f4f6;
+}
+
+.dark .leaflet-popup-tip {
+    background-color: #1f2937;
+}
+
+.house-popup {
+    min-width: 200px;
+}
+
+.house-popup-title {
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin-bottom: 8px;
+}
+
+.house-popup-details {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 5px;
+    font-size: 0.85rem;
+}
+
+.status-badge {
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: bold;
+}
+
+.status-available {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+}
+
+.status-rented {
+    background-color: rgba(96, 165, 250, 0.1);
+    color: #60a5fa;
+}
+
+.status-maintenance {
+    background-color: rgba(245, 158, 11, 0.1);
+    color: #f59e0b;
+}
+
+.status-inactive {
+    background-color: rgba(107, 114, 128, 0.1);
+    color: #6b7280;
+}
+
+.dark .status-available {
+    background-color: rgba(52, 211, 153, 0.2);
+    color: #34d399;
+}
+
+.dark .status-rented {
+    background-color: rgba(96, 165, 250, 0.2);
+    color: #93c5fd;
+}
+
+.dark .status-maintenance {
+    background-color: rgba(245, 158, 11, 0.2);
+    color: #fbbf24;
+}
+
+.dark .status-inactive {
+    background-color: rgba(156, 163, 175, 0.2);
+    color: #d1d5db;
+}
+
+/* Custom markers for the map */
+.custom-marker {
+    width: 30px !important;
+    height: 30px !important;
+}
+
+.marker-icon {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    position: relative;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    border: 2px solid white;
+}
+
+.available-marker .marker-icon {
+    background-color: #10b981;
+}
+
+.rented-marker .marker-icon {
+    background-color: #f59e0b;
+}
+
+.maintenance-marker .marker-icon {
+    background-color: #6366f1;
+}
+
+.inactive-marker .marker-icon {
+    background-color: #ef4444;
+}
+
+/* Dark mode adjustments */
+html.dark .stats-card,
+html.dark .panel {
+    background-color: #1f2937;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+html.dark .action-button {
+    background-color: #374151;
+    color: #e5e7eb;
+}
+
+html.dark .action-button:hover {
+    background-color: #4b5563;
+}
+
+html.dark .panel-title {
+    border-bottom-color: #374151;
+}
+
+html.dark .card-title,
+html.dark .card-context {
+    color: #9ca3af;
+}
+
+html.dark .house-popup-address {
+    color: #9ca3af;
+}

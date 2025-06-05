@@ -1,0 +1,27 @@
+<div style="display: flex; gap: 15px; align-items: flex-start; padding: 8px;">
+    <div style="flex-shrink: 0;">
+        <img src="{{ thumbnail }}" width="150" height="150" style="border-radius: 6px; object-fit: cover;" />
+    </div>
+    <div style="flex: 1;">
+        <h4 style="margin: 0 0 8px 0; font-size: 14px;">
+            <a href="/admin/rent_house/house/{{ house.id }}/change/" style="text-decoration: none;">
+                {{ house.title|default:"House #"|add:house.id }}
+            </a>
+        </h4>
+        {% comment %} Định dạng giá VND {% endcomment %}
+        <div style="font-size: 16px; line-height: 1.4;">
+            <div><strong>Địa chỉ:</strong> {{ house.address|default:"No address" }}</div>
+            <div><strong>Số người ở:</strong> {{ house.max_people|default:"N/A" }}</div>
+            <div><strong>Loại:</strong> {{ house.type|default:"N/A" }}</div>
+            <div><strong>Giá:</strong> {{ house.get_base_price_display|default:"0" }}</div>
+            <div style="margin-top: 8px;">
+                <span>
+                    {% if house.is_verified %} Đã xác minh{% else %} Chưa xác minh{% endif %}
+                </span>
+                <span style="margin-left: 8px;">
+                    {% if house.is_renting %} Đang cho thuê{% else %} Không cho thuê{% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+</div>

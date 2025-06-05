@@ -17,7 +17,7 @@ import {
   View
 } from 'react-native';
 import { useUser } from '../../../../contexts/UserContext';
-import { createPostCommentService, getPostCommentsService, deletePostCommentService } from '../../../../services/postService';
+import { createPostCommentService, deletePostCommentService, getPostCommentsService } from '../../../../services/postService';
 import { CommentItem } from './CommentItem';
 
 export const CommentsModal = ({ visible, onClose, postId, colors }) => {
