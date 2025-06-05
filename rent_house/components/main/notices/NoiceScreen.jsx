@@ -1,4 +1,4 @@
-import { useIsFocused } from '@react-navigation/native';
+import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { useCallback, useEffect, useState } from 'react';
 import {
     ActivityIndicator,
@@ -34,8 +34,9 @@ export const NoticeScreen = () => {
     const [hasError, setHasError] = useState(false);
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
-    const { resetNotificationCount, fetchUnreadNotifications } = useNotificationCount();
+    const { resetNotificationCount, fetchUnreadNotifications, readedOneNotification } = useNotificationCount();
     const isFocused = useIsFocused();
+    const navigation = useNavigation();
     
     // Fetch notifications - tối ưu để tránh gọi API liên tục
     const fetchNotifications = useCallback(async (isRefresh = false) => {
@@ -76,7 +77,6 @@ export const NoticeScreen = () => {
                         }
                     });
                     
-                    // Cập nhật trạng thái phân trang
                     setNextPageUrl(next);
                     setHasMore(!!next);
                     if (!isRefresh) {
@@ -110,14 +110,39 @@ export const NoticeScreen = () => {
         fetchNotifications(true);
     }, []);
     
-    // Reset notification count when screen is focused
     useEffect(() => {
         if (isFocused) {
             resetNotificationCount();
         }
     }, [isFocused, resetNotificationCount]);
 
-    // Update count when the user refreshes
+    const redirectToTargetScreen = ((notification) => {
+        console.log('Redirecting to:', notification);
+        type = notification.type;
+        switch (type) {
+            case 'follow':
+                navigation.navigate('PublicProfile', { username: notification.sender.username });
+                break;
+            case 'comment':
+                navigation.navigate('PostDetail', { id: notification.related_object_id });
+                break;
+            case 'new_post':
+                navigation.navigate('PostDetail', { id: notification.related_object_id });
+                break;
+            case 'new_house':
+                navigation.navigate('HouseDetail', { id: notification.related_object_id });
+                break;
+            case 'rating':
+                navigation.navigate('HouseDetail', { id: notification.related_object_id });
+                break;
+            case 'interaction':
+                navigation.navigate('PostDetail', { id: notification.related_object_id });
+                break;
+            
+        } 
+        
+    });
+
     const handleRefresh = useCallback(() => {
         setRefreshing(true);
         setNextPageUrl(null);
@@ -125,17 +150,14 @@ export const NoticeScreen = () => {
         resetNotificationCount();
     }, [fetchNotifications, resetNotificationCount]);
     
-    // Load more - chỉ gọi khi cần và có thêm dữ liệu
     const handleLoadMore = useCallback(() => {
         if (loadingMore || !hasMore || loading || refreshing) return;
         
-        // Thêm debounce để tránh gọi nhiều lần liên tiếp
         if (nextPageUrl) {
             fetchNotifications(false);
         }
     }, [loadingMore, hasMore, nextPageUrl, fetchNotifications, loading, refreshing]);
 
-    // Mark notification as read
     const markAsRead = useCallback(async (notification) => {
         if (notification.is_read) return;
 
@@ -155,24 +177,17 @@ export const NoticeScreen = () => {
         }
     }, []);
 
-    // Handle notification click
     const handleNotificationPress = useCallback((notification) => {
         markAsRead(notification);
-        
-        // Refresh notification count after marking as read
         fetchUnreadNotifications();
-
-        // Thêm logic điều hướng tùy theo loại thông báo
-        // Ví dụ: if (notification.type === 'comment') { navigation.navigate(...) }
+        redirectToTargetScreen(notification);
     }, [markAsRead, fetchUnreadNotifications]);
 
-    // Handle notification menu
     const handleMenuPress = useCallback((notification) => {
         setSelectedNotification(notification);
         setMenuVisible(true);
     }, []);
 
-    // Mark all as read
     const handleMarkAllAsRead = useCallback(async () => {
         try {
             await markAllNotificationsAsReadService();

@@ -7,7 +7,7 @@ class ReportSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Report
-        fields = ['id', 'reporter', 'reported_user', 'type', 'type_display', 'reason', 'is_resolved', 'created_at']
+        fields = ['id', 'reporter', 'reported_user', 'type', 'type_display', 'reason', 'is_resolved', 'created_at', 'url_tag']
         read_only_fields = ['id', 'is_resolved', 'created_at', 'type_display']
 
     def get_type_display(self, obj):

@@ -1,3 +1,4 @@
+import { useNavigation } from '@react-navigation/native';
 import {
   Dimensions,
   Image,
@@ -14,9 +15,9 @@ export const Message = ({ message, currentUserId, onLongPress }) => {
   const { colors } = useTheme();
   const isCurrentUser = message.sender.id === currentUserId;
   const screenWidth = Dimensions.get('window').width;
-  const maxMessageWidth = screenWidth * 0.75; // 75% of screen width
-  
-  // Handle system messages
+  const maxMessageWidth = screenWidth * 0.75; 
+  const navigator = useNavigation();
+
   if (message.is_system_message) {
     return (
       <View style={styles.systemMessageContainer}>
@@ -26,8 +27,7 @@ export const Message = ({ message, currentUserId, onLongPress }) => {
       </View>
     );
   }
-  
-  // Handle deleted messages
+
   if (message.is_removed) {
     return (
       <View style={[
@@ -41,15 +41,15 @@ export const Message = ({ message, currentUserId, onLongPress }) => {
       </View>
     );
   }
-  
+
   const handleLongPress = (event) => {
     if (onLongPress) {
       onLongPress(message, event);
     }
   };
-  
+
   return (
-    <TouchableOpacity 
+    <TouchableOpacity
       style={[
         styles.messageWrapper,
         isCurrentUser ? styles.currentUserWrapper : styles.otherUserWrapper
@@ -59,13 +59,17 @@ export const Message = ({ message, currentUserId, onLongPress }) => {
       delayLongPress={200}
     >
       {!isCurrentUser && (
-        <Image 
-          source={{ uri: message.sender.avatar_thumbnail || 'https://via.placeholder.com/40' }} 
-          style={styles.messageAvatar} 
-        />
+        <TouchableOpacity
+          onPress={() => navigator.navigate('PublicProfile', { username: message.sender.username })}
+        >
+          <Image
+            source={{ uri: message.sender.avatar_thumbnail || 'https://via.placeholder.com/40' }}
+            style={styles.messageAvatar}
+          />
+        </TouchableOpacity>
       )}
-      
-      <Card 
+
+      <Card
         style={[
           styles.messageCard,
           isCurrentUser ? styles.currentUserMessage : styles.otherUserMessage,
@@ -78,14 +82,14 @@ export const Message = ({ message, currentUserId, onLongPress }) => {
               {message.sender.full_name}
             </Text>
           )}
-          
+
           {message.replied_to_preview && (
             <View style={[styles.replyPreview, { backgroundColor: colors.backgroundTertiary }]}>
               <Text style={[styles.replyName, { color: colors.textSecondary }]}>
                 {message.replied_to_preview.sender.full_name}
               </Text>
               <Divider style={{ backgroundColor: colors.borderColor, marginVertical: 3 }} />
-              <Text 
+              <Text
                 style={[styles.replyContent, { color: colors.textSecondary }]}
                 numberOfLines={1}
               >
@@ -93,25 +97,25 @@ export const Message = ({ message, currentUserId, onLongPress }) => {
               </Text>
             </View>
           )}
-          
+
           {message.content && (
             <Text style={[
-              styles.messageText, 
+              styles.messageText,
               { color: isCurrentUser ? 'white' : colors.textPrimary }
             ]}>
               {message.content}
             </Text>
           )}
-          
+
           {message.media && message.media.length > 0 && (
             <View style={styles.mediaContainer}>
-              <ImageGallery 
-                mediaItems={message.media} 
+              <ImageGallery
+                mediaItems={message.media}
                 containerWidth={maxMessageWidth - 40} // Account for padding
               />
             </View>
           )}
-          
+
           <Text style={[styles.messageTime, { color: isCurrentUser ? 'rgba(255,255,255,0.7)' : colors.textSecondary }]}>
             {new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </Text>

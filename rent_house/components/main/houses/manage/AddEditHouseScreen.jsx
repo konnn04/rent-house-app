@@ -277,8 +277,16 @@ export const AddEditHouseScreen = ({ houseId, isEditing = false }) => {
       
     } catch (error) {
       console.error('Error submitting house:', error);
-
-      Alert.alert('Lỗi', 'Không thể lưu thông tin nhà.', error.message ? error.message : 'Vui lòng thử lại sau.');
+      Alert.alert(
+        'Lỗi',
+        isEditing ? (error?.response?.data?.error|| 'Không thể cập nhật thông tin nhà. Vui lòng thử lại.') :
+          (error?.response?.data?.error || 'Không thể tạo nhà mới. Vui lòng thử lại.'),
+        [
+          {
+            text: 'OK',
+          }
+        ]
+      );
       setErrors({ submit: 'Không thể lưu thông tin nhà. Vui lòng thử lại.' });
     } finally {
       setSubmitting(false);

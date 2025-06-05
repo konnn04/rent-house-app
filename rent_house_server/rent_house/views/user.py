@@ -1,4 +1,4 @@
-from rest_framework import viewsets, generics, status, parsers, permissions
+from rest_framework import viewsets, status, parsers, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
@@ -8,7 +8,7 @@ from rent_house.serializers import UserSerializer, IdentityVerificationSerialize
 from rent_house.utils import upload_image_to_cloudinary
 from rent_house.permissions import IsOwnerOrReadOnly
 
-class UserViewSet(viewsets.ViewSet, generics.CreateAPIView):
+class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.filter(is_active=True)
     serializer_class = UserSerializer
     parser_classes = [parsers.MultiPartParser, parsers.JSONParser]
@@ -97,4 +97,3 @@ class IdentityVerificationViewSet(viewsets.ModelViewSet):
         identity.rejection_reason = request.data.get('reason', '')
         identity.save()
         return Response({"status": "Đã từ chối xác thực"})
-

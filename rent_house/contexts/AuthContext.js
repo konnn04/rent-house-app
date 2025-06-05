@@ -38,30 +38,28 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Đăng ký tài khoản mới
-  const register = async (
-    username,
-    password,
-    confirmPassword,
-    email,
-    firstName,
-    lastName,
-    phone,
-    role,
-    verificationCode
-  ) => {
+  // Updated register function to handle FormData or individual parameters
+  const register = async (formDataOrUsername, ...rest) => {
     try {
-      const result = await registerService(
-        username,
-        password,
-        confirmPassword,
-        email,
-        firstName,
-        lastName,
-        phone,
-        role,
-        verificationCode
-      );
+      let result;
+      // Check if the first argument is FormData
+      if (formDataOrUsername instanceof FormData) {
+        result = await registerService(formDataOrUsername);
+      } else {
+        // For backward compatibility - handle the old way of passing parameters
+        const [password, confirmPassword, email, firstName, lastName, phone, role, verificationCode] = rest;
+        result = await registerService(
+          formDataOrUsername,
+          password,
+          confirmPassword,
+          email,
+          firstName,
+          lastName,
+          phone,
+          role,
+          verificationCode
+        );
+      }
       return result;
     } catch (error) {
       throw error;

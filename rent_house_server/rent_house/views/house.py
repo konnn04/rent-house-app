@@ -7,6 +7,8 @@ from django.db.models.functions import Power, Sqrt
 import math
 from django.db.models import Q
 from django.db.models.expressions import RawSQL
+from rest_framework.exceptions import ValidationError
+from django.db import transaction
 
 from rent_house.models import House, Media
 from rent_house.serializers.house import (
@@ -30,7 +32,6 @@ def haversine_sql(lat_origin, lon_origin):
     
 
 class HouseViewSet(viewsets.ModelViewSet):
-    """ViewSet cho quản lý House (nhà/căn hộ)"""
     queryset = House.objects.all()
     parser_classes = [parsers.MultiPartParser, parsers.JSONParser]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
@@ -38,7 +39,6 @@ class HouseViewSet(viewsets.ModelViewSet):
     ordering_fields = ['created_at', 'base_price', 'updated_at']
 
     def get_serializer_class(self):
-        """Sử dụng serializer chi tiết cho action retrieve"""
         if self.action == 'list':
             return HouseListSerializer
         elif self.action == 'retrieve':
@@ -48,12 +48,6 @@ class HouseViewSet(viewsets.ModelViewSet):
         return HouseListSerializer
 
     def get_permissions(self):
-        """
-        Instantiates and returns the list of permissions that this view requires:
-        - Xem không cần đăng nhập
-        - Tạo mới chỉ cho user với role OWNER
-        - Sửa/xóa chỉ cho chủ sở hữu của house
-        """
         if self.action in ['create']:
             permission_classes = [IsOwnerRoleOrReadOnly]
         elif self.action in ['update', 'partial_update', 'destroy', 'add_image', 'remove_image']:
@@ -63,10 +57,8 @@ class HouseViewSet(viewsets.ModelViewSet):
         return [permission() for permission in permission_classes]
 
     def get_queryset(self):
-        """Filter houses theo các tham số"""
         queryset = super().get_queryset()
 
-        # Tìm kiếm theo từ khóa (title, description, address)
         search = self.request.query_params.get('search')
         if search:
             queryset = queryset.filter(
@@ -75,18 +67,15 @@ class HouseViewSet(viewsets.ModelViewSet):
                 Q(address__icontains=search)
             )
 
-        # Filter theo house_type
         house_type = self.request.query_params.get('type')
         if house_type:
             queryset = queryset.filter(type=house_type)
 
-        # Filter theo xác thực
         is_verified = self.request.query_params.get('is_verified')
         if is_verified is not None:
             is_verified_bool = is_verified.lower() in ['true', '1', 'yes']
             queryset = queryset.filter(is_verified=is_verified_bool)
 
-        # Filter theo giá
         min_price = self.request.query_params.get('min_price')
         max_price = self.request.query_params.get('max_price')
         if min_price:
@@ -94,13 +83,11 @@ class HouseViewSet(viewsets.ModelViewSet):
         if max_price:
             queryset = queryset.filter(base_price__lte=max_price)
 
-        # Filter theo trạng thái cho thuê
         is_renting = self.request.query_params.get('is_renting')
         if is_renting is not None:
             is_renting_bool = is_renting.lower() in ['true', '1', 'yes']
             queryset = queryset.filter(is_renting=is_renting_bool)
 
-        # Filter theo phòng trống
         is_blank = self.request.query_params.get('is_blank')
         if is_blank is not None and is_blank.lower() in ['true', '1', 'yes']:
             queryset = queryset.filter(
@@ -108,7 +95,6 @@ class HouseViewSet(viewsets.ModelViewSet):
                 current_rooms__lt=F('max_rooms')
             )
             
-        # Filter và sắp xếp theo khoảng cách
         lat = self.request.query_params.get('lat')
         lon = self.request.query_params.get('lon')
         has_distance = False
@@ -121,77 +107,83 @@ class HouseViewSet(viewsets.ModelViewSet):
             except (ValueError, TypeError):
                 pass
         
-        # Sort theo các tham số
         sort_by = self.request.query_params.get('sort_by')
         if sort_by:
-            if sort_by == 'price_asc':
-                queryset = queryset.order_by('base_price')
-            elif sort_by == 'price_desc':
-                queryset = queryset.order_by('-base_price')
-            elif sort_by == 'date_asc':
-                queryset = queryset.order_by('created_at')
-            elif sort_by == 'date_desc':
-                queryset = queryset.order_by('-created_at')
-            elif sort_by == 'rating_desc':
+            if sort_by in ['base_price', '-base_price', 'created_at', '-created_at']:
+                queryset = queryset.order_by(sort_by)
+            elif sort_by == '-rating':
                 from django.db.models import Avg
                 queryset = queryset.annotate(
                     avg_rating=Avg('ratings__star')
                 ).order_by('-avg_rating')
-            elif sort_by == 'rating_asc':
+            elif sort_by == 'rating':
                 from django.db.models import Avg
                 queryset = queryset.annotate(
                     avg_rating=Avg('ratings__star')
                 ).order_by('avg_rating')
 
-        # Filter theo số user sở hữu
         owner_username = self.request.query_params.get('owner_username')
         if owner_username:
             queryset = queryset.filter(owner__username=owner_username)
+
+        max_people = self.request.query_params.get('max_people')
+        if max_people:
+            try:
+                max_people_int = int(max_people)
+                queryset = queryset.filter(max_people__gte=max_people_int)
+            except ValueError:
+                pass
         return queryset
 
+    @transaction.atomic
     def perform_create(self, serializer):
-        # Lấy danh sách ảnh file
-        images = self.request.FILES.getlist('images') if hasattr(self.request.FILES, 'getlist') else []
-        # Lấy danh sách ảnh base64 (nếu có)
-        base64_images = self.request.data.get('base64_images', [])
-        if isinstance(base64_images, str):
-            import json
-            try:
-                base64_images = json.loads(base64_images)
-            except Exception:
-                base64_images = [base64_images]
-        if not isinstance(base64_images, list):
-            base64_images = [base64_images]
-        # Tổng số ảnh thực sự (bỏ qua ảnh rỗng)
-        total_images = len(images) + len([img for img in base64_images if img])
-
-        if total_images < 3:
-            from rest_framework.response import Response
-            from rest_framework import status
-            raise Exception("Vui lòng tải lên tối thiểu 3 ảnh cho nhà/căn hộ.")
-
-        house = serializer.save(owner=self.request.user)
-        self.handle_images(house)
-
         try:
-            from rent_house.services.notification_service import house_notification
-            house_notification(self.request.user, house)
+            images = self.request.FILES.getlist('images') if hasattr(self.request.FILES, 'getlist') else []
+            base64_images = self.request.data.get('base64_images', [])
+            if isinstance(base64_images, str):
+                import json
+                try:
+                    base64_images = json.loads(base64_images)
+                except Exception:
+                    base64_images = [base64_images]
+            if not isinstance(base64_images, list):
+                base64_images = [base64_images]
+            total_images = len(images) + len([img for img in base64_images if img])
+
+            if not self.request.user.can_create_house():
+                raise ValidationError({
+                    "message": "Bạn cần xác thực danh tính trước khi đăng tin nhà mới"
+                })
+
+            if len(images) < 3:
+                raise ValidationError({"error": "Cần ít nhất 3 ảnh để đăng tin nhà mới"})
+            
+            house = serializer.save(owner=self.request.user)
+            self.handle_images(house)
+
+            try:
+                from rent_house.services.notification_service import house_notification
+                house_notification(self.request.user, house)
+            except Exception as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Lỗi khi gửi thông báo có nhà mới: {str(e)}")
+
+            return house
+        except ValidationError as e:
+            raise e
         except Exception as e:
             import logging
             logger = logging.getLogger(__name__)
-            logger.error(f"Lỗi khi gửi thông báo có nhà mới: {str(e)}")
-
-        return house
+            logger.error(f"Lỗi khi tạo nhà mới: {str(e)}")
+            raise
 
     def perform_update(self, serializer):
-        """Khi cập nhật house"""
         house = serializer.save()
         self.handle_images(house)
         return house
 
     def handle_images(self, house):
-        """Xử lý tải lên hình ảnh cho house"""
-        # Xử lý file ảnh
         images = self.request.FILES.getlist('images')
         if images:
             for image in images:
@@ -208,7 +200,6 @@ class HouseViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def add_image(self, request, pk=None):
-        """Thêm ảnh cho house"""
         house = self.get_object()
         images = request.FILES.getlist('images')
 
@@ -241,7 +232,6 @@ class HouseViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['delete'])
     def remove_image(self, request, pk=None):
-        """Xóa ảnh của house"""
         house = self.get_object()
         media_id = request.data.get('media_id')
 
@@ -266,7 +256,6 @@ class HouseViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def my_houses(self, request):
-        """Lấy danh sách house của người dùng hiện tại"""
         if not request.user.is_authenticated:
             return Response({"error": "Bạn cần đăng nhập"}, status=401)
 
@@ -277,7 +266,6 @@ class HouseViewSet(viewsets.ModelViewSet):
         return self.get_paginated_response(serializer.data) if page is not None else Response(serializer.data)
 
     def create(self, request, *args, **kwargs):
-        # Kiểm tra nếu người dùng có quyền tạo nhà mới
         if not request.user.can_create_house():
             return Response({
                 "message": "Bạn cần xác thực danh tính trước khi đăng tin nhà mới"

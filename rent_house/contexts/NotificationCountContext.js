@@ -55,6 +55,14 @@ export const NotificationCountProvider = ({ children }) => {
     setUnreadMessages(0);
   }, []);
 
+  const readedOneNotification = useCallback(() => {
+    setUnreadNotifications(prev => Math.max(prev - 1, 0));
+  }, []);
+
+  const readedOneMessage = useCallback(() => {
+    setUnreadMessages(prev => Math.max(prev - 1, 0));
+  }, []);
+
   const value = {
     unreadNotifications,
     unreadMessages,
@@ -63,7 +71,9 @@ export const NotificationCountProvider = ({ children }) => {
     fetchUnreadNotifications,
     fetchUnreadMessages,
     resetNotificationCount,
-    resetMessageCount
+    resetMessageCount,
+    readedOneNotification,
+    readedOneMessage
   };
 
   return (
