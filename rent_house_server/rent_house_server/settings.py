@@ -8,34 +8,22 @@ from django.templatetags.static import static
 
 pymysql.install_as_MySQLdb()
 
-
-# Load environment variables from .env file
 load_dotenv()
 
-import cloudinary
-import cloudinary.uploader
-import cloudinary.api
+DEBUG = True
 
-# Add after the dotenv load_dotenv() call
-# Configure Cloudinary
+# Cloundinary
+import cloudinary
 cloudinary.config( 
     cloud_name = os.getenv('CLOUDINARY_CLOUD_NAME', ''),
     api_key = os.getenv('CLOUDINARY_API_KEY', ''),
     api_secret = os.getenv('CLOUDINARY_API_SECRET', '')
 )
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+APPEND_SLASH = True
 
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-w5g$n@c%sz5kxf!f00h+a9@4ac8i-va^5^a1a8hom$ad*l%c_y'
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
 
 ALLOWED_HOSTS = [
     'localhost',
@@ -43,17 +31,16 @@ ALLOWED_HOSTS = [
 ]
 
 
-# Application definition
-
 INSTALLED_APPS = [
     "unfold",  # before django.contrib.admin
     "unfold.contrib.filters",  # optional, if special filters are needed
     "unfold.contrib.forms",  # optional, if special form elements are needed
-    
     "unfold.contrib.inlines",  # optional, if special inlines are needed
     "unfold.contrib.import_export",  # optional, if django-import-export package is used
     "unfold.contrib.guardian",  # optional, if django-guardian package is used
     "unfold.contrib.simple_history",  # optional, if django-simple-history package is used
+    "crispy_forms",
+    "clearcache",
     #=====================
     'django.contrib.admin',
     'django.contrib.auth',
@@ -82,12 +69,9 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 10,
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
-    # Add custom exception handler
-    # 'EXCEPTION_HANDLER': 'rent_house.exception_handlers.custom_exception_handler',
 }
 
 AUTH_USER_MODEL = 'rent_house.User'
-
 CKEDITOR_UPLOAD_PATH = "ckeditors/"
 
 MIDDLEWARE = [
@@ -102,13 +86,9 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'rent_house_server.urls'
-
 MEDIA_ROOT = '%s/rent_house/static_media/' % BASE_DIR
-
 STATIC_URL = '/static/'
-
 STATIC_ROOT = '%s/rent_house/static/' % BASE_DIR
-
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -128,10 +108,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'rent_house_server.wsgi.application'
 
-
-
 DATABASES = {
-    # Use MySQL database
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': os.getenv('DB_NAME') or 'rent_house',
@@ -157,9 +134,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
-# https://docs.djangoproject.com/en/4.2/topics/i18n/
-
 LANGUAGE_CODE = 'vi-vn'
 
 TIME_ZONE = 'UTC'
@@ -167,11 +141,6 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 
 USE_TZ = True
-
-
-
-
-
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -214,32 +183,29 @@ LOGGING = {
     },
 }
 
-
-# Telegram Bot Settings
+# Telegram
 TELEGRAM_DEBUG_ENABLED = os.getenv('TELEGRAM_DEBUG_ENABLED', 'False').lower() == 'true'
 TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID', '')
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', '')
 
-# Email Configuration with Gmail
+# Email 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')  # Add to .env
-EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')  # App password from Google
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '') 
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '') 
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER)
 
-# Verification settings
-VERIFICATION_CODE_EXPIRY_MINUTES = 30  # Time in minutes before verification codes expire
+VERIFICATION_CODE_EXPIRY_MINUTES = 30  
 
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
 ]
 
-# Only add Telegram handler if enabled
 if TELEGRAM_DEBUG_ENABLED:
     LOGGING['handlers']['telegram'] = {
-        'level': 'ERROR',  # Only send ERROR and above to Telegram by default
+        'level': 'ERROR', 
         'class': 'rent_house.log_handlers.TelegramLogHandler',
     }
     LOGGING['loggers']['django']['handlers'].append('telegram')
@@ -252,13 +218,12 @@ CSRF_TRUSTED_ORIGINS = [
     'https://djan.konnn04.live'
 ]
 
-DATA_UPLOAD_MAX_MEMORY_SIZE = 104857600  # 100 MB 
+DATA_UPLOAD_MAX_MEMORY_SIZE = 104857600 
 
 UNFOLD = {
     "SITE_TITLE": "Quản trị Rent House",
     "SITE_HEADER": "Quản trị Rent House",
-    # "SITE_SYMBOL": "home",
-    "SHOW_HISTORY": True,
+    "SHOW_HISTORY": False,
     "DASHBOARD_CALLBACK": "rent_house.admin_view.dashboard_callback",
     "SITE_URL": "/",
     "SITE_ICON": {
@@ -299,5 +264,8 @@ UNFOLD = {
     "SIDEBAR": "rent_house.admin_config.get_sidebar_config",
 }
 
-# Site URL for links in emails
+CRISPY_TEMPLATE_PACK = "unfold_crispy"
+
+CRISPY_ALLOWED_TEMPLATE_PACKS = ["unfold_crispy"]
+
 SITE_URL = os.getenv('SITE_URL', 'http://localhost:8000')

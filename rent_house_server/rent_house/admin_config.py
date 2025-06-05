@@ -11,7 +11,7 @@ def get_sidebar_config(request=None):
         "show_all_applications": True,
         "navigation": [
             {
-                "title": _("Main Navigation"),
+                "title": _("Quản lý"),
                 "items": [
                     {
                         "title": _("Dashboard"),
@@ -34,9 +34,34 @@ def get_sidebar_config(request=None):
                         "link": reverse_lazy("admin:rent_house_post_changelist"),
                     },
                     {
-                        "title": _("Chat Groups"),
-                        "icon": "forum",
-                        "link": reverse_lazy("admin:rent_house_chatgroup_changelist"),
+                        "title": _("Comments"),
+                        "icon": "comment",
+                        "link": reverse_lazy("admin:rent_house_comment_changelist"),
+                    },
+                    {
+                        "title": _("Rates"),
+                        "icon": "star",
+                        "link": reverse_lazy("admin:rent_house_rate_changelist"),
+                    },
+                    {
+                        "title": _("Media"),
+                        "icon": "image",
+                        "link": reverse_lazy("admin:rent_house_media_changelist"),
+                    },
+                    {
+                        "title": _("Notifications"),
+                        "icon": "notifications",
+                        "link": reverse_lazy("admin:rent_house_notification_changelist"),
+                    },
+                    {
+                        "title": _("Interactions"),
+                        "icon": "thumb_up",
+                        "link": reverse_lazy("admin:rent_house_interaction_changelist"),
+                    },
+                    {
+                        "title": _("Follows"),
+                        "icon": "person_add",
+                        "link": reverse_lazy("admin:rent_house_follow_changelist"),
                     },
                 ],
             },
@@ -54,6 +79,16 @@ def get_sidebar_config(request=None):
                         "icon": "report",
                         "link": reverse_lazy("admin:rent_house_report_changelist"),
                         "badge": get_unresolved_reports_count,
+                    },
+                    {
+                        "title": _("Verification Codes"),
+                        "icon": "vpn_key",
+                        "link": reverse_lazy("admin:rent_house_verificationcode_changelist"),
+                    },
+                    {
+                        "title": _("Password Reset Tokens"),
+                        "icon": "lock_reset",
+                        "link": reverse_lazy("admin:rent_house_passwordresettoken_changelist"),
                     },
                 ],
             },
@@ -75,3 +110,7 @@ def get_sidebar_config(request=None):
             },
         ],
     }
+
+
+
+
