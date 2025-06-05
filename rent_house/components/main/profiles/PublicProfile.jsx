@@ -1,25 +1,35 @@
-import { useNavigation, useRoute } from '@react-navigation/native';
-import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Dimensions, Image, Linking, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { useTheme } from '../../../contexts/ThemeContext';
+import { useNavigation, useRoute } from "@react-navigation/native";
+import { useCallback, useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  Dimensions,
+  Image,
+  Linking,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import Icon from "react-native-vector-icons/MaterialCommunityIcons";
+import { useTheme } from "../../../contexts/ThemeContext";
 import { useUser } from "../../../contexts/UserContext";
-import { } from "../../../services/feedService";
-import { } from "../../../services/houseService";
 import {
   followUserService,
   getUserHouseService,
   getUserPostsService,
   getUserProfileService,
-  unfollowUserService
-} from '../../../services/profileService';
-import { createDirectChat } from '../../../utils/ChatUtils';
-import { timeAgo } from '../../../utils/Tools';
-import { HouseMiniCard } from '../houses/components/HouseMiniCard';
-import { PostCard } from '../posts/PostCard';
+  unfollowUserService,
+} from "../../../services/profileService";
+import { createDirectChat } from "../../../utils/ChatUtils";
+
+import { timeAgo } from "../../../utils/Tools";
+import { HouseMiniCard } from "../houses/components/HouseMiniCard";
+import { PostCard } from "../posts/PostCard";
 
 // Lấy chiều rộng màn hình để tính toán layout 2 cột
-const { width } = Dimensions.get('window');
+const { width } = Dimensions.get("window");
 
 export const PublicProfile = () => {
   const navigation = useNavigation();
@@ -35,7 +45,7 @@ export const PublicProfile = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState('posts'); // 'posts' or 'houses'
+  const [activeTab, setActiveTab] = useState("posts"); // 'posts' or 'houses'
   const [isFollowing, setIsFollowing] = useState(false);
   const [messageButtonLoading, setMessageButtonLoading] = useState(false);
 
@@ -54,15 +64,14 @@ export const PublicProfile = () => {
       setPosts(postsResponse?.results || []);
 
       // If user is owner, fetch houses
-      if (profileData.role === 'owner') {
+      if (profileData.role === "owner") {
         const housesResponse = await getUserHouseService(username);
         setHouses(housesResponse?.results || []);
       }
-
     } catch (err) {
-      console.error('Error fetching profile data:', err);
+      console.error("Error fetching profile data:", err);
 
-      setError('Không thể tải thông tin người dùng. Vui lòng thử lại sau.');
+      setError("Không thể tải thông tin người dùng. Vui lòng thử lại sau.");
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -84,33 +93,36 @@ export const PublicProfile = () => {
         // Unfollow the user
         await unfollowUserService(profileData.id);
         setIsFollowing(false);
-        setProfileData(prev => ({
+        setProfileData((prev) => ({
           ...prev,
-          follower_count: Math.max(0, prev.follower_count - 1)
+          follower_count: Math.max(0, prev.follower_count - 1),
         }));
       } else {
         // Follow the user
         await followUserService(profileData.id);
         setIsFollowing(true);
-        setProfileData(prev => ({
+        setProfileData((prev) => ({
           ...prev,
-          follower_count: prev.follower_count + 1
+          follower_count: prev.follower_count + 1,
         }));
       }
     } catch (error) {
-      console.error('Error toggling follow status:', error);
-      setError(error.response?.data?.detail || 'Không thể thực hiện thao tác này. Vui lòng thử lại sau.');
+      console.error("Error toggling follow status:", error);
+      setError(
+        error.response?.data?.detail ||
+          "Không thể thực hiện thao tác này. Vui lòng thử lại sau."
+      );
     }
   };
 
   const handleMessageUser = async () => {
     if (!profileData || !profileData.id) return;
-    
+
     setMessageButtonLoading(true);
     await createDirectChat(
-      profileData.id, 
+      profileData.id,
       profileData.full_name,
-      navigation, 
+      navigation,
       setMessageButtonLoading
     );
   };
@@ -138,6 +150,10 @@ export const PublicProfile = () => {
     }
   };
 
+  const handleDeletePost = (deletedPostId) => {
+    setPosts(prevPosts => prevPosts.filter(post => post.id !== deletedPostId));
+};
+
   const renderHeader = () => (
     <View style={styles.header}>
       <TouchableOpacity
@@ -146,18 +162,39 @@ export const PublicProfile = () => {
       >
         <Icon name="arrow-left" size={24} color={colors.textPrimary} />
       </TouchableOpacity>
-      <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Thông tin người dùng</Text>
+      <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
+        Thông tin người dùng
+      </Text>
       <View style={styles.headerRight} />
+      // nút báo cáo
+      <TouchableOpacity
+        style={[styles.reportButton, { backgroundColor: colors.accentColor }]}
+        onPress={() =>
+          navigation.navigate("Report", {
+            reportedUserId: profileData.id,
+            url_tag: `profile/${profileData.id}`,
+          })
+        }
+      >
+        <Icon name="flag" size={18} color="#fff" />
+      </TouchableOpacity>
     </View>
   );
 
   if (loading && !refreshing) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.backgroundPrimary }]}>
+      <View
+        style={[
+          styles.container,
+          { backgroundColor: colors.backgroundPrimary },
+        ]}
+      >
         {renderHeader()}
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.accentColor} />
-          <Text style={{ color: colors.textSecondary, marginTop: 10 }}>Đang tải thông tin...</Text>
+          <Text style={{ color: colors.textSecondary, marginTop: 10 }}>
+            Đang tải thông tin...
+          </Text>
         </View>
       </View>
     );
@@ -165,13 +202,27 @@ export const PublicProfile = () => {
 
   if (error) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.backgroundPrimary }]}>
+      <View
+        style={[
+          styles.container,
+          { backgroundColor: colors.backgroundPrimary },
+        ]}
+      >
         {renderHeader()}
         <View style={styles.errorContainer}>
-          <Icon name="alert-circle-outline" size={50} color={colors.dangerColor} />
-          <Text style={[styles.errorText, { color: colors.dangerColor }]}>{error}</Text>
+          <Icon
+            name="alert-circle-outline"
+            size={50}
+            color={colors.dangerColor}
+          />
+          <Text style={[styles.errorText, { color: colors.dangerColor }]}>
+            {error}
+          </Text>
           <TouchableOpacity
-            style={[styles.retryButton, { backgroundColor: colors.accentColor }]}
+            style={[
+              styles.retryButton,
+              { backgroundColor: colors.accentColor },
+            ]}
             onPress={fetchProfileData}
           >
             <Text style={styles.retryButtonText}>Thử lại</Text>
@@ -183,18 +234,31 @@ export const PublicProfile = () => {
 
   if (!profileData) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.backgroundPrimary }]}>
+      <View
+        style={[
+          styles.container,
+          { backgroundColor: colors.backgroundPrimary },
+        ]}
+      >
         {renderHeader()}
         <View style={styles.errorContainer}>
-          <Icon name="account-question" size={50} color={colors.textSecondary} />
-          <Text style={[styles.errorText, { color: colors.textSecondary }]}>Không tìm thấy người dùng</Text>
+          <Icon
+            name="account-question"
+            size={50}
+            color={colors.textSecondary}
+          />
+          <Text style={[styles.errorText, { color: colors.textSecondary }]}>
+            Không tìm thấy người dùng
+          </Text>
         </View>
       </View>
     );
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.backgroundPrimary }]}>
+    <View
+      style={[styles.container, { backgroundColor: colors.backgroundPrimary }]}
+    >
       {renderHeader()}
 
       <ScrollView
@@ -209,76 +273,131 @@ export const PublicProfile = () => {
         }
       >
         {/* Profile header */}
-        <View style={[styles.profileHeader, { backgroundColor: colors.backgroundSecondary }]}>
+        <View
+          style={[
+            styles.profileHeader,
+            { backgroundColor: colors.backgroundSecondary },
+          ]}
+        >
           <View style={styles.profileImageContainer}>
             <Image
               source={{ uri: profileData.avatar }}
               style={styles.profileImage}
-              defaultSource={require('@assets/images/default-avatar.png')}
+              defaultSource={require("@assets/images/default-avatar.png")}
             />
           </View>
 
           <View style={styles.profileInfo}>
-            <Text style={[styles.fullName, { color: colors.textPrimary }]}>{profileData.full_name}
+            <Text style={[styles.fullName, { color: colors.textPrimary }]}>
+              {profileData.full_name}
               <Icon
-                name={profileData.is_verified ? 'check-circle' : 'account'}
+                name={profileData.is_verified ? "check-circle" : "account"}
                 size={16}
-                color={profileData.is_verified ? colors.successColor : colors.textSecondary}
+                color={
+                  profileData.is_verified
+                    ? colors.successColor
+                    : colors.textSecondary
+                }
               />
             </Text>
-            <Text style={[styles.username, { color: colors.textSecondary }]}>@{profileData.username}</Text>
+            <Text style={[styles.username, { color: colors.textSecondary }]}>
+              @{profileData.username}
+            </Text>
 
             <View style={styles.roleContainer}>
               <Icon
-                name={profileData.role === 'owner' ? 'home-city' : 'account'}
+                name={profileData.role === "owner" ? "home-city" : "account"}
                 size={16}
                 color={colors.accentColor}
               />
               <Text style={[styles.roleText, { color: colors.textSecondary }]}>
-                {profileData.role === 'owner' ? 'Chủ nhà' : 'Người thuê'}
+                {profileData.role === "owner" ? "Chủ nhà" : "Người thuê"}
               </Text>
             </View>
 
             <View style={styles.statsRow}>
               <View style={styles.statItem}>
-                <Text style={[styles.statValue, { color: colors.textPrimary }]}>{profileData.post_count}</Text>
-                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Bài đăng</Text>
+                <Text style={[styles.statValue, { color: colors.textPrimary }]}>
+                  {profileData.post_count}
+                </Text>
+                <Text
+                  style={[styles.statLabel, { color: colors.textSecondary }]}
+                >
+                  Bài đăng
+                </Text>
               </View>
               <View style={styles.statItem}>
-                <Text style={[styles.statValue, { color: colors.textPrimary }]}>{profileData.follower_count}</Text>
-                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Người theo dõi</Text>
+                <Text style={[styles.statValue, { color: colors.textPrimary }]}>
+                  {profileData.follower_count}
+                </Text>
+                <Text
+                  style={[styles.statLabel, { color: colors.textSecondary }]}
+                >
+                  Người theo dõi
+                </Text>
               </View>
               <View style={styles.statItem}>
-                <Text style={[styles.statValue, { color: colors.textPrimary }]}>{profileData.following_count}</Text>
-                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Đang theo dõi</Text>
+                <Text style={[styles.statValue, { color: colors.textPrimary }]}>
+                  {profileData.following_count}
+                </Text>
+                <Text
+                  style={[styles.statLabel, { color: colors.textSecondary }]}
+                >
+                  Đang theo dõi
+                </Text>
               </View>
             </View>
 
             {profileData?.username !== userData?.username && (
               <View style={styles.actionButtons}>
                 <TouchableOpacity
-                  style={[styles.followButton, { backgroundColor: isFollowing ? colors.accentColor : colors.accentColor }]}
+                  style={[
+                    styles.followButton,
+                    {
+                      backgroundColor: isFollowing
+                        ? colors.accentColor
+                        : colors.accentColor,
+                    },
+                  ]}
                   onPress={handleFollowToggle}
                 >
                   <Icon
-                    name={isFollowing ? 'account-check' : 'account-plus'}
+                    name={isFollowing ? "account-check" : "account-plus"}
                     size={18}
-                    color={isFollowing ? 'white' : colors.textPrimary}
+                    color={isFollowing ? "white" : colors.textPrimary}
                   />
-                  <Text style={[styles.followButtonText, { color: isFollowing ? 'white' : colors.textPrimary }]}>
-                    {isFollowing ? 'Đang theo dõi' : 'Theo dõi'}
+                  <Text
+                    style={[
+                      styles.followButtonText,
+                      { color: isFollowing ? "white" : colors.textPrimary },
+                    ]}
+                  >
+                    {isFollowing ? "Đang theo dõi" : "Theo dõi"}
                   </Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={[styles.messageButton, { borderColor: colors.accentColor }]}
+                  style={[
+                    styles.messageButton,
+                    { borderColor: colors.accentColor },
+                  ]}
                   onPress={handleMessageUser}
                   disabled={messageButtonLoading}
                 >
                   {messageButtonLoading ? (
-                    <ActivityIndicator size="small" color={colors.accentColor} />
+                    <ActivityIndicator
+                      size="small"
+                      color={colors.accentColor}
+                    />
                   ) : (
-                    <Text style={[styles.messageButtonText, { color: colors.accentColor }]}>Nhắn tin</Text>
+                    <Text
+                      style={[
+                        styles.messageButtonText,
+                        { color: colors.accentColor },
+                      ]}
+                    >
+                      Nhắn tin
+                    </Text>
                   )}
                 </TouchableOpacity>
               </View>
@@ -287,14 +406,26 @@ export const PublicProfile = () => {
         </View>
 
         {/* About section - Đã cập nhật phần này với các nút tương tác */}
-        <View style={[styles.aboutSection, { backgroundColor: colors.backgroundSecondary }]}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Thông tin</Text>
+        <View
+          style={[
+            styles.aboutSection,
+            { backgroundColor: colors.backgroundSecondary },
+          ]}
+        >
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+            Thông tin
+          </Text>
 
           <View style={styles.infoRow}>
             <Icon name="email-outline" size={18} color={colors.textSecondary} />
-            <Text style={[styles.infoText, { color: colors.textPrimary }]}>{profileData.email}</Text>
-            <TouchableOpacity 
-              style={[styles.actionButton, { backgroundColor: colors.accentColor }]} 
+            <Text style={[styles.infoText, { color: colors.textPrimary }]}>
+              {profileData.email}
+            </Text>
+            <TouchableOpacity
+              style={[
+                styles.actionButton,
+                { backgroundColor: colors.accentColor },
+              ]}
               onPress={handleEmail}
             >
               <Icon name="email-send-outline" size={16} color="#fff" />
@@ -304,10 +435,19 @@ export const PublicProfile = () => {
 
           {profileData.phone_number && (
             <View style={styles.infoRow}>
-              <Icon name="phone-outline" size={18} color={colors.textSecondary} />
-              <Text style={[styles.infoText, { color: colors.textPrimary }]}>{profileData.phone_number}</Text>
-              <TouchableOpacity 
-                style={[styles.actionButton, { backgroundColor: colors.accentColor }]} 
+              <Icon
+                name="phone-outline"
+                size={18}
+                color={colors.textSecondary}
+              />
+              <Text style={[styles.infoText, { color: colors.textPrimary }]}>
+                {profileData.phone_number}
+              </Text>
+              <TouchableOpacity
+                style={[
+                  styles.actionButton,
+                  { backgroundColor: colors.accentColor },
+                ]}
                 onPress={handlePhoneCall}
               >
                 <Icon name="phone" size={16} color="#fff" />
@@ -318,10 +458,19 @@ export const PublicProfile = () => {
 
           {profileData.address && (
             <View style={styles.infoRow}>
-              <Icon name="map-marker-outline" size={18} color={colors.textSecondary} />
-              <Text style={[styles.infoText, { color: colors.textPrimary }]}>{profileData.address}</Text>
-              <TouchableOpacity 
-                style={[styles.actionButton, { backgroundColor: colors.accentColor }]} 
+              <Icon
+                name="map-marker-outline"
+                size={18}
+                color={colors.textSecondary}
+              />
+              <Text style={[styles.infoText, { color: colors.textPrimary }]}>
+                {profileData.address}
+              </Text>
+              <TouchableOpacity
+                style={[
+                  styles.actionButton,
+                  { backgroundColor: colors.accentColor },
+                ]}
                 onPress={handleOpenMap}
               >
                 <Icon name="map" size={16} color="#fff" />
@@ -331,13 +480,17 @@ export const PublicProfile = () => {
           )}
 
           <View style={styles.infoRow}>
-            <Icon name="calendar-outline" size={18} color={colors.textSecondary} />
+            <Icon
+              name="calendar-outline"
+              size={18}
+              color={colors.textSecondary}
+            />
             <Text style={[styles.infoText, { color: colors.textPrimary }]}>
               Tham gia từ {timeAgo(profileData.joined_date)}
             </Text>
           </View>
 
-          {profileData.role === 'owner' && profileData.avg_rating !== null && (
+          {profileData.role === "owner" && profileData.avg_rating !== null && (
             <View style={styles.infoRow}>
               <Icon name="star" size={18} color="#FFD700" />
               <Text style={[styles.infoText, { color: colors.textPrimary }]}>
@@ -346,9 +499,13 @@ export const PublicProfile = () => {
             </View>
           )}
 
-          {profileData.role === 'owner' && profileData.house_count !== null && (
+          {profileData.role === "owner" && profileData.house_count !== null && (
             <View style={styles.infoRow}>
-              <Icon name="home-outline" size={18} color={colors.textSecondary} />
+              <Icon
+                name="home-outline"
+                size={18}
+                color={colors.textSecondary}
+              />
               <Text style={[styles.infoText, { color: colors.textPrimary }]}>
                 {profileData.house_count} nhà/căn hộ
               </Text>
@@ -357,36 +514,57 @@ export const PublicProfile = () => {
         </View>
 
         {/* Tab navigation */}
-        <View style={[styles.tabContainer, { backgroundColor: colors.backgroundSecondary }]}>
+        <View
+          style={[
+            styles.tabContainer,
+            { backgroundColor: colors.backgroundSecondary },
+          ]}
+        >
           <TouchableOpacity
             style={[
               styles.tabButton,
-              activeTab === 'posts' && { borderBottomColor: colors.accentColor, borderBottomWidth: 2 }
+              activeTab === "posts" && {
+                borderBottomColor: colors.accentColor,
+                borderBottomWidth: 2,
+              },
             ]}
-            onPress={() => setActiveTab('posts')}
+            onPress={() => setActiveTab("posts")}
           >
             <Text
               style={[
                 styles.tabText,
-                { color: activeTab === 'posts' ? colors.accentColor : colors.textSecondary }
+                {
+                  color:
+                    activeTab === "posts"
+                      ? colors.accentColor
+                      : colors.textSecondary,
+                },
               ]}
             >
               Bài đăng
             </Text>
           </TouchableOpacity>
 
-          {profileData.role === 'owner' && (
+          {profileData.role === "owner" && (
             <TouchableOpacity
               style={[
                 styles.tabButton,
-                activeTab === 'houses' && { borderBottomColor: colors.accentColor, borderBottomWidth: 2 }
+                activeTab === "houses" && {
+                  borderBottomColor: colors.accentColor,
+                  borderBottomWidth: 2,
+                },
               ]}
-              onPress={() => setActiveTab('houses')}
+              onPress={() => setActiveTab("houses")}
             >
               <Text
                 style={[
                   styles.tabText,
-                  { color: activeTab === 'houses' ? colors.accentColor : colors.textSecondary }
+                  {
+                    color:
+                      activeTab === "houses"
+                        ? colors.accentColor
+                        : colors.textSecondary,
+                  },
                 ]}
               >
                 Nhà cho thuê
@@ -396,21 +574,33 @@ export const PublicProfile = () => {
         </View>
 
         {/* Tab content */}
-        {activeTab === 'posts' ? (
+        {activeTab === "posts" ? (
           <View style={styles.contentContainer}>
             {posts.length === 0 ? (
               <View style={styles.emptyStateContainer}>
-                <Icon name="post-outline" size={50} color={colors.textSecondary} />
-                <Text style={[styles.emptyStateText, { color: colors.textSecondary }]}>
+                <Icon
+                  name="post-outline"
+                  size={50}
+                  color={colors.textSecondary}
+                />
+                <Text
+                  style={[
+                    styles.emptyStateText,
+                    { color: colors.textSecondary },
+                  ]}
+                >
                   Chưa có bài đăng nào
                 </Text>
               </View>
             ) : (
-              posts.map(post => (
+              posts.map((post) => (
                 <PostCard
                   key={post.id}
                   post={post}
-                  onPress={() => navigation.navigate('PostDetail', { postId: post.id })}
+                  onPress={() =>
+                    navigation.navigate("PostDetail", { postId: post.id })
+                  }
+                  onPostDeleted={handleDeletePost}
                 />
               ))
             )}
@@ -419,8 +609,17 @@ export const PublicProfile = () => {
           <View style={styles.contentContainer}>
             {houses.length === 0 ? (
               <View style={styles.emptyStateContainer}>
-                <Icon name="home-outline" size={50} color={colors.textSecondary} />
-                <Text style={[styles.emptyStateText, { color: colors.textSecondary }]}>
+                <Icon
+                  name="home-outline"
+                  size={50}
+                  color={colors.textSecondary}
+                />
+                <Text
+                  style={[
+                    styles.emptyStateText,
+                    { color: colors.textSecondary },
+                  ]}
+                >
                   Chưa có nhà/căn hộ nào
                 </Text>
               </View>
@@ -431,7 +630,11 @@ export const PublicProfile = () => {
                   <View key={house.id} style={styles.houseCardContainer}>
                     <HouseMiniCard
                       house={house}
-                      onPress={() => navigation.navigate('HouseDetail', { houseId: house.id })}
+                      onPress={() =>
+                        navigation.navigate("HouseDetail", {
+                          houseId: house.id,
+                        })
+                      }
                     />
                   </View>
                 ))}
@@ -444,15 +647,14 @@ export const PublicProfile = () => {
   );
 };
 
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingTop: 20,
     paddingBottom: 15,
     paddingHorizontal: 16,
@@ -462,25 +664,25 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   headerRight: {
     width: 30,
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   errorContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: 20,
   },
   errorText: {
     fontSize: 16,
-    textAlign: 'center',
+    textAlign: "center",
     marginTop: 10,
   },
   retryButton: {
@@ -490,16 +692,16 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   retryButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
+    color: "white",
+    fontWeight: "bold",
   },
   profileHeader: {
     padding: 16,
-    flexDirection: 'row',
+    flexDirection: "row",
     borderRadius: 12,
     marginHorizontal: 16,
     marginTop: 10,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
@@ -518,7 +720,7 @@ const styles = StyleSheet.create({
   },
   fullName: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 2,
   },
   username: {
@@ -526,8 +728,8 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   roleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 8,
   },
   roleText: {
@@ -535,7 +737,7 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   statsRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginBottom: 12,
   },
   statItem: {
@@ -543,25 +745,25 @@ const styles = StyleSheet.create({
   },
   statValue: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   statLabel: {
     fontSize: 12,
   },
   actionButtons: {
-    flexDirection: 'row',
+    flexDirection: "row",
   },
   followButton: {
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 5,
     marginRight: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 5,
   },
   followButtonText: {
-    fontWeight: '500',
+    fontWeight: "500",
   },
   messageButton: {
     paddingVertical: 8,
@@ -570,14 +772,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   messageButtonText: {
-    fontWeight: '500',
+    fontWeight: "500",
   },
   aboutSection: {
     padding: 16,
     borderRadius: 12,
     marginHorizontal: 16,
     marginTop: 16,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
@@ -585,14 +787,14 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 12,
   },
   infoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 10,
-    flexWrap: 'wrap',
+    flexWrap: "wrap",
   },
   infoText: {
     marginLeft: 10,
@@ -600,34 +802,34 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 15,
     marginLeft: 8,
   },
   actionButtonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 12,
     marginLeft: 4,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   tabContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginHorizontal: 16,
     marginTop: 16,
     borderRadius: 12,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   tabButton: {
     flex: 1,
     paddingVertical: 12,
-    alignItems: 'center',
+    alignItems: "center",
   },
   tabText: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   contentContainer: {
     marginTop: 16,
@@ -635,21 +837,32 @@ const styles = StyleSheet.create({
   },
   emptyStateContainer: {
     padding: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   emptyStateText: {
     marginTop: 10,
     fontSize: 16,
   },
   housesGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
     paddingHorizontal: 8,
   },
   houseCardContainer: {
-    width: (width - 28) / 2, 
+    width: (width - 28) / 2,
     marginBottom: 16,
+  },
+
+  reportButton: {
+    position: "absolute",
+    top: 18,
+    right: 16,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 4,
+    flexDirection: "row",
+    alignItems: "center",
   },
 });

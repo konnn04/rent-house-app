@@ -16,6 +16,7 @@ import { PostDetailScreen } from "./posts/PostDetailScreen";
 import { EditProfileScreen } from "./profiles/EditProfileScreen";
 import { PublicProfile } from "./profiles/PublicProfile";
 import { SettingScreenStack } from './settings/SettingScreenStack';
+import { ReportScreen } from './report/ReportScreens';
 
 export const Main = () => {
     return (
@@ -43,9 +44,12 @@ export const Main = () => {
                 <MainStackScreen.Screen name="EditHouse" component={EditHouseScreen} />
                 {/* Identity Verification */}
                 <MainStackScreen.Screen name="IdentityVerification" component={IdentityVerificationScreen} />
+                {/* Report Screen */}
+                <MainStackScreen.Screen name="Report" component={ReportScreen} />
                 {/* Post Detail */}
                 <MainStackScreen.Screen name="PostDetail" component={PostDetailScreen} />
             </MainStackScreen.Navigator>
+
         </SafeAreaProvider>
     );
 }

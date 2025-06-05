@@ -412,5 +412,6 @@ const styles = StyleSheet.create({
   footerButton: {
     flex: 1,
     marginHorizontal: 8,
+    marginBottom: 16,
   },
 });

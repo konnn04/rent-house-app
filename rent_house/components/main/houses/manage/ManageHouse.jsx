@@ -284,10 +284,19 @@ export const ManageHouse = () => {
                   <Icon name="pencil" size={20} color="#fff" />
                 </TouchableOpacity>
               </View>
+
+              <View style={styles.actionButtonsContainer}>
+                <TouchableOpacity
+                  style={[styles.deleteButton, { backgroundColor: colors.dangerColor }]}
+                  onPress={() => handleEditHouse(item)}
+                >
+                  <Icon name="delete" size={20} color="#fff" />
+                </TouchableOpacity>
+              </View>
               
               {!item.is_verified && (
                 <Badge
-                  style={[styles.verificationBadge, { backgroundColor: colors.warningColor }]}
+                  style={[styles.verificationBadge, { backgroundColor: colors.dangerColor, color: '#fff' }]}
                 >
                   Chưa xác thực
                 </Badge>
@@ -422,6 +431,9 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   editButton: {
+    position: 'absolute',
+    bottom: 205,
+    right: 5,
     width: 40,
     height: 40,
     borderRadius: 20,
@@ -432,12 +444,30 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 3,
     elevation: 5,
+    opacity: 0.8,
   },
+  deleteButton: {
+    position: 'absolute',
+    bottom: 155,
+    right: 5,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 5,
+    opacity: 0.8,
+  },
+
   fab: {
     position: 'absolute',
     margin: 16,
     right: 0,
-    bottom: 70,
+    bottom: 40,
     borderRadius: 30,
     width: 60,
     height: 60,
@@ -479,7 +509,7 @@ const styles = StyleSheet.create({
     top: 10,
     left: 10,
     paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingVertical: 0,
     borderRadius: 4,
     zIndex: 5,
   },

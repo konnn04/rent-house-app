@@ -82,7 +82,6 @@ export const CommentItem = ({ comment, onReply, colors, postId, onDelete }) => {
 
   const isCurrentUser = userData?.id === comment.author.id;
 
-
   return (
     <PaperProvider>
       <View style={styles.commentContainer}>
