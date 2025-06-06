@@ -57,7 +57,7 @@ class HouseViewSet(viewsets.ModelViewSet):
         return [permission() for permission in permission_classes]
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        queryset = super().get_queryset().filter(is_active=True)
 
         search = self.request.query_params.get('search')
         if search:
@@ -273,4 +273,12 @@ class HouseViewSet(viewsets.ModelViewSet):
             }, status=status.HTTP_403_FORBIDDEN)
         
         return super().create(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        house = self.get_object()
+        if not house.is_active:
+            return Response({"error": "Nhà đã bị xoá trước đó."}, status=status.HTTP_400_BAD_REQUEST)
+        house.is_active = False
+        house.save(update_fields=['is_active'])
+        return Response({"status": "success", "message": "Đã xoá nhà (xoá mềm)"}, status=status.HTTP_204_NO_CONTENT)
 

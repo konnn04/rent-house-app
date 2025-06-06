@@ -13,8 +13,9 @@ class RateViewSet(viewsets.ModelViewSet):
     serializer_class = RateSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     
+    
     def get_queryset(self):
-        queryset = super().get_queryset()
+        queryset = super().get_queryset().filter(is_active=True)
         
         house_id = self.request.query_params.get('house_id')
         if house_id:

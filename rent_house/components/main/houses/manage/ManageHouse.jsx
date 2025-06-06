@@ -6,7 +6,7 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 import { useTheme } from '../../../../contexts/ThemeContext';
 import { useUser } from '../../../../contexts/UserContext';
-import { getMyHousesService } from '../../../../services/houseService';
+import { deleteHouseService, getMyHousesService } from '../../../../services/houseService';
 import { PaperDialog } from '../../../common/PaperDialog';
 import { HouseCard } from '../components/HouseCard';
 import { ManageHeader } from './components/ManageHeader';
@@ -201,26 +201,43 @@ export const ManageHouse = () => {
   };
 
   const handleDeleteHouse = (house) => {
-    Alert.alert("Xác nhận xóa nhà", "Bạn có chắc chắn muốn xóa nhà này?", [
-      {
-        text: "Hủy",
-        style: "cancel"
-      },
-      {
-        text: "Xóa",
-        style: "destructive",
-        onPress: async () => {
-          try {
-            await deleteHouseService(house.id);
-            setHouses(prev => prev.filter(h => h.id !== house.id));
-            Alert.alert("Thành công", "Nhà đã được xóa.");
-          } catch (err) {
-            console.error("Error deleting house:", err);
-            Alert.alert("Lỗi", "Không thể xóa nhà. Vui lòng thử lại sau.");
-          }
+    setDialogContent({
+      title: "Xác nhận xóa nhà",
+      message: "Bạn có chắc chắn muốn xóa nhà này?",
+      actions: [
+        {
+          label: "Hủy",
+          onPress: () => setDialogVisible(false),
+          style: "cancel"
+        },
+        {
+          label: "Xóa",
+          onPress: async () => {
+            setDialogVisible(false);
+            try {
+              await deleteHouseService(house.id);
+              setHouses(prev => prev.filter(h => h.id !== house.id));
+              setDialogContent({
+                title: "Thành công",
+                message: "Nhà đã được xóa.",
+                actions: [{ label: "OK", onPress: () => setDialogVisible(false) }]
+              });
+              setDialogVisible(true);
+            } catch (err) {
+              console.error("Error deleting house:", err);
+              setDialogContent({
+                title: "Lỗi",
+                message: "Không thể xóa nhà. Vui lòng thử lại sau.",
+                actions: [{ label: "OK", onPress: () => setDialogVisible(false) }]
+              });
+              setDialogVisible(true);
+            }
+          },
+          isDestructive: true
         }
-      }
-    ]);
+      ]
+    });
+    setDialogVisible(true);
   }
   
   const renderStatistics = () => (
@@ -266,7 +283,7 @@ export const ManageHouse = () => {
         <View style={styles.actionButtonsContainer}>
           <TouchableOpacity
             style={[styles.deleteButton, { backgroundColor: colors.dangerColor }]}
-            onPress={() => handleEditHouse(item)}
+            onPress={() => handleDeleteHouse(item)}
           >
             <Icon name="delete" size={20} color="#fff" />
           </TouchableOpacity>

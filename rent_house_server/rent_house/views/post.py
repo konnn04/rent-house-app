@@ -34,7 +34,7 @@ class PostViewSet(viewsets.ModelViewSet):
         return [permission() for permission in permission_classes]
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        queryset = super().get_queryset().filter(is_active=True)
 
         author_username = self.request.query_params.get('author_username')
         if author_username:
