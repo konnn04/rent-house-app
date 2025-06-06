@@ -1,6 +1,5 @@
 import { apiClient } from './Api';
 
-// Hàm lấy danh sách bài viết với phân trang
 export const getFeedService = async (nextUrl = null, type = null) => {
   try {
     if (!nextUrl) {

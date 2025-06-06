@@ -77,7 +77,7 @@ export const CommentItem = ({ comment, onReply, colors, postId, onDelete }) => {
     }
   };
 
-  const isCurrentUser = userData?.id === comment.author.id;
+  const hasDeletePermission = (userData?.id === comment.author.id || ["admin", "moderator","collaborator"].includes(userData?.role));
 
   return (
     <PaperProvider>
@@ -122,7 +122,7 @@ export const CommentItem = ({ comment, onReply, colors, postId, onDelete }) => {
               </TouchableOpacity>
               <View
                 style={styles.moreButton_container}>
-                {isCurrentUser && (
+                {hasDeletePermission && (
                   <Menu
                     visible={menuVisible}
                     onDismiss={() => setMenuVisible(false)}

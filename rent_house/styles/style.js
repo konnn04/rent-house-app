@@ -96,6 +96,12 @@ export const homeStyles = StyleSheet.create({
     marginTop: 20,
     gap: 10,
   },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    gap: 10,
+  },
   title: {
     fontSize: 24,
     fontWeight: 'bold',

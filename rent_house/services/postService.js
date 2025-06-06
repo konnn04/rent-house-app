@@ -1,6 +1,5 @@
 import { apiClient } from './Api';
 
-// Tạo bài viết 
 export const createPostService = async (postData) => {
   try {
     const response = await apiClient.post('/api/posts/', postData, {
@@ -15,7 +14,6 @@ export const createPostService = async (postData) => {
   }
 }
 
-// Tương tác với bài viết (thích, bình luận, chia sẻ)
 export const interactWithPostService = async (postId, interactionType) => {
   try {
     const response = await apiClient.post(`/api/posts/${postId}/interact/`, {
@@ -28,7 +26,6 @@ export const interactWithPostService = async (postId, interactionType) => {
   }
 }
 
-// Chi tiết bài viết
 export const getPostDetailsService = async (postId) => {
   try {
     const response = await apiClient.get(`/api/posts/${postId}/`);
@@ -39,7 +36,6 @@ export const getPostDetailsService = async (postId) => {
   }
 }
 
-// Lấy comment của bài viết
 export const getPostCommentsService = async (postId, parentId = null, page = 1) => {
   try {
     const response = await apiClient.get(`/api/comments/post_comments/`, {
@@ -66,7 +62,6 @@ export const deletePostService = async (postId) => {
   }
 }
 
-// Tạo comment cho bài viết
 export const createPostCommentService = async (formData) => {
   try {
     const response = await apiClient.post(`/api/comments/`, formData, {
@@ -81,7 +76,6 @@ export const createPostCommentService = async (formData) => {
   }
 }
 
-// Xóa comment của bài viết
 export const deletePostCommentService = async (commentId) => {
   try {
     const response = await apiClient.delete(`/api/comments/${commentId}/`);

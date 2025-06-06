@@ -1,5 +1,4 @@
 import { apiClient } from './Api';
-// Lấy profile công khai của người dùng
 export const getUserProfileService = async (username) => {
     try {
         const response = await apiClient.get(`/api/profiles/${username}/`);
@@ -20,7 +19,6 @@ export const followUserService = async (userId) => {
     }
 };
 
-// Unfollow người dùng khác
 export const unfollowUserService = async (userId) => {
     try {
         const response = await apiClient.post(`/api/follows/${userId}/unfollow/`);

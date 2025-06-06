@@ -2,7 +2,6 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   KeyboardAvoidingView,
   Platform,
@@ -22,6 +21,7 @@ import {
 } from "../../../services/chatService";
 import { getChatDetailsFromRoute } from '../../../utils/ChatUtils';
 
+import { PaperDialog } from '../../common/PaperDialog';
 import { ChatHeader } from './components/ChatHeader';
 import { Message } from './components/Message';
 import { MessageActions } from './components/MessageActions';
@@ -53,7 +53,8 @@ export const ChatDetailScreen = () => {
   const [messageActionPosition, setMessageActionPosition] = useState({ x: 0, y: 0 });
 
   const [shouldScrollToBottom, setShouldScrollToBottom] = useState(false);
-
+  const [dialogVisible, setDialogVisible] = useState(false);
+  const [dialogContent, setDialogContent] = useState({ title: '', message: '', actions: [] });
 
   const fetchChatDetails = useCallback(async () => {
     try {
@@ -131,38 +132,39 @@ export const ChatDetailScreen = () => {
   };
 
   const handleDeleteMessage = async (message) => {
-    try {
-      Alert.alert(
-        'Xóa tin nhắn',
-        'Bạn có chắc muốn xóa tin nhắn này?',
-        [
-          {
-            text: 'Hủy',
-            style: 'cancel'
-          },
-          {
-            text: 'Xóa',
-            style: 'destructive',
-            onPress: async () => {
-              try {
-                await deleteMessageService(message.id);
-                setMessages(prev =>
-                  prev.map(msg =>
-                    msg.id === message.id ? { ...msg, is_removed: true } : msg
-                  )
-                );
-              } catch (error) {
-                let msg = 'Không thể xóa tin nhắn. Vui lòng thử lại sau.';
-                if (error.response?.data?.error) msg = error.response.data.error;
-                Alert.alert('Lỗi', msg);
-              }
+    // Sử dụng Dialog thay cho Alert
+    setDialogContent({
+      title: 'Xóa tin nhắn',
+      message: 'Bạn có chắc muốn xóa tin nhắn này?',
+      actions: [
+        { label: 'Hủy', onPress: () => setDialogVisible(false) },
+        {
+          label: 'Xóa',
+          onPress: async () => {
+            try {
+              await deleteMessageService(message.id);
+              setMessages(prev =>
+                prev.map(msg =>
+                  msg.id === message.id ? { ...msg, is_removed: true } : msg
+                )
+              );
+              setDialogVisible(false);
+            } catch (error) {
+              let msg = 'Không thể xóa tin nhắn. Vui lòng thử lại sau.';
+              if (error.response?.data?.error) msg = error.response.data.error;
+              setDialogContent({
+                title: 'Lỗi',
+                message: msg,
+                actions: [{ label: 'OK', onPress: () => setDialogVisible(false) }]
+              });
+              setDialogVisible(true);
             }
-          }
-        ]
-      );
-    } catch (error) {
-      console.error('Error showing delete alert:', error);
-    }
+          },
+          isDestructive: true
+        }
+      ]
+    });
+    setDialogVisible(true);
   };
 
   const handleEditMessage = async (messageId, newContent) => {
@@ -177,6 +179,12 @@ export const ChatDetailScreen = () => {
     } catch (error) {
       let msg = 'Không thể sửa tin nhắn. Vui lòng thử lại sau.';
       if (error.response?.data?.error) msg = error.response.data.error;
+      setDialogContent({
+        title: 'Lỗi',
+        message: msg,
+        actions: [{ label: 'OK', onPress: () => setDialogVisible(false) }]
+      });
+      setDialogVisible(true);
       return { success: false, error: msg };
     }
   };
@@ -340,6 +348,13 @@ export const ChatDetailScreen = () => {
           position={messageActionPosition}
         />
       </Portal>
+      <PaperDialog
+        visible={dialogVisible}
+        title={dialogContent.title}
+        message={dialogContent.message}
+        actions={dialogContent.actions}
+        onDismiss={() => setDialogVisible(false)}
+      />
     </KeyboardAvoidingView>
   );
 };
