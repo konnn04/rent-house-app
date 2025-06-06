@@ -16,6 +16,10 @@ class UserViewSet(viewsets.ModelViewSet):
     search_fields = ['username', 'email', 'first_name', 'last_name', 'phone_number']
     filterset_fields = ['role', 'is_active']
 
+    def get_queryset(self):
+        queryset = super().get_queryset().filter(is_active=True)
+        return queryset
+
     def list(self, request, *args, **kwargs):
         search = request.query_params.get('search')
         if not search:

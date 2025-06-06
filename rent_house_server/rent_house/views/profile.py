@@ -11,6 +11,10 @@ class ProfileViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = PublicProfileSerializer
     lookup_field = 'username' 
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    def get_queryset(self):
+        queryset = super().get_queryset().filter(is_active=True)
+        return queryset
     
     def retrieve(self, request, username=None):
         user = get_object_or_404(User, username=username)
