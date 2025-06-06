@@ -165,13 +165,12 @@ class HouseUpdateSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         house_type = data.get('type', getattr(self.instance, 'type', None))
-        if house_type == HouseType.ROOM.value[0]:
+        if house_type == HouseType.ROOM.value[0] or house_type == HouseType.DORMITORY.value[0]:
             if data.get('max_rooms') is None or data.get('max_people') is None:
                 raise serializers.ValidationError("Phải nhập max_rooms và max_people cho loại phòng trọ.")
         else:
-            data['max_rooms'] = None
-            data['current_rooms'] = None
-            data['max_people'] = None
+            data['max_rooms'] = 1
+            data['current_rooms'] = 0
 
         max_rooms = data.get('max_rooms', getattr(self.instance, 'max_rooms', None))
         current_rooms = data.get('current_rooms', getattr(self.instance, 'current_rooms', None))

@@ -14,7 +14,7 @@ import {
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { useUser } from '../../../contexts/UserContext';
-import { apiClient } from '../../../services/Api'; // Thêm dòng này để gọi API thêm thành viên
+import { apiClient } from '../../../services/Api';
 import { getInfoChatService, leaveChatService } from '../../../services/chatService';
 import { getChatDetailsFromRoute } from '../../../utils/ChatUtils';
 import { PaperDialog } from '../../common/PaperDialog';
@@ -102,7 +102,6 @@ export const ChatInfoScreen = () => {
     fetchChatInfo();
   }, [fetchChatInfo]);
   
-  // Handle remove member
   const handleRemoveMember = (member) => {
     setDialogContent({
       title: 'Xóa thành viên',
@@ -302,11 +301,11 @@ export const ChatInfoScreen = () => {
             )}
           </View>
           
-          {chatData?.members_summary?.map(member => (
+          {chatData?.members.map(member => (
             <MemberItem 
-              key={member.id}
-              member={member}
-              isCurrentUser={member.id === userData?.id}
+              key={member.user.id}
+              member={member.user}
+              isCurrentUser={member.user.id === userData?.id}
               isAdmin={isCurrentUserAdmin()}
               onRemoveMember={handleRemoveMember}
               onViewProfile={handleViewProfile}
