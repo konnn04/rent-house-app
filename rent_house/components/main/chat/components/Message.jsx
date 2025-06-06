@@ -112,7 +112,7 @@ export const Message = React.memo(({ message, currentUserId, onLongPress }) => {
             <View style={styles.mediaContainer}>
               <ImageGallery
                 mediaItems={message.media}
-                containerWidth={maxMessageWidth - 40} // Account for padding
+                containerWidth={maxMessageWidth - 40} 
               />
             </View>
           )}

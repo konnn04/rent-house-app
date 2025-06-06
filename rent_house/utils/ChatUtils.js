@@ -87,7 +87,6 @@ export const createOptimisticMessage = (content, userData, replyingTo = null, im
   const now = new Date().toISOString();
   const tempId = `temp-${Date.now()}`;
   
-  // Convert image objects to the format expected by the UI
   const mediaItems = images.map((img, index) => ({
     id: `temp-media-${index}`,
     url: img.uri,
@@ -98,7 +97,7 @@ export const createOptimisticMessage = (content, userData, replyingTo = null, im
   
   return {
     id: tempId,
-    chat_group: null, // Will be set by the API
+    chat_group: null, 
     content: content || '',
     created_at: now,
     updated_at: now,
@@ -113,6 +112,6 @@ export const createOptimisticMessage = (content, userData, replyingTo = null, im
     is_removed: false,
     replied_to: replyingTo,
     media: mediaItems,
-    isOptimistic: true // Flag to identify optimistic updates
+    isOptimistic: true 
   };
 };

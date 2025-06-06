@@ -1,6 +1,7 @@
 import { useIsFocused, useNavigation } from '@react-navigation/native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { FAB } from 'react-native-paper';
 import { useNotificationCount } from '../../../contexts/NotificationCountContext';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { useUser } from '../../../contexts/UserContext';
@@ -194,6 +195,17 @@ export const ChatListScreen = () => {
             </Text>
           </View>
         }
+      />
+      <FAB
+        style={{
+          position: 'absolute',
+          right: 20,
+          bottom: 30,
+          backgroundColor: colors.accentColor,
+        }}
+        icon="account-multiple-plus"
+        onPress={() => navigation.navigate('CreateGroupChat')}
+        color="#fff"
       />
     </View>
   );

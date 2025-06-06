@@ -20,6 +20,7 @@ import {
   getInfoChatService
 } from "../../../services/chatService";
 import { getChatDetailsFromRoute } from '../../../utils/ChatUtils';
+import { subscribeToMessages } from '../../../services/firebaseChatService';
 
 import { PaperDialog } from '../../common/PaperDialog';
 import { ChatHeader } from './components/ChatHeader';
@@ -55,6 +56,11 @@ export const ChatDetailScreen = () => {
   const [shouldScrollToBottom, setShouldScrollToBottom] = useState(false);
   const [dialogVisible, setDialogVisible] = useState(false);
   const [dialogContent, setDialogContent] = useState({ title: '', message: '', actions: [] });
+
+  // useEffect(() => {
+  //   const unsubscribe = subscribeToMessages(chatId, setMessages);
+  //   return unsubscribe;
+  // }, [chatId]);
 
   const fetchChatDetails = useCallback(async () => {
     try {
@@ -124,15 +130,14 @@ export const ChatDetailScreen = () => {
 
   const handleMessageLongPress = (message, event) => {
     setSelectedMessage(message);
-    
+
     const { pageX, pageY } = event.nativeEvent;
     setMessageActionPosition({ x: pageX, y: pageY });
-    
+
     setActionsVisible(true);
   };
 
   const handleDeleteMessage = async (message) => {
-    // Sử dụng Dialog thay cho Alert
     setDialogContent({
       title: 'Xóa tin nhắn',
       message: 'Bạn có chắc muốn xóa tin nhắn này?',
@@ -207,7 +212,7 @@ export const ChatDetailScreen = () => {
   }, [navigation]);
 
   const handleInfoPress = useCallback(() => {
-    navigation.navigate('ChatInfo', { chatId : chatId });
+    navigation.navigate('ChatInfo', { chatId: chatId });
   }, [navigation, chatId]);
 
   const handleMessageSent = useCallback((newMessage) => {
@@ -309,6 +314,7 @@ export const ChatDetailScreen = () => {
             { paddingBottom: Platform.OS === 'android' ? 60 : 0 }
           ]}
           refreshing={refreshing}
+          onRefresh={handleRefresh}
           onEndReached={handleLoadMore}
           onEndReachedThreshold={0.3}
           ListFooterComponent={loadingMore ? (
@@ -351,7 +357,7 @@ export const ChatDetailScreen = () => {
       <PaperDialog
         visible={dialogVisible}
         title={dialogContent.title}
-        message={dialogContent.message}
+        content={dialogContent.message}
         actions={dialogContent.actions}
         onDismiss={() => setDialogVisible(false)}
       />

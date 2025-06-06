@@ -292,7 +292,7 @@ export const IdentityVerificationScreen = () => {
       <PaperDialog
         visible={dialogVisible}
         title={dialogContent.title}
-        message={dialogContent.message}
+        content={dialogContent.message}
         actions={dialogContent.actions}
         onDismiss={() => setDialogVisible(false)}
       />

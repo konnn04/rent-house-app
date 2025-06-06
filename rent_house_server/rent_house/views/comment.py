@@ -6,14 +6,14 @@ from django.db import transaction
 
 from rent_house.models import Comment, Post, Media
 from rent_house.serializers import CommentSerializer
-from rent_house.permissions import IsOwnerOrAdminOrReadOnly
+from rent_house.permissions import IsOwnerOrAdminOrReadOnly, IsOwnerOrModderOrReadOnly
 from rent_house.utils import upload_image_to_cloudinary, delete_cloudinary_image
 from .pagination import SmallPagePagination
 
 class CommentViewSet(viewsets.ModelViewSet):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrAdminOrReadOnly]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrModderOrReadOnly]
     pagination_class = SmallPagePagination
     
     @transaction.atomic

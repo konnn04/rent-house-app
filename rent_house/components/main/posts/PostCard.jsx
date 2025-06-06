@@ -411,11 +411,10 @@ export const PostCard = ({ post, onPostDeleted, ...props }) => {
         />
       </View>
 
-      {/* Thay Alert bằng Dialog */}
       <PaperDialog
         visible={dialogVisible}
         title={dialogContent.title}
-        message={dialogContent.message}
+        content={dialogContent.message}
         actions={dialogContent.actions}
         onDismiss={() => setDialogVisible(false)}
       />

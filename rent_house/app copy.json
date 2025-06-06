@@ -41,7 +41,10 @@
       },
       "apiUrl": "https://api.rent-house.konnn04.com",
       "CLIENT_ID": "",
-      "CLIENT_SECRET": ""
+      "CLIENT_SECRET": "",
+      "CLOUDINARY_CLOUD_NAME": "",
+      "CLOUDINARY_API_KEY":"",
+      "CLOUDINARY_API_SECRET":""
     }
   }
 }

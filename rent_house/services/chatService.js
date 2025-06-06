@@ -105,3 +105,16 @@ export const getUnreadChatsCount = async () => {
     return 0;
   }
 }
+
+export const createGroupChatService = async (groupName, usernames) => {
+  try {
+    const response = await apiClient.post('/api/chats/create_group/', {
+      name: groupName,
+      usernames
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error creating group chat:', error);
+    throw error;
+  }
+}

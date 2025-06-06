@@ -9,7 +9,7 @@ from django.db.models import Q
 
 from rent_house.models import Post, Media, Interaction
 from rent_house.serializers import PostSerializer, PostDetailSerializer
-from rent_house.permissions import IsOwnerOrAdminOrReadOnly
+from rent_house.permissions import IsOwnerOrAdminOrReadOnly, IsOwnerOrModderOrReadOnly
 from rent_house.utils import upload_image_to_cloudinary, delete_cloudinary_image
 
 class PostViewSet(viewsets.ModelViewSet):
@@ -22,7 +22,9 @@ class PostViewSet(viewsets.ModelViewSet):
     ordering = ['-created_at']
 
     def get_permissions(self):
-        if self.action in ['update', 'partial_update', 'destroy']:
+        if self.action in ['destroy']:
+            permission_classes = [IsOwnerOrModderOrReadOnly]
+        elif self.action in ['update', 'partial_update']:
             permission_classes = [IsOwnerOrAdminOrReadOnly]
         elif self.action == 'interact':
             permission_classes = [permissions.IsAuthenticated]
