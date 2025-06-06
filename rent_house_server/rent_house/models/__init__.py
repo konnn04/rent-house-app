@@ -67,6 +67,7 @@ class ReportType(Enum):
 class BaseModel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, db_index=True, help_text="Ngày tạo")
     updated_at = models.DateTimeField(auto_now=True, help_text="Ngày cập nhật")
+    is_active = models.BooleanField(default=True, db_index=True, help_text="Đang hoạt động")
     class Meta:
         abstract = True
 

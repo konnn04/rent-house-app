@@ -88,7 +88,7 @@ class HouseAdmin(ModelAdmin):
             'fields': ('base_price', 'water_price', 'electricity_price', 'internet_price', 'trash_price', 'deposit')
         }),
         ('Tình trạng', {
-            'fields': ('is_verified', 'is_renting')
+            'fields': ('is_verified', 'is_renting', 'is_active')
         }),
         ('Property Details', {
             'fields': ('area', 'max_rooms', 'current_rooms', 'max_people')
