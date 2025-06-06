@@ -25,7 +25,7 @@ export const getDetailHouseService = async (houseId) => {
 
 export const updateHouseService = async (houseId, formData) => {
   try {
-    const response = await apiClient.put(`/api/houses/${houseId}/`, formData, {
+    const response = await apiClient.patch(`/api/houses/${houseId}/`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -185,3 +185,21 @@ export const createHouseRatingService = async (formData) => {
     throw error;
   }
 }
+
+export const updateHouseRatingService = async (ratingId, formData) => {
+  try {
+    const response = await apiClient.put(`/api/rates/${ratingId}/`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error updating house rating:', error);
+    throw error;
+  }
+}
+
+export const deleteHouseRatingService = async (ratingId) => {
+  return apiClient.delete(`/api/rates/${ratingId}/`);
+};

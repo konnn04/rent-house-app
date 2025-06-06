@@ -260,18 +260,23 @@ export const PostCard = ({ post, onPostDeleted, ...props }) => {
                   </Text>
                 </TouchableOpacity>
                 {hasDeletePermission && (
-                  <TouchableOpacity
-                    onPress={handleDelete}
-                  >
-                    <Text
-                      style={[
-                        styles.deleteButtonText,
-                        { color: colors.dangerColor },
-                      ]}
+                  <>
+                    <TouchableOpacity
+                      onPress={() => {
+                        setShowOptions(false);
+                        navigation.navigate('CreatePost', { postId: post.id });
+                      }}
                     >
-                      {isDeleting ? "Đang xóa..." : "Xóa bài viết"}
-                    </Text>
-                  </TouchableOpacity>
+                      <Text style={{ color: colors.textPrimary, padding: 10 }}>
+                        Sửa bài viết
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={handleDelete}>
+                      <Text style={[styles.deleteButtonText, { color: colors.dangerColor }]}>
+                        {isDeleting ? "Đang xóa..." : "Xóa bài viết"}
+                      </Text>
+                    </TouchableOpacity>
+                  </>
                 )}
               </View>
             )}

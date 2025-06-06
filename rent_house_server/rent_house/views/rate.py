@@ -3,7 +3,6 @@ from rest_framework.response import Response
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 
-from rent_house import serializers
 from rent_house.models import Rate, House, Media
 from rent_house.serializers import RateSerializer
 from rent_house.utils import upload_image_to_cloudinary
@@ -33,24 +32,6 @@ class RateViewSet(viewsets.ModelViewSet):
     
     def perform_create(self, serializer):
         house_id = self.request.data.get('house')
-        content = self.request.data.get('content', '').strip()
-        star = self.request.data.get('star')
-        
-        if not content:
-            raise serializers.ValidationError("Nội dung đánh giá không được để trống")
-        
-        if len(content) < 10:
-            raise serializers.ValidationError("Nội dung đánh giá phải có ít nhất 10 ký tự")
-        
-        if len(content) > 1000:
-            raise serializers.ValidationError("Nội dung đánh giá không được vượt quá 1000 ký tự")
-        
-        try:
-            star = int(star)
-            if star < 1 or star > 5:
-                raise serializers.ValidationError("Điểm đánh giá phải từ 1 đến 5 sao")
-        except (ValueError, TypeError):
-            raise serializers.ValidationError("Điểm đánh giá phải là số nguyên từ 1 đến 5")
         
         try:
             house = House.objects.get(id=house_id)
@@ -80,4 +61,4 @@ class RateViewSet(viewsets.ModelViewSet):
             return rate
 
         except House.DoesNotExist:
-            raise serializers.ValidationError("Nhà cho thuê không tồn tại")
+            raise ValidationError("Nhà cho thuê không tồn tại")

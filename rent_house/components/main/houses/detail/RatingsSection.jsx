@@ -11,7 +11,9 @@ import { useTheme } from '../../../../contexts/ThemeContext';
 import { useUser } from '../../../../contexts/UserContext';
 import {
   createHouseRatingService,
-  getHouseRatingsService
+  deleteHouseRatingService,
+  getHouseRatingsService,
+  updateHouseRatingService
 } from '../../../../services/houseService';
 import { PaperDialog } from '../../../common/PaperDialog';
 
@@ -87,7 +89,12 @@ export const RatingsSection = ({ houseId, avgRating = 0, insideScrollView = fals
         });
       }
       
-      await createHouseRatingService(formData);
+      if (userHasRated) {
+        await updateHouseRatingService(userRating.id, formData);
+      }
+      else {
+        await createHouseRatingService(formData);
+      }
       setDialogContent({
         title: 'Thành công',
         message: 'Đánh giá của bạn đã được thêm thành công.',
@@ -113,6 +120,43 @@ export const RatingsSection = ({ houseId, avgRating = 0, insideScrollView = fals
     setAddModalVisible(true);
   };
   
+  const handleDeleteRating = async () => {
+    setDialogContent({
+      title: 'Xác nhận xoá',
+      message: 'Bạn có chắc chắn muốn xoá đánh giá này?',
+      actions: [
+        { label: 'Hủy', onPress: () => setDialogVisible(false) },
+        {
+          label: 'Xoá',
+          isDestructive: true,
+          onPress: async () => {
+            setDialogVisible(false);
+            try {
+              await deleteHouseRatingService(userRating.id);
+              setDialogContent({
+                title: 'Thành công',
+                message: 'Đánh giá đã được xoá.',
+                actions: [{ label: 'OK', onPress: () => setDialogVisible(false) }]
+              });
+              setDialogVisible(true);
+              fetchRatings(filter);
+              setUserHasRated(false);
+              setUserRating(null);
+            } catch (error) {
+              setDialogContent({
+                title: 'Lỗi',
+                message: 'Không thể xoá đánh giá. Vui lòng thử lại.',
+                actions: [{ label: 'OK', onPress: () => setDialogVisible(false) }]
+              });
+              setDialogVisible(true);
+            }
+          }
+        }
+      ]
+    });
+    setDialogVisible(true);
+  };
+
   const renderRatingSummary = () => (
     <View style={[styles.summaryContainer, { backgroundColor: colors.backgroundSecondary }]}>
       <View style={styles.ratingValueContainer}>
@@ -145,14 +189,24 @@ export const RatingsSection = ({ houseId, avgRating = 0, insideScrollView = fals
       )}
       
       {userHasRated && (
-        <Button
-          mode="outlined"
-          onPress={handleEditRating}
-          style={[styles.editRatingButton, { borderColor: colors.accentColor }]}
-          labelStyle={{ color: colors.accentColor }}
-        >
-          Sửa đánh giá
-        </Button>
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          <Button
+            mode="outlined"
+            onPress={handleEditRating}
+            style={[styles.editRatingButton, { borderColor: colors.accentColor }]}
+            labelStyle={{ color: colors.accentColor }}
+          >
+            Sửa đánh giá
+          </Button>
+          <Button
+            mode="outlined"
+            onPress={handleDeleteRating}
+            style={[styles.editRatingButton, { borderColor: colors.dangerColor }]}
+            labelStyle={{ color: colors.dangerColor }}
+          >
+            Xoá đánh giá
+          </Button>
+        </View>
       )}
     </View>
   );

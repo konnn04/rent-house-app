@@ -13,9 +13,10 @@ class CommentSerializer(serializers.ModelSerializer):
         read_only_fields = ('id', 'post', 'created_at', 'updated_at')
     
     def validate_content(self, value):
-        if not value or not value.strip():
+        content = value.strip() if value else ''
+        if not content:
             raise serializers.ValidationError("Nội dung bình luận không được để trống.")
-        return value.strip()
+        return content
         
     def get_reply_count(self, obj):
         return obj.replies.count()
@@ -41,9 +42,10 @@ class CommentDetailSerializer(serializers.ModelSerializer):
         read_only_fields = ('id', 'post', 'created_at', 'updated_at')
     
     def validate_content(self, value):
-        if not value or not value.strip():
+        content = value.strip() if value else ''
+        if not content:
             raise serializers.ValidationError("Nội dung bình luận không được để trống.")
-        return value.strip()
+        return content
 
     def get_replies(self, obj):
         replies = obj.replies.all()

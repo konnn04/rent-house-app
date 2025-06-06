@@ -1,4 +1,4 @@
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import { useCallback, useEffect, useState } from 'react';
 import {
@@ -15,16 +15,19 @@ import {
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { useUser } from '../../../contexts/UserContext';
-import { createPostService } from '../../../services/postService';
+import { createPostService, getPostDetailsService, updatePostService } from '../../../services/postService';
 import { PaperDialog } from '../../common/PaperDialog';
 import { HouseLinkSelector } from './components/HouseLinkSelector';
 import { ImagePickerComponent } from './components/ImagePickerComponent';
 import { LocationPickerComponent } from './components/LocationPickerComponent';
 import { PostTypeSelector } from './components/PostTypeSelector';
 
-export const CreatePostScreen = () => {
+export const CreateEditPostScreen = () => {
   const { colors } = useTheme();
   const navigation = useNavigation();
+  const route = useRoute();
+  const postId = route.params?.postId; 
+  const isEdit = !!postId;
   const { userData } = useUser();
 
   const isOwner = userData?.role === 'owner';
@@ -115,48 +118,44 @@ export const CreatePostScreen = () => {
       formData.append('title', title);
       formData.append('content', content);
 
-      if (address.trim()) {
-        formData.append('address', address);
-      }
+      if (address.trim()) formData.append('address', address);
       if (location.latitude && location.longitude) {
         formData.append('latitude', location.latitude);
         formData.append('longitude', location.longitude);
       }
+      if (linkedHouse) formData.append('house_link', linkedHouse.id);
 
-      if (isOwner && linkedHouse) {
-        formData.append('house_link', linkedHouse.id);
-      }
-
-      if (selectedImages.length > 0) {
-        selectedImages.forEach((image, index) => {
+      selectedImages.forEach((image, index) => {
+        if (!image.isExisting) {
           const imageUri = Platform.OS === 'ios' ? image.uri.replace('file://', '') : image.uri;
           const filename = image.uri.split('/').pop();
           const match = /\.(\w+)$/.exec(filename);
           const fileType = match ? `image/${match[1]}` : 'image/jpeg';
-
-          console.log(`Appending image ${index}:`, { uri: imageUri, name: filename, type: fileType });
-          
           formData.append('images', {
             uri: imageUri,
             name: filename || `image_${index}.jpg`,
             type: fileType
           });
-        });
-      }
+        }
+      });
 
-      const data = await createPostService(formData);
+      let data;
+      if (isEdit) {
+        data = await updatePostService(postId, formData);
+      } else {
+        data = await createPostService(formData);
+      }
 
       setDialogContent({
         title: 'Thành công',
-        message: 'Bài đăng đã được tạo thành công',
+        message: isEdit ? 'Bài đăng đã được cập nhật thành công' : 'Bài đăng đã được tạo thành công',
         actions: [{ label: 'OK', onPress: () => { setDialogVisible(false); navigation.goBack(); } }]
       });
       setDialogVisible(true);
     } catch (error) {
-      console.error('Error creating post:', error);
       setDialogContent({
         title: 'Lỗi',
-        message: 'Không thể tạo bài đăng. Vui lòng thử lại sau.',
+        message: isEdit ? 'Không thể cập nhật bài đăng. Vui lòng thử lại sau.' : 'Không thể tạo bài đăng. Vui lòng thử lại sau.',
         actions: [{ label: 'OK', onPress: () => setDialogVisible(false) }]
       });
       setDialogVisible(true);
@@ -164,6 +163,42 @@ export const CreatePostScreen = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (isEdit) {
+      (async () => {
+        setLoading(true);
+        try {
+          const data = await getPostDetailsService(postId);
+          setTitle(data.title || '');
+          setContent(data.content || '');
+          setPostType(data.type || 'general');
+          setAddress(data.address || '');
+          setLocation({
+            latitude: data.latitude,
+            longitude: data.longitude,
+          });
+          setLinkedHouse(data.house_link || null);
+          setSelectedImages(
+            (data.media || []).map(img => ({
+              uri: img.url,
+              isExisting: true,
+              id: img.id,
+            }))
+          );
+        } catch (error) {
+          setDialogContent({
+            title: 'Lỗi',
+            message: 'Không thể tải dữ liệu bài viết.',
+            actions: [{ label: 'OK', onPress: () => { setDialogVisible(false); navigation.goBack(); } }]
+          });
+          setDialogVisible(true);
+        } finally {
+          setLoading(false);
+        }
+      })();
+    }
+  }, [isEdit, postId]);
 
   return (
     <>
@@ -180,7 +215,7 @@ export const CreatePostScreen = () => {
         >
           <View style={styles.header}>
             <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
-              Tạo bài đăng mới
+              {isEdit ? 'Chỉnh sửa bài đăng' : 'Tạo bài đăng mới'}
             </Text>
           </View>
 
@@ -322,7 +357,7 @@ export const CreatePostScreen = () => {
             {loading ? (
               <ActivityIndicator size="small" color="#fff" />
             ) : (
-              <Text style={styles.submitButtonText}>Đăng bài</Text>
+              <Text style={styles.submitButtonText}>{isEdit ? 'Lưu thay đổi' : 'Đăng bài'}</Text>
             )}
           </TouchableOpacity>
         </ScrollView>

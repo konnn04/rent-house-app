@@ -115,3 +115,17 @@ export const searchPostsService = async (query, nextUrl = null, type = null) => 
     throw error;
   }
 };
+
+export const updatePostService = async (postId, formData) => {
+  try {
+    const response = await apiClient.patch(`/api/posts/${postId}/`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error updating post:', error);
+    throw error;
+  }
+};

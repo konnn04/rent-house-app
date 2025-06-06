@@ -22,14 +22,16 @@ class PostSerializer(serializers.ModelSerializer):
         read_only_fields = ('id', 'created_at', 'updated_at')
 
     def validate_content(self, value):
-        if not value or not value.strip():
+        content = value.strip() if value else ''
+        if not content:
             raise serializers.ValidationError("Nội dung không được để trống.")
-        return value.strip()
+        return content
 
     def validate_title(self, value):
-        if not value or not value.strip():
+        title = value.strip() if value else ''
+        if not title:
             raise serializers.ValidationError("Tiêu đề không được để trống.")
-        return value.strip()
+        return title
 
     def validate_latitude(self, value):
         if value is not None and (value < -90 or value > 90):
@@ -107,14 +109,16 @@ class PostDetailSerializer(serializers.ModelSerializer):
         read_only_fields = ('id', 'created_at', 'updated_at')
     
     def validate_content(self, value):
-        if not value or not value.strip():
+        content = value.strip() if value else ''
+        if not content:
             raise serializers.ValidationError("Nội dung không được để trống.")
-        return value.strip()
+        return content
 
     def validate_title(self, value):
-        if not value or not value.strip():
+        title = value.strip() if value else ''
+        if not title:
             raise serializers.ValidationError("Tiêu đề không được để trống.")
-        return value.strip()
+        return title
 
     def validate_latitude(self, value):
         if value is not None and (value < -90 or value > 90):

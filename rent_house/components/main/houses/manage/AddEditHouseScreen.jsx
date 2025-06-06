@@ -75,7 +75,7 @@ export const AddEditHouseScreen = ({ houseId, isEditing = false }) => {
       setLongitude(house.longitude?.toString() || '');
       setMaxRooms(house.max_rooms?.toString() || '');
       setCurrentRooms(house.current_rooms?.toString() || ''); 
-      setMaxPeople(house.max_people?.toString() || '');
+      setMaxPeople(house.max_people?.toString() || '0');
       
       if (house.media && house.media.length > 0) {
         const formattedImages = house.media.map(media => ({

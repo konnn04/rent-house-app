@@ -4,7 +4,7 @@ from django.db.models import Q, Count, Avg, F
 from enum import Enum
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
-from django.core.cache import cache
+# from django.core.cache import cache
 from django.utils import timezone
 import random
 import string
@@ -302,12 +302,10 @@ class House(BaseModel):
         return self.title or f"House {self.id}"
 
     def get_avg_rating(self):
-        cache_key = f'house_rating_{self.id}'
-        avg_rating = cache.get(cache_key)
-        if avg_rating is None:
-            avg_rating = self.ratings.aggregate(avg=Avg('star'))['avg'] or 0
-            cache.set(cache_key, avg_rating, 3600)  # Cache for 1 hour
-        return avg_rating
+        if not hasattr(self, 'ratings'):
+            return None
+        avg_rating = self.ratings.aggregate(Avg('star'))['star__avg']
+        return round(avg_rating, 1) if avg_rating else None
 
     def get_thumbnail(self):
         first_image = self.media_files.filter(media_type='image').first()

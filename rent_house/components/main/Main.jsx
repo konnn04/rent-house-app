@@ -11,7 +11,7 @@ import { HouseDetailScreen } from "./houses/detail/HouseDetailScreen";
 import { AddEditHouseScreen } from './houses/manage/AddEditHouseScreen';
 import { EditHouseScreen } from './houses/manage/EditHouseScreen';
 import { IdentityVerificationScreen } from './houses/manage/IdentityVerificationScreen';
-import { CreatePostScreen } from './posts/CreatePostScreen';
+import { CreateEditPostScreen } from './posts/CreateEditPostScreen';
 import { PostDetailScreen } from "./posts/PostDetailScreen";
 import { EditProfileScreen } from "./profiles/EditProfileScreen";
 import { PublicProfile } from "./profiles/PublicProfile";
@@ -37,7 +37,7 @@ export const Main = () => {
                 {/* Profile  */}
                 <MainStackScreen.Screen name="EditProfile" component={EditProfileScreen} />
                 {/* Create Post */}
-                <MainStackScreen.Screen name="CreatePost" component={CreatePostScreen} />
+                <MainStackScreen.Screen name="CreatePost" component={CreateEditPostScreen} />
                 {/* House Detail */}
                 <MainStackScreen.Screen name="HouseDetail" component={HouseDetailScreen} />
                 {/* House Management */}
