@@ -51,13 +51,12 @@ export const verifyTokenService = async () => {
   }
 };
 
-// Tiền đăng ký: Nhập Email để nhận mã xác thực
+// Gửi mã xác thực đến email
 export const preRegisterService = async (email) => {
   try {
     const response = await apiClient.post('/api/pre-register/', { email });
     return response.data;
   } catch (error) {
-    // Trả về lỗi dạng object để context xử lý field error
     if (error.response && error.response.data) {
       throw { response: { data: error.response.data } };
     }

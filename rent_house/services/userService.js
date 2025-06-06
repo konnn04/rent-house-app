@@ -75,12 +75,6 @@ export const checkIdentityVerificationStatusService = async () => {
   }
 };
 
-/**
- * Tìm kiếm người dùng theo từ khóa
- * @param {string} query - Từ khóa tìm kiếm
- * @param {string} nextUrl - URL phân trang
- * @returns {Promise<Object>} Kết quả tìm kiếm người dùng
- */
 export const searchUsersService = async (query, nextUrl = null) => {
   try {
     let url = nextUrl || `/api/users/?search=${encodeURIComponent(query)}`;

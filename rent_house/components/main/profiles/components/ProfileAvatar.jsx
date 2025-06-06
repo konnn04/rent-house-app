@@ -10,6 +10,14 @@ export const ProfileAvatar = ({ profile, onAvatarUpdate }) => {
   const { colors } = useTheme();
   const { loading } = useUser();
   const [avatarLoading, setAvatarLoading] = useState(false);
+
+  const roles = {
+    renter: 'Người thuê',
+    owner: 'Chủ nhà',
+    admin: 'Quản trị viên',
+    moderator: 'Người điều hành',
+    collaborator: 'Cộng tác viên',
+  }
   
   const handleUpdateAvatar = async () => {
     try {
@@ -83,7 +91,7 @@ export const ProfileAvatar = ({ profile, onAvatarUpdate }) => {
         }
       </Text>
       <Text style={[styles.userRole, { color: colors.textSecondary }]}>
-        {profile?.role === 'renter' ? 'Người thuê' : 'Chủ nhà'}
+        {roles[profile?.role] || 'Người dùng'}
       </Text>
     </View>
   );

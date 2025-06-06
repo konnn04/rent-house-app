@@ -4,6 +4,7 @@ from rest_framework import viewsets, permissions, status, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.db import transaction
+from rest_framework import serializers
 
 from rent_house.models import ChatGroup, ChatMembership, Message, User, Media
 from rent_house.serializers import (
@@ -12,6 +13,13 @@ from rent_house.serializers import (
 )
 from rent_house.utils import upload_image_to_cloudinary
 from rent_house.permissions import IsOwnerOrReadOnly
+
+class CreateGroupSerializer(serializers.Serializer):
+    name = serializers.CharField(max_length=100)
+    usernames = serializers.ListField(
+        child=serializers.CharField(max_length=150),
+        allow_empty=False
+    )
 
 class ChatGroupViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
@@ -267,5 +275,32 @@ class ChatGroupViewSet(viewsets.ModelViewSet):
             'total_unread': total_unread,
             'chats_with_unread': chats_with_unread
         })
+    
+    @action(detail=False, methods=['post'], url_path='create_group')
+    @transaction.atomic
+    def create_group(self, request):
+        serializer = CreateGroupSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        name = serializer.validated_data['name']
+        usernames = serializer.validated_data['usernames']
+
+        users = list(User.objects.filter(username__in=usernames, is_active=True))
+        if request.user not in users:
+            users.append(request.user)
+
+        chat_group = ChatGroup.objects.create(
+            name=name,
+            is_group=True,
+            created_by=request.user
+        )
+        for user in users:
+            ChatMembership.objects.create(
+                chat_group=chat_group,
+                user=user,
+                is_admin=(user == request.user)
+            )
+
+        serializer = self.get_serializer(chat_group)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 

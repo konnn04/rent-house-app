@@ -5,8 +5,8 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 const MainStackScreen = createNativeStackNavigator();
 
-import { TabScreens } from './TabScreens';
 import { ChatStackScreen } from './chat/ChatStackScreen';
+import { CreateGroupChatScreen } from './chat/CreateGroupChatScreen';
 import { HouseDetailScreen } from "./houses/detail/HouseDetailScreen";
 import { AddEditHouseScreen } from './houses/manage/AddEditHouseScreen';
 import { EditHouseScreen } from './houses/manage/EditHouseScreen';
@@ -15,8 +15,9 @@ import { CreatePostScreen } from './posts/CreatePostScreen';
 import { PostDetailScreen } from "./posts/PostDetailScreen";
 import { EditProfileScreen } from "./profiles/EditProfileScreen";
 import { PublicProfile } from "./profiles/PublicProfile";
-import { SettingScreenStack } from './settings/SettingScreenStack';
 import { ReportScreen } from './report/ReportScreens';
+import { SettingScreenStack } from './settings/SettingScreenStack';
+import { TabScreens } from './TabScreens';
 
 export const Main = () => {
     return (
@@ -48,6 +49,9 @@ export const Main = () => {
                 <MainStackScreen.Screen name="Report" component={ReportScreen} />
                 {/* Post Detail */}
                 <MainStackScreen.Screen name="PostDetail" component={PostDetailScreen} />
+                {/* Create Group Chat */}
+                <MainStackScreen.Screen name="CreateGroupChat" component={CreateGroupChatScreen} />
+
             </MainStackScreen.Navigator>
 
         </SafeAreaProvider>

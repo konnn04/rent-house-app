@@ -1,9 +1,8 @@
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Image,
   StyleSheet,
   Text,
@@ -18,68 +17,11 @@ import {
 } from "../../../services/postService";
 import { truncateText } from "../../../utils/Tools";
 import { ImageGallery } from "../../common/ImageGallery";
+import { PaperDialog } from '../../common/PaperDialog';
 import { CommentsModal } from "./components/CommentsModal";
+import { HouseAttachment } from "./components/HouseAttachment";
 
-const HouseAttachment = ({ house, colors, onPress }) => {
-  const route = useRoute();
-
-  if (!house) return null;
-
-  const formatPrice = (price) => {
-    return parseFloat(price).toLocaleString("vi-VN");
-  };
-
-  return (
-    <View style={[styles.houseAttachment, { borderColor: colors.borderColor }]}>
-      <Text
-        style={[styles.houseAttachmentTitle, { color: colors.accentColor }]}
-      >
-        <MaterialCommunityIcons
-          name="home-outline"
-          size={16}
-          color={colors.accentColor}
-        />{" "}
-        Thông tin nhà
-      </Text>
-      <TouchableOpacity onPress={onPress}>
-        <View style={styles.houseContent}>
-          {house.thumbnail && (
-            <Image
-              source={{ uri: house.thumbnail }}
-              style={styles.houseThumbnail}
-              resizeMode="cover"
-            />
-          )}
-
-          <View style={styles.houseDetails}>
-            <Text style={[styles.houseTitle, { color: colors.textPrimary }]}>
-              {house.title}
-            </Text>
-
-            <View style={styles.houseInfoRow}>
-              <Text style={[styles.houseInfo, { color: colors.textSecondary }]}>
-                {formatPrice(house.base_price)} VNĐ/tháng
-              </Text>
-            </View>
-
-            <View style={styles.houseInfoRow}>
-              <Text style={[styles.houseInfo, { color: colors.textSecondary }]}>
-                <MaterialCommunityIcons name="ruler-square" size={14} />
-                {house.area} m²
-              </Text>
-              <Text style={[styles.houseInfo, { color: colors.textSecondary }]}>
-                <MaterialCommunityIcons name="door" size={14} />
-                {house.current_rooms}/{house.max_rooms} phòng
-              </Text>
-            </View>
-          </View>
-        </View>
-      </TouchableOpacity>
-    </View>
-  );
-};
-
-export const PostCard = ({ post, onPostDeleted }) => {
+export const PostCard = ({ post, onPostDeleted, ...props }) => {
   const { colors } = useTheme();
   const [showOptions, setShowOptions] = useState(false);
   const [imageLoading, setImageLoading] = useState({});
@@ -92,12 +34,14 @@ export const PostCard = ({ post, onPostDeleted }) => {
   });
   const route = useRoute();
 
-  const isCurrentUser = userData?.id === post.author?.id;
+  const hasDeletePermission = (userData?.id === post.author?.id || ["admin", "moderator","collaborator"].includes(userData?.role));
 
   const navigation = useNavigation();
 
   const [commentModalVisible, setCommentModalVisible] = useState(false);
   const [isContentExpanded, setIsContentExpanded] = useState(false);
+  const [dialogVisible, setDialogVisible] = useState(false);
+  const [dialogContent, setDialogContent] = useState({ title: '', message: '', actions: [] });
 
   const MAX_CONTENT_LENGTH = 1000;
   const shouldTruncate =
@@ -155,29 +99,51 @@ export const PostCard = ({ post, onPostDeleted }) => {
     }
   };
 
-  const handleDeletePost = async () => {
-    try {
-      setIsDeleting(true);
-      await deletePostService(post.id); 
+  const handleDelete = async () => {
+    setDialogContent({
+      title: 'Xác nhận xóa',
+      message: 'Bạn có chắc chắn muốn xóa bài viết này?',
+      actions: [
+        { label: 'Hủy', onPress: () => setDialogVisible(false) },
+        {
+          label: 'Xóa',
+          onPress: async () => {
+            setDialogVisible(false);
+            try {
+              setIsDeleting(true);
+              await deletePostService(post.id); 
 
-      if (onPostDeleted) {
-        onPostDeleted(post.id); 
-      }
+              if (onPostDeleted) {
+                onPostDeleted(post.id); 
+              }
 
-      if (route.name === "PostDetail") {
-        navigation.goBack();
-      } else {
-        Alert.alert("Thành công", "Đã xóa bài viết");
-      }
-    } catch (error) {
-      console.error("Error deleting post:", error);
-      Alert.alert(
-        "Lỗi",
-        error.response?.data?.message || "Không thể xóa bài viết"
-      );
-    } finally {
-      setIsDeleting(false);
-    }
+              if (route.name === "PostDetail") {
+                navigation.goBack();
+              } else {
+                setDialogContent({
+                  title: 'Thành công',
+                  message: 'Đã xóa bài viết',
+                  actions: [{ label: 'OK', onPress: () => setDialogVisible(false) }]
+                });
+                setDialogVisible(true);
+              }
+            } catch (error) {
+              console.error("Error deleting post:", error);
+              setDialogContent({
+                title: 'Lỗi',
+                message: 'Không thể xóa bài viết. Vui lòng thử lại.',
+                actions: [{ label: 'OK', onPress: () => setDialogVisible(false) }]
+              });
+              setDialogVisible(true);
+            } finally {
+              setIsDeleting(false);
+            }
+          },
+          isDestructive: true
+        }
+      ]
+    });
+    setDialogVisible(true);
   };
 
   const handleLike = () => handleInteraction("like");
@@ -218,244 +184,241 @@ export const PostCard = ({ post, onPostDeleted }) => {
       : post.content;
 
   return (
-    <View
-      style={[
-        styles.postContainer,
-        { backgroundColor: colors.backgroundSecondary },
-      ]}
-    >
-      <View style={styles.postHeader}>
-        <TouchableOpacity
-          style={styles.postUserInfo}
-          onPress={() => {
-            navigation.navigate("PublicProfile", {
-              username: post.author?.username,
-            });
-          }}
-        >
-          <Image
-            source={
-              {
-                uri: post.author?.avatar || post.author?.avatar_thumbnail,
-              } || require("@assets/images/favicon.png")
-            }
-            onLoadStart={() => handleImageLoadStart("avatar")}
-            onLoad={() => handleImageLoadEnd("avatar")}
-            onError={() => handleImageError("avatar")}
-            resizeMode="cover"
-            style={styles.userAvatar}
-          />
-          {imageLoading["avatar"] && (
-            <View style={styles.avatarLoadingOverlay}>
-              <ActivityIndicator size="small" color={colors.accentColor} />
-            </View>
-          )}
-          <View>
-            <Text style={[styles.userName, { color: colors.textPrimary }]}>
-              {post.author?.full_name || post.author?.username || "Anonymous"}
-            </Text>
-            <Text style={[styles.postTime, { color: colors.textSecondary }]}>
-              {formatDate(post.created_at)}
-            </Text>
-          </View>
-        </TouchableOpacity>
-        <View style={styles.postOptions}>
+    <>
+      <View
+        style={[
+          styles.postContainer,
+          { backgroundColor: colors.backgroundSecondary },
+        ]}
+      >
+        <View style={styles.postHeader}>
           <TouchableOpacity
-            onPress={toggleOptions}
-            style={styles.optionsButton}
+            style={styles.postUserInfo}
+            onPress={() => {
+              navigation.navigate("PublicProfile", {
+                username: post.author?.username,
+              });
+            }}
           >
-            <Ionicons
-              name="ellipsis-horizontal"
-              size={20}
-              color={colors.textSecondary}
+            <Image
+              source={
+                {
+                  uri: post.author?.avatar || post.author?.avatar_thumbnail,
+                } || require("@assets/images/favicon.png")
+              }
+              onLoadStart={() => handleImageLoadStart("avatar")}
+              onLoad={() => handleImageLoadEnd("avatar")}
+              onError={() => handleImageError("avatar")}
+              resizeMode="cover"
+              style={styles.userAvatar}
             />
+            {imageLoading["avatar"] && (
+              <View style={styles.avatarLoadingOverlay}>
+                <ActivityIndicator size="small" color={colors.accentColor} />
+              </View>
+            )}
+            <View>
+              <Text style={[styles.userName, { color: colors.textPrimary }]}>
+                {post.author?.full_name || post.author?.username || "Anonymous"}
+              </Text>
+              <Text style={[styles.postTime, { color: colors.textSecondary }]}>
+                {formatDate(post.created_at)}
+              </Text>
+            </View>
           </TouchableOpacity>
-          {showOptions && (
-            <View
-              style={[
-                styles.optionsDropdown,
-                { backgroundColor: colors.backgroundSecondary },
-              ]}
+          <View style={styles.postOptions}>
+            <TouchableOpacity
+              onPress={toggleOptions}
+              style={styles.optionsButton}
             >
-              <TouchableOpacity>
-                <Text style={{ color: colors.textPrimary, padding: 10 }}>
-                  Ẩn bài viết
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity>
-                <Text style={{ color: colors.textPrimary, padding: 10 }}>
-                  Lưu bài viết
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity>
-                <Text style={{ color: colors.textPrimary, padding: 10 }}>
-                  Báo cáo bài viết
-                </Text>
-              </TouchableOpacity>
-              {isCurrentUser && (
-                <TouchableOpacity
-                  onPress={() => {
-                    Alert.alert(
-                      "Xác nhận",
-                      "Bạn có chắc muốn xóa bài viết này?",
-                      [
-                        { text: "Hủy", style: "cancel" },
-                        {
-                          text: "Xóa",
-                          style: "destructive",
-                          onPress: () => handleDeletePost(),
-                        },
-                      ]
-                    );
-                  }}
-                >
-                  <Text
-                    style={[
-                      styles.deleteButtonText,
-                      { color: colors.dangerColor },
-                    ]}
-                  >
-                    {isDeleting ? "Đang xóa..." : "Xóa bài viết"}
+              <Ionicons
+                name="ellipsis-horizontal"
+                size={20}
+                color={colors.textSecondary}
+              />
+            </TouchableOpacity>
+            {showOptions && (
+              <View
+                style={[
+                  styles.optionsDropdown,
+                  { backgroundColor: colors.backgroundSecondary },
+                ]}
+              >
+                <TouchableOpacity>
+                  <Text style={{ color: colors.textPrimary, padding: 10 }}>
+                    Ẩn bài viết
                   </Text>
                 </TouchableOpacity>
-              )}
+                <TouchableOpacity>
+                  <Text style={{ color: colors.textPrimary, padding: 10 }}>
+                    Lưu bài viết
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity>
+                  <Text style={{ color: colors.textPrimary, padding: 10 }}>
+                    Báo cáo bài viết
+                  </Text>
+                </TouchableOpacity>
+                {hasDeletePermission && (
+                  <TouchableOpacity
+                    onPress={handleDelete}
+                  >
+                    <Text
+                      style={[
+                        styles.deleteButtonText,
+                        { color: colors.dangerColor },
+                      ]}
+                    >
+                      {isDeleting ? "Đang xóa..." : "Xóa bài viết"}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            )}
+          </View>
+        </View>
+
+        <View style={styles.postBody}>
+          {post.title && (
+            <Text style={[styles.postTitle, { color: colors.accentColor }]}>
+              {post.title}
+            </Text>
+          )}
+
+          <Text style={[styles.postContent, { color: colors.textPrimary }]}>
+            {displayContent}
+          </Text>
+
+          {shouldTruncate && (
+            <TouchableOpacity onPress={toggleContentExpansion}>
+              <Text style={[styles.seeMoreButton, { color: colors.accentColor }]}>
+                {isContentExpanded ? "Thu gọn" : "Xem thêm"}
+              </Text>
+            </TouchableOpacity>
+          )}
+
+
+          {post.media && post.media.length > 0 && (
+            <ImageGallery mediaItems={post.media} />
+          )}
+
+          {post.address && !post.house_link && (
+            <View style={styles.locationInfo}>
+              <Ionicons name="location" size={16} color={colors.textSecondary} />
+              <Text
+                style={[styles.locationText, { color: colors.textSecondary }]}
+              >
+                {post.address}
+              </Text>
             </View>
           )}
-        </View>
-      </View>
 
-      <View style={styles.postBody}>
-        {post.title && (
-          <Text style={[styles.postTitle, { color: colors.accentColor }]}>
-            {post.title}
-          </Text>
-        )}
-
-        <Text style={[styles.postContent, { color: colors.textPrimary }]}>
-          {displayContent}
-        </Text>
-
-        {shouldTruncate && (
-          <TouchableOpacity onPress={toggleContentExpansion}>
-            <Text style={[styles.seeMoreButton, { color: colors.accentColor }]}>
-              {isContentExpanded ? "Thu gọn" : "Xem thêm"}
-            </Text>
-          </TouchableOpacity>
-        )}
-
-
-        {post.media && post.media.length > 0 && (
-          <ImageGallery mediaItems={post.media} />
-        )}
-
-        {post.address && !post.house_link && (
-          <View style={styles.locationInfo}>
-            <Ionicons name="location" size={16} color={colors.textSecondary} />
-            <Text
-              style={[styles.locationText, { color: colors.textSecondary }]}
-            >
-              {post.address}
-            </Text>
-          </View>
-        )}
-
-        {post.house_link && (
-          <HouseAttachment
-            house={post.house_link}
-            colors={colors}
-            onPress={handleViewHouse}
-          />
-        )}
-      </View>
-
-      <View style={styles.postFooter}>
-        <View
-          style={[
-            styles.interactionBar,
-            { borderBottomColor: colors.borderColor },
-          ]}
-        >
-          <TouchableOpacity
-            style={styles.interactionButton}
-            onPress={handleLike}
-          >
-            <Ionicons
-              name={
-                interaction.type === "like" ? "thumbs-up" : "thumbs-up-outline"
-              }
-              size={20}
-              color={
-                interaction.type === "like"
-                  ? colors.accentColor
-                  : colors.textSecondary
-              }
+          {post.house_link && (
+            <HouseAttachment
+              house={post.house_link}
+              colors={colors}
+              onPress={handleViewHouse}
             />
-            <Text
-              style={{
-                color:
+          )}
+        </View>
+
+        <View style={styles.postFooter}>
+          <View
+            style={[
+              styles.interactionBar,
+              { borderBottomColor: colors.borderColor },
+            ]}
+          >
+            <TouchableOpacity
+              style={styles.interactionButton}
+              onPress={handleLike}
+            >
+              <Ionicons
+                name={
+                  interaction.type === "like" ? "thumbs-up" : "thumbs-up-outline"
+                }
+                size={20}
+                color={
                   interaction.type === "like"
                     ? colors.accentColor
-                    : colors.textSecondary,
-                marginLeft: 5,
-              }}
+                    : colors.textSecondary
+                }
+              />
+              <Text
+                style={{
+                  color:
+                    interaction.type === "like"
+                      ? colors.accentColor
+                      : colors.textSecondary,
+                  marginLeft: 5,
+                }}
+              >
+                {interaction.like_count || 0}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.interactionButton}
+              onPress={handleDislike}
             >
-              {interaction.like_count || 0}
-            </Text>
-          </TouchableOpacity>
+              <Ionicons
+                name={
+                  interaction.type === "dislike"
+                    ? "thumbs-down"
+                    : "thumbs-down-outline"
+                }
+                size={20}
+                color={
+                  interaction.type === "dislike"
+                    ? colors.accentColor
+                    : colors.textSecondary
+                }
+              />
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.interactionButton}
-            onPress={handleDislike}
-          >
-            <Ionicons
-              name={
-                interaction.type === "dislike"
-                  ? "thumbs-down"
-                  : "thumbs-down-outline"
-              }
-              size={20}
-              color={
-                interaction.type === "dislike"
-                  ? colors.accentColor
-                  : colors.textSecondary
-              }
-            />
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.interactionButton}
+              onPress={handleCommentClick}
+            >
+              <Ionicons
+                name="chatbubble-outline"
+                size={20}
+                color={colors.textSecondary}
+              />
+              <Text style={{ color: colors.textSecondary, marginLeft: 5 }}>
+                {post.comment_count || 0}
+              </Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.interactionButton}
-            onPress={handleCommentClick}
-          >
-            <Ionicons
-              name="chatbubble-outline"
-              size={20}
-              color={colors.textSecondary}
-            />
-            <Text style={{ color: colors.textSecondary, marginLeft: 5 }}>
-              {post.comment_count || 0}
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.interactionButton}>
-            <Ionicons
-              name="share-social-outline"
-              size={20}
-              color={colors.textSecondary}
-            />
-            <Text style={{ color: colors.textSecondary, marginLeft: 5 }}>
-              Chia sẻ
-            </Text>
-          </TouchableOpacity>
+            <TouchableOpacity style={styles.interactionButton}>
+              <Ionicons
+                name="share-social-outline"
+                size={20}
+                color={colors.textSecondary}
+              />
+              <Text style={{ color: colors.textSecondary, marginLeft: 5 }}>
+                Chia sẻ
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
+
+        <CommentsModal
+          visible={commentModalVisible}
+          onClose={() => setCommentModalVisible(false)}
+          postId={post.id}
+          colors={colors}
+        />
       </View>
 
-      <CommentsModal
-        visible={commentModalVisible}
-        onClose={() => setCommentModalVisible(false)}
-        postId={post.id}
-        colors={colors}
+      <PaperDialog
+        visible={dialogVisible}
+        title={dialogContent.title}
+        content={dialogContent.message}
+        actions={dialogContent.actions}
+        onDismiss={() => setDialogVisible(false)}
       />
-    </View>
+    </>
   );
 };
 
@@ -597,7 +560,6 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
 
-  // House attachment styles
   houseAttachment: {
     marginVertical: 10,
     borderWidth: 1,

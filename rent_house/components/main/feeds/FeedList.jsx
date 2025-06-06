@@ -5,10 +5,9 @@ import {
   FlatList,
   Image,
   RefreshControl,
-  StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { useTheme } from "../../../contexts/ThemeContext";
@@ -100,13 +99,15 @@ export const FeedList = () => {
     >
       <View style={homeStyles.headerContainer}>
         <View style={homeStyles.headerTop}>
-          <Image
-            source={require("@assets/images/favicon.png")}
-            style={homeStyles.logo}
-          />
-          <Text style={[homeStyles.title, { color: colors.textPrimary }]}>
-            Trang chủ
-          </Text>
+          <View style={homeStyles.headerLeft}>
+            <Image
+              source={require("@assets/images/favicon.png")}
+              style={homeStyles.logo}
+            />
+            <Text style={[homeStyles.title, { color: colors.textPrimary }]}>
+              Trang chủ
+            </Text>
+          </View>
           <TouchableOpacity
             style={homeStyles.searchButton}
             onPress={handleSearchPress}
@@ -133,7 +134,7 @@ export const FeedList = () => {
               onPostDeleted={handlePostDeleted}
             />
           )}
-          contentContainerStyle={[homeStyles.postsList, { paddingHorizontal:8 }]}
+          contentContainerStyle={[homeStyles.postsList, { paddingHorizontal: 8 }]}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}

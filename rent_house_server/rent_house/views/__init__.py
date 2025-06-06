@@ -12,6 +12,7 @@ from .auth import RegisterView, VerifyEmailView, ResendVerificationView, CheckVe
 from .profile import ProfileViewSet
 from .ping import ping_view
 from .report import ReportViewSet
+from .cloudinary_upload import CloudinaryUploadView
 
 __all__ = [
     'SmallPagePagination',
@@ -35,4 +36,5 @@ __all__ = [
     'ping_view',
     'ProfileViewSet',
     'ReportViewSet',
+    'CloudinaryUploadView'
 ]

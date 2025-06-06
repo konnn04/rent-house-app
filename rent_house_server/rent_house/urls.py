@@ -2,6 +2,7 @@ from django.urls import path, include
 from . import views
 from rest_framework.routers import DefaultRouter
 from rent_house.views.report import ReportViewSet
+from rent_house.views.cloudinary_upload import CloudinaryUploadView
 
 router = DefaultRouter()
 router.register(r'users', views.UserViewSet, basename='user')
@@ -31,7 +32,8 @@ urlpatterns = [
     path('reset-password/<str:token>/', views.WebPasswordResetView.as_view(), name='web-password-reset'),
     path('request-password-reset/', views.RequestPasswordResetView.as_view(), name='request-password-reset'),
     path('password-reset/', views.PasswordResetView.as_view(), name='password-reset'),
-    
+    path('upload-image/', CloudinaryUploadView.as_view(), name='upload-image'),
 ]
+
 
 

@@ -13,6 +13,8 @@ import { PaperDialog } from '../../../../components/common/PaperDialog';
 import { useTheme } from '../../../../contexts/ThemeContext';
 import { sendMessageService } from '../../../../services/chatService';
 import { createOptimisticMessage } from '../../../../utils/ChatUtils';
+// import { sendMessage } from '../../../../services/firebaseChatService';
+// import { uploadImagesToServer } from '../../../../services/cloudinaryService';
 
 export const MessageInput = ({ chatId, onMessageSent, replyingTo, onCancelReply, userData }) => {
   const [message, setMessage] = useState('');
@@ -21,7 +23,7 @@ export const MessageInput = ({ chatId, onMessageSent, replyingTo, onCancelReply,
   const [dialogVisible, setDialogVisible] = useState(false);
   const [dialogContent, setDialogContent] = useState({ title: '', message: '', actions: [] });
   const { colors } = useTheme();
-  
+
   const pickImage = async () => {
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -34,7 +36,7 @@ export const MessageInput = ({ chatId, onMessageSent, replyingTo, onCancelReply,
         setDialogVisible(true);
         return;
       }
-      
+
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: false,
@@ -42,16 +44,16 @@ export const MessageInput = ({ chatId, onMessageSent, replyingTo, onCancelReply,
         quality: 0.8,
         selectionLimit: 5,
       });
-      
+
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const newImages = result.assets.map((img) => ({
           uri: img.uri,
           name: img.uri.split('/').pop(),
-          type: 'image/jpeg', 
+          type: 'image/jpeg',
           url: img.uri,
         }));
-        
-        setSelectedImages(prev => [...prev, ...newImages].slice(0, 5)); 
+
+        setSelectedImages(prev => [...prev, ...newImages].slice(0, 5));
       }
     } catch (error) {
       console.error('Error picking image:', error);
@@ -63,27 +65,27 @@ export const MessageInput = ({ chatId, onMessageSent, replyingTo, onCancelReply,
       setDialogVisible(true);
     }
   };
-  
+
   const removeImage = (index) => {
     setSelectedImages(prev => prev.filter((_, i) => i !== index));
   };
-  
+
   const handleSend = async () => {
     if ((!message.trim() && selectedImages.length === 0) || sending) return;
 
     try {
       setSending(true);
-      
+      // DÙNG API
       const formData = new FormData();
-      
+
       if (message.trim()) {
         formData.append('content', message);
       }
-      
+
       if (replyingTo) {
         formData.append('replied_to', replyingTo.id);
       }
-      
+
       selectedImages.forEach((img, index) => {
         formData.append('medias', {
           uri: img.uri,
@@ -98,14 +100,30 @@ export const MessageInput = ({ chatId, onMessageSent, replyingTo, onCancelReply,
         replyingTo, 
         selectedImages
       );
-      
+
       onMessageSent(optimisticMessage);
-      
+
       setMessage('');
       setSelectedImages([]);
       if (replyingTo) onCancelReply();
-      
+
       await sendMessageService(chatId, formData);
+
+      // DÙNG FIREBASE
+      // let imageUrls = [];
+      // if (selectedImages.length > 0) {
+      //   imageUrls = await uploadImagesToServer(selectedImages, userData?.token);
+      // }
+
+      // await sendMessage(chatId, {
+      //   sender: userData?.id,
+      //   content: message,
+      //   replied_to: replyingTo ? replyingTo.id : null,
+      // }, imageUrls);
+
+      setMessage('');
+      setSelectedImages([]);
+      if (replyingTo) onCancelReply();
     } catch (error) {
       console.error('Error sending message:', error);
       setDialogContent({
@@ -118,14 +136,14 @@ export const MessageInput = ({ chatId, onMessageSent, replyingTo, onCancelReply,
       setSending(false);
     }
   };
-  
+
   return (
     <>
       <Surface style={styles.inputContainer} elevation={4}>
         {selectedImages.length > 0 && (
           <View style={styles.imagePreviewContainer}>
-            <ScrollView 
-              horizontal 
+            <ScrollView
+              horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.imagePreviewScroll}
             >
@@ -144,14 +162,14 @@ export const MessageInput = ({ chatId, onMessageSent, replyingTo, onCancelReply,
             </ScrollView>
           </View>
         )}
-        
+
         {replyingTo && (
           <Surface style={styles.replyingToContainer} elevation={0}>
             <View style={styles.replyingToContent}>
               <Text variant="labelMedium" style={{ color: colors.textPrimary }}>
                 {replyingTo.sender.full_name}
               </Text>
-              <Text 
+              <Text
                 variant="bodySmall"
                 style={{ color: colors.textSecondary }}
                 numberOfLines={1}
@@ -159,7 +177,7 @@ export const MessageInput = ({ chatId, onMessageSent, replyingTo, onCancelReply,
                 {replyingTo.content}
               </Text>
             </View>
-            
+
             <IconButton
               icon="close"
               size={20}
@@ -167,7 +185,7 @@ export const MessageInput = ({ chatId, onMessageSent, replyingTo, onCancelReply,
             />
           </Surface>
         )}
-        
+
         <View style={styles.inputRow}>
           <IconButton
             icon="image"
@@ -175,7 +193,7 @@ export const MessageInput = ({ chatId, onMessageSent, replyingTo, onCancelReply,
             onPress={pickImage}
             iconColor={colors.accentColor}
           />
-          
+
           <TextInput
             style={[styles.input, { color: colors.textPrimary, backgroundColor: colors.backgroundSecondary }]}
             placeholder="Nhập tin nhắn..."
@@ -185,7 +203,7 @@ export const MessageInput = ({ chatId, onMessageSent, replyingTo, onCancelReply,
             multiline
             maxLength={500}
           />
-          
+
           <Button
             mode="contained"
             onPress={handleSend}
@@ -202,7 +220,7 @@ export const MessageInput = ({ chatId, onMessageSent, replyingTo, onCancelReply,
       <PaperDialog
         visible={dialogVisible}
         title={dialogContent.title}
-        message={dialogContent.message}
+        content={dialogContent.message}
         actions={dialogContent.actions}
         onDismiss={() => setDialogVisible(false)}
       />
@@ -234,7 +252,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 8,
-    paddingBottom: Platform.OS === 'ios' ? 8 : 12, 
+    paddingBottom: Platform.OS === 'ios' ? 8 : 12,
   },
   input: {
     flex: 1,

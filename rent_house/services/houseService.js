@@ -1,6 +1,5 @@
 import { apiClient } from './Api';
 
-// Lấy danh sách nhà của bản thân
 export const getMyHousesService = async (nextUrl = null) => {
   try {
     if (!nextUrl) {
@@ -14,7 +13,6 @@ export const getMyHousesService = async (nextUrl = null) => {
   }
 }
 
-// Chi tiết nhà
 export const getDetailHouseService = async (houseId) => {
   try {
     const response = await apiClient.get(`/api/houses/${houseId}/`);
@@ -25,7 +23,6 @@ export const getDetailHouseService = async (houseId) => {
   }
 }
 
-// Cập nhật thông tin nhà
 export const updateHouseService = async (houseId, formData) => {
   try {
     const response = await apiClient.put(`/api/houses/${houseId}/`, formData, {
@@ -40,7 +37,6 @@ export const updateHouseService = async (houseId, formData) => {
   }
 }
 
-// Tạo nhà mới
 export const createHouseService = async (formData) => {
   try {
     const response = await apiClient.post(`/api/houses/`, formData, {
@@ -65,7 +61,6 @@ export const deleteHouseService = async (houseId) => {
   }
 }
 
-// Lấy danh sách nhà với filter và phân trang (lazy loading)
 export const getHousesService = async ({
   search = '',
   type = '',
@@ -121,10 +116,10 @@ export const getHousesByMapService = async ({
   type = '',
   min_price = '',
   max_price = '',
-  is_verified = true, // Mặc định chỉ lấy nhà đã xác thực
-  is_renting = true, // Mặc định chỉ lấy nhà đang cho thuê
+  is_verified = true, 
+  is_renting = true, 
   is_blank = '',
-  limit = 20, // Giới hạn số lượng kết quả
+  limit = 20, 
 } = {}) => {
   try {
     if (!lat || !lon) {
@@ -145,9 +140,8 @@ export const getHousesByMapService = async ({
 
     const url = `/api/houses/?${params.join('&')}`;
     
-    // Thêm timeout để tránh quá nhiều API calls
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+    const timeoutId = setTimeout(() => controller.abort(), 10000); 
     
     try {
       const response = await apiClient.get(url, {
@@ -165,7 +159,6 @@ export const getHousesByMapService = async ({
   }
 }
 
-// Lấy đánh giá của nhà
 export const getHouseRatingsService = async (houseId, nextUrl = null, minStar = 0) => {
   try {
     if (!nextUrl) {
@@ -179,7 +172,6 @@ export const getHouseRatingsService = async (houseId, nextUrl = null, minStar = 
   }
 }
 
-// Tạo đánh giá mới
 export const createHouseRatingService = async (formData) => {
   try {
     const response = await apiClient.post(`/api/rates/`, formData, {

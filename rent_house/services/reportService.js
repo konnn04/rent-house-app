@@ -8,7 +8,6 @@ export const sendReportService = async (reportData) => {
             reason: reportData.reason
         });
 
-        // Kiểm tra response
         if (response.status === 201) {
             return {
                 success: true,

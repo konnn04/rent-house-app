@@ -17,6 +17,7 @@ export const UserProvider = ({ children }) => {
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [hasDeletePostPermission, setHasDeletePostPermission] = useState(false);
 
   useEffect(() => {
     if (userToken) {  

@@ -34,7 +34,14 @@ export const PublicProfile = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const username = route.params?.username;
-
+  const roles = {
+      renter: 'Người thuê',
+      owner: 'Chủ nhà',
+      admin: 'Quản trị viên',
+      moderator: 'Người điều hành',
+      collaborator: 'Cộng tác viên',
+    }
+  
   const { colors } = useTheme();
   const { userData } = useUser();
 
@@ -299,7 +306,7 @@ export const PublicProfile = () => {
                 color={colors.accentColor}
               />
               <Text style={[styles.roleText, { color: colors.textSecondary }]}>
-                {profileData.role === "owner" ? "Chủ nhà" : "Người thuê"}
+                {roles[profileData.role] || "Người dùng"}
               </Text>
             </View>
 
